@@ -27,6 +27,31 @@ def reduce_to_highest_weighted_branch(logic_tree):
 
     return modified_logic_tree
 
+def select_branch_sets(logic_tree, branch_set_short_names_to_select):
+
+    modified_logic_tree = copy.deepcopy(logic_tree)
+
+    available_branch_set_short_names = [branch_set.short_name for branch_set in logic_tree.branch_sets]
+
+    if not set(branch_set_short_names_to_select).issubset(set(available_branch_set_short_names)):
+        # find which branch set short names are not found in the logic tree
+        branch_set_short_names_not_found = set(branch_set_short_names_to_select) - set(available_branch_set_short_names)
+        raise ValueError(f"Branch set short names {branch_set_short_names_not_found} are not found in logic tree")
+
+    selected_branch_sets = [ branch_set for branch_set in logic_tree.branch_sets if branch_set.short_name in branch_set_short_names_to_select ]
+
+    modified_logic_tree.branch_sets = selected_branch_sets
+    
+    if ("PUY" in branch_set_short_names_to_select) & ("HIK" in branch_set_short_names_to_select):
+        # retain the HIK to PUY correlations
+        pass
+    else:
+        # remove correlations
+        modified_logic_tree.correlations = LogicTreeCorrelations()
+
+    return modified_logic_tree
+
+
 
 import matplotlib.pyplot as plt
 
@@ -53,11 +78,13 @@ run_aggregation(args)
 slt = args.srm_logic_tree
 glt = args.gmcm_logic_tree
 
-slt_only_highest_weight_branches = reduce_to_highest_weighted_branch(slt)
-slt_only_highest_weight_branches.to_json('/home/arr65/src/logic_tree_study/custom_logic_trees/slt_only_highest_weighted_branches.json')
+print()
 
-glt_only_highest_weight_branches = reduce_to_highest_weighted_branch(glt)
-glt_only_highest_weight_branches.to_json('/home/arr65/src/logic_tree_study/custom_logic_trees/glt_only_highest_weighted_branches.json')
+# slt_only_highest_weight_branches = reduce_to_highest_weighted_branch(slt)
+# slt_only_highest_weight_branches.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_only_highest_weighted_branches.json')
+#
+# glt_only_highest_weight_branches = reduce_to_highest_weighted_branch(glt)
+# glt_only_highest_weight_branches.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/glt_only_highest_weighted_branches.json')
 
 
 # print()

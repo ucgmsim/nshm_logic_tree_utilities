@@ -110,6 +110,7 @@ aggs = ["mean", "std"]
 
 pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275.pdf')
 
+
 progress_counter = 0
 
 for im in ims:
@@ -151,27 +152,84 @@ for im in ims:
         ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
         plt.subplots_adjust(hspace=0.03, top=0.94)
         plt.xlabel('IM level')
+        plt.ylim(-2,0.5)
         plt.suptitle(f"{im} (agg = {agg})")
-
-
-        # plt.subplot(3, 1, 3)
-        #
-        # plt.suptitle(f"{im} (agg = {agg})")
-        # plt.ylabel('residual')
-        # plt.xlabel('IM level')
-        # plt.legend()
-        # plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
-        # ax = plt.gca()  # Get current axis
-        # ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-        # ax.minorticks_on()
-        # ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
-
-        # plt.subplots_adjust(hspace=0.05, top=0.94)
 
         pdf.savefig()
         plt.close()
 
-pdf.close()
+    pdf.close()
+
+pdf2 = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275_mean_plusminus_sig.pdf')
+
+for im in ims:
+
+    progress_counter += 1
+
+    print(f"Plotting {im} (agg = {agg}) ({progress_counter}/{len(ims) * len(aggs)})")
+
+    full_full_data_mean = get_data_from_df(full_full_df, im, "mean")
+    full_full_data_std = get_data_from_df(full_full_df, im, "std")
+
+    full_highest_data_mean = get_data_from_df(full_highest_df, im, "mean")
+    full_highest_data_std = get_data_from_df(full_highest_df, im, "std")
+
+    highest_full_data_mean = get_data_from_df(highest_full_df, im, "mean")
+    highest_full_data_std = get_data_from_df(highest_full_df, im, "std")
+
+    plt.close('all')
+
+    plt.subplots(2, 1)
+    plt.subplot(2, 1, 1)
+
+    plt.loglog(NSHM_IM_LEVELS, full_full_data_mean, linestyle='-', color="blue", linewidth = 2, label='full logic tree')
+    # plt.loglog(NSHM_IM_LEVELS, full_full_data_mean + full_full_data_std, color="black", linestyle=':')
+    # plt.loglog(NSHM_IM_LEVELS, full_full_data_mean - full_full_data_std, color="black", linestyle=':')
+    plt.fill_between(NSHM_IM_LEVELS, full_full_data_mean - full_full_data_std, full_full_data_mean + full_full_data_std, color='blue', alpha=0.2)
+
+    plt.loglog(NSHM_IM_LEVELS, full_highest_data_mean, linestyle='--', color="green", linewidth = 2, label='full SRM, single GMCM')
+    # plt.loglog(NSHM_IM_LEVELS, full_highest_data_mean + full_highest_data_std, color="orange", linestyle=':')
+    # plt.loglog(NSHM_IM_LEVELS, full_highest_data_mean - full_highest_data_std, color="orange", linestyle=':')
+    plt.fill_between(NSHM_IM_LEVELS, full_highest_data_mean - full_highest_data_std, full_highest_data_mean + full_highest_data_std,
+                     color='green', alpha=0.2)
+
+    plt.ylim(1e-6,1e0)
+
+    ax1 = plt.gca()
+    x_limits = ax1.get_xlim()  # Get x-axis limits
+    y_limits = ax1.get_ylim()  # Get y-axis limi
+    plt.xlabel('IM level')
+    ax1.set_xticklabels([])
+    plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')  # Add grid lines
+
+    plt.legend()
+
+    plt.subplot(2, 1, 2)
+    plt.loglog(NSHM_IM_LEVELS, full_full_data_mean, color="blue", linewidth = 2, linestyle='-', label='full logic tree')
+    #plt.loglog(NSHM_IM_LEVELS, full_full_data_mean + full_full_data_std, color="black", linestyle=':')
+    #plt.loglog(NSHM_IM_LEVELS, full_full_data_mean - full_full_data_std, color="black", linestyle=':')
+    plt.fill_between(NSHM_IM_LEVELS, full_full_data_mean - full_full_data_std, full_full_data_mean + full_full_data_std, color='blue', alpha=0.2)
+
+    plt.loglog(NSHM_IM_LEVELS, highest_full_data_mean, linestyle='--', color="red", linewidth=2, label='single SRM, full GMCM')
+    # plt.loglog(NSHM_IM_LEVELS, highest_full_data_mean + highest_full_data_std, color="blue", linestyle=':')
+    # plt.loglog(NSHM_IM_LEVELS, highest_full_data_mean - highest_full_data_std, color="blue", linestyle=':')
+    plt.fill_between(NSHM_IM_LEVELS, highest_full_data_mean - highest_full_data_std, highest_full_data_mean + highest_full_data_std,
+                     color='red', alpha=0.2)
+    plt.legend()
+    plt.xlim(x_limits)  # Set x-axis limits to match the first plot
+    plt.ylim(y_limits)
+    plt.xlabel('IM level')
+    plt.subplots_adjust(hspace=0.07, top=0.94)
+    plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')  # Add grid lines
+
+    plt.suptitle(f"{im}")
+
+    pdf2.savefig()
+    plt.close()
+
+pdf2.close()
+
+
 
 # pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275.pdf')
 #
