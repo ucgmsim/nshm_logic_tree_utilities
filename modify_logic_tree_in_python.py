@@ -51,6 +51,75 @@ def select_branch_sets(logic_tree, branch_set_short_names_to_select):
 
     return modified_logic_tree
 
+#
+# def select_source_type(source_logic_tree, selected_source_type: str):
+#     if selected_source_type not in ['distributed', 'inversion']:
+#         raise ValueError(f"source_type must be either 'distributed' or 'inversion'")
+#
+#     modified_source_logic_tree = copy.deepcopy(source_logic_tree)
+#
+#     for branch_set_idx, branch_set in enumerate(slt.branch_sets):
+#         for branch_idx, branch in enumerate(branch_set.branches):
+#
+#             if len(branch.sources) > 1:
+#                 new_sources = [x for x in branch.sources if x.type == selected_source_type]
+#
+#                 modified_source_logic_tree.branch_sets[branch_set_idx].branches[branch_idx].sources = new_sources
+#
+#             # if there is only one source in the branch (so removing it would leave no sources)
+#             if len(branch.sources) == 1:
+#
+#                 # if the only source type is the selected source, leave it as is
+#                 if branch.sources[0].type == selected_source_type:
+#                     pass
+#
+#                 # if the only source type is not the selected source type, see if there are other branches in the branch_set
+#                 if branch.sources[0].type != selected_source_type:
+#
+#                     # if the branch_set has no other branches, remove the branch_set
+#                     if len(branch_set.branches) == 1:
+#                         del modified_source_logic_tree.branch_sets[branch_set_idx]
+#
+#                     # if the branch_set has other branches, remove the branch (but leave the rest of the branch_set)
+#                     if len(branch_set.branches) > 1:
+#                         del modified_source_logic_tree.branch_sets[branch_set_idx].branches[branch_idx]
+#
+#     return modified_source_logic_tree
+
+def logic_tree_single_source_type(source_logic_tree, selected_source_type: str):
+    if selected_source_type not in ['distributed', 'inversion']:
+        raise ValueError(f"source_type must be either 'distributed' or 'inversion'")
+
+    modified_source_logic_tree = copy.deepcopy(source_logic_tree)
+
+    for branch_set_idx, branch_set in enumerate(slt.branch_sets):
+        for branch_idx, branch in enumerate(branch_set.branches):
+
+            if len(branch.sources) > 1:
+
+                for source_index, source in enumerate(branch.sources):
+                    if source.type != selected_source_type:
+                        del modified_source_logic_tree.branch_sets[branch_set_idx].branches[branch_idx].sources[source_index]
+
+            # if there is only one source in the branch (so removing it would leave no sources)
+            if len(branch.sources) == 1:
+
+                # if the only source type is the selected source, leave it as is
+                if branch.sources[0].type == selected_source_type:
+                    pass
+
+                # if the only source type is not the selected source type, see if there are other branches in the branch_set
+                if branch.sources[0].type != selected_source_type:
+
+                    # if the branch_set has no other branches, remove the branch_set
+                    if len(branch_set.branches) == 1:
+                        del modified_source_logic_tree.branch_sets[branch_set_idx]
+
+                    # if the branch_set has other branches, remove the branch (but leave the rest of the branch_set)
+                    if len(branch_set.branches) > 1:
+                        del modified_source_logic_tree.branch_sets[branch_set_idx].branches[branch_idx]
+
+    return modified_source_logic_tree
 
 
 import matplotlib.pyplot as plt
@@ -68,17 +137,31 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 os.environ['THP_ENV_FILE'] = str("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home")
 
 # starting model
-input_file = "/home/arr65/src/gns/toshi-hazard-post/scripts/test_input.toml"
+input_file = "/home/arr65/src/gns/toshi-hazard-post/scripts/simple_input.toml"
 args = AggregationArgs(input_file)
 
 # run model
-run_aggregation(args)
+#run_aggregation(args)
 
 # extract logic trees
 slt = args.srm_logic_tree
 glt = args.gmcm_logic_tree
 
-print()
+source_logic_tree = copy.deepcopy(slt)
+
+selected_source_type = 'inversion' # 'distributed' or 'inversion'
+
+
+slt_only_selected_source_type = logic_tree_single_source_type(source_logic_tree = source_logic_tree, selected_source_type = selected_source_type)
+
+#slt.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/test.json')
+#print()
+
+slt_only_selected_source_type.to_json(f'/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_full_only_{selected_source_type}.json')
+
+
+
+
 
 # slt_only_highest_weight_branches = reduce_to_highest_weighted_branch(slt)
 # slt_only_highest_weight_branches.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_only_highest_weighted_branches.json')

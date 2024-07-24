@@ -93,22 +93,26 @@ def get_data_from_df(full_df, imt, agg):
 
     return data
 
-full_full_df = load_results(results_dir = Path('/home/arr65/data/nshm/nshm_output/chc_vs30_275_full_full'))
-full_highest_df = load_results(results_dir = Path('/home/arr65/data/nshm/nshm_output/chc_vs30_275_full_highest'))
-highest_full_df = load_results(results_dir = Path('/home/arr65/data/nshm/nshm_output/chc_vs30_275_highest_full'))
+location_code = 'wlg'
+vs30 = 275
+
+full_full_df = load_results(results_dir = Path(f'/home/arr65/data/nshm/nshm_output/{location_code}_{vs30}_full_full'))
+full_highest_df = load_results(results_dir = Path(f'/home/arr65/data/nshm/nshm_output/{location_code}_{vs30}_full_highest'))
+highest_full_df = load_results(results_dir = Path(f'/home/arr65/data/nshm/nshm_output/{location_code}_{vs30}_highest_full'))
 
 ims = natsort.natsorted(full_full_df["imt"].unique())
 aggs = full_full_df["agg"].unique()
 
 
 ims = ["PGA", "SA(0.1)","SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
+#ims = ["SA(10.0)"]
 #ims = ["PGA"]
 aggs = ["mean", "std"]
 
 # ims = ims[0:2]
 # aggs = aggs[0:2]
 
-pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275.pdf')
+pdf = PdfPages(Path(f"/home/arr65/data/nshm/output_plots") / f'{location_code}_{vs30}.pdf')
 
 
 progress_counter = 0
@@ -160,7 +164,7 @@ for im in ims:
 
     pdf.close()
 
-pdf2 = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275_mean_plusminus_sig.pdf')
+pdf2 = PdfPages(Path(f"/home/arr65/data/nshm/output_plots") / f'{location_code}_{vs30}_mean_plusminus.pdf')
 
 for im in ims:
 
@@ -230,66 +234,56 @@ for im in ims:
 pdf2.close()
 
 
+progress_counter = 0
 
-# pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / 'chc_vs30_275.pdf')
-#
-# progress_counter = 0
-#
-# for im in ims:
-#
-#     for agg in aggs:
-#
-#         progress_counter += 1
-#
-#         print(f"Plotting {im} (agg = {agg}) ({progress_counter}/{len(ims)*len(aggs)})")
-#
-#         full_full_data = get_data_from_df(full_full_df, im, agg)
-#         full_highest_data = get_data_from_df(full_highest_df, im, agg)
-#         highest_full_data = get_data_from_df(highest_full_df, im, agg)
-#
-#         fh_resid = np.log(full_highest_data) - np.log(full_full_data)
-#         hf_resid = np.log(highest_full_data) - np.log(full_full_data)
-#
-#         plt.subplots(3,1)
-#         plt.subplot(3,1,1)
-#         plt.loglog(NSHM_IM_LEVELS, full_full_data, linestyle='-', color = "black", label='full logic tree')
-#         plt.loglog(NSHM_IM_LEVELS, full_highest_data, linestyle=':', label='full SRM, single GMCM')
-#         plt.loglog(NSHM_IM_LEVELS, highest_full_data, linestyle='--', label='single SRM, full GMCM')
-#         plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
-#         ax = plt.gca()
-#         ax.minorticks_on()
-#         ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
-#         plt.legend()
-#
-#
-#         plt.subplot(3,1,2)
-#         plt.semilogx(NSHM_IM_LEVELS, fh_resid, label=r'$\ln$(full SRM, single GMCM) $-$ $\ln$(full logic tree)')
-#         plt.ylabel('residual')
-#         plt.legend()
-#         plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
-#         ax = plt.gca()  # Get current axis
-#         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-#         ax.minorticks_on()
-#         ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
-#
-#         plt.subplot(3,1,3)
-#         plt.semilogx(NSHM_IM_LEVELS, hf_resid, label=r'$\ln$(single SRM, full GMCM) $-$ $\ln$(full logic tree)')
-#         plt.suptitle(f"{im} (agg = {agg})")
-#         plt.ylabel('residual')
-#         plt.xlabel('IM level')
-#         plt.legend()
-#         plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
-#         ax = plt.gca()  # Get current axis
-#         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-#         ax.minorticks_on()
-#         ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
-#
-#         plt.subplots_adjust(hspace=0.05,top=0.94)
-#
-#         pdf.savefig()
-#         plt.close()
-#
-# pdf.close()
+for im in ims:
+
+    for agg in aggs:
+
+        progress_counter += 1
+
+        print(f"Plotting {im} (agg = {agg}) ({progress_counter}/{len(ims)*len(aggs)})")
+
+        full_full_data = get_data_from_df(full_full_df, im, agg)
+        full_highest_data = get_data_from_df(full_highest_df, im, agg)
+        highest_full_data = get_data_from_df(highest_full_df, im, agg)
+        print()
+
+        fh_resid = np.log(full_highest_data) - np.log(full_full_data)
+        hf_resid = np.log(highest_full_data) - np.log(full_full_data)
+
+        plt.subplots(2,1)
+        plt.subplot(2,1,1)
+        plt.loglog(NSHM_IM_LEVELS, full_full_data, linestyle='-', color = "blue", label='full logic tree')
+        plt.loglog(NSHM_IM_LEVELS, full_highest_data, linestyle=':', color="green", label='full SRM, single GMCM')
+        plt.loglog(NSHM_IM_LEVELS, highest_full_data, linestyle='--', color="red", label='single SRM, full GMCM')
+        plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
+        ax = plt.gca()
+        ax.minorticks_on()
+        ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
+        plt.legend()
+
+
+        plt.subplot(2,1,2)
+        plt.semilogx(NSHM_IM_LEVELS, fh_resid, color="green", label=r'$\ln$(full SRM, single GMCM) $-$ $\ln$(full logic tree)')
+        plt.semilogx(NSHM_IM_LEVELS, hf_resid, color="red", label=r'$\ln$(full SRM, single GMCM) $-$ $\ln$(full logic tree)')
+        plt.ylabel('residual')
+        plt.xlabel('IM level')
+        plt.legend()
+        plt.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
+        ax = plt.gca()  # Get current axis
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax.minorticks_on()
+        ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
+        plt.ylim(-2,0.3)
+        plt.suptitle(f"{im} (agg = {agg})")
+
+        plt.subplots_adjust(hspace=0.04,top=0.94)
+
+        pdf.savefig()
+        plt.close()
+
+pdf.close()
 
 
 
