@@ -31,5 +31,5 @@ print()
 run_aggregation(args)
 
 # extract logic trees
-slt = args.srm_logic_tree
-glt = args.gmcm_logic_tree
+# slt = args.srm_logic_tree
+# glt = args.gmcm_logic_tree
