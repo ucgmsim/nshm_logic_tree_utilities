@@ -88,32 +88,46 @@ def logic_tree_single_source_type(source_logic_tree, selected_source_type: str):
     return modified_source_logic_tree
 
 
-import matplotlib.pyplot as plt
+if __name__ == "__main__":
 
-## copying logging from scripts/cli.py
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
-logging.getLogger('toshi_hazard_post.aggregation_calc').setLevel(logging.DEBUG)
-logging.getLogger('toshi_hazard_post.aggregation').setLevel(logging.DEBUG)
-logging.getLogger('toshi_hazard_post.aggregation_calc').setLevel(logging.DEBUG)
-logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
-logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
-logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
+    import matplotlib.pyplot as plt
 
-os.environ['THP_ENV_FILE'] = str("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home")
+    ## copying logging from scripts/cli.py
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
+    logging.getLogger('toshi_hazard_post.aggregation_calc').setLevel(logging.DEBUG)
+    logging.getLogger('toshi_hazard_post.aggregation').setLevel(logging.DEBUG)
+    logging.getLogger('toshi_hazard_post.aggregation_calc').setLevel(logging.DEBUG)
+    logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
+    logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
+    logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-# starting model
-input_file = "/home/arr65/src/gns/toshi-hazard-post/scripts/simple_input.toml"
-args = AggregationArgs(input_file)
+    os.environ['THP_ENV_FILE'] = str("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home")
 
-# run model
-#run_aggregation(args)
+    # starting model
+    input_file = "/home/arr65/src/gns/toshi-hazard-post/scripts/simple_input.toml"
+    args = AggregationArgs(input_file)
 
-# extract logic trees
-slt = args.srm_logic_tree
-glt = args.gmcm_logic_tree
+    # run model
+    #run_aggregation(args)
 
-source_logic_tree = copy.deepcopy(slt)
+    # extract logic trees
+    slt = args.srm_logic_tree
+    glt = args.gmcm_logic_tree
+
+    source_logic_tree = copy.deepcopy(slt)
+
+
+    # Confirming that all branch weights within a branch set need to sum to 1.0
+    # bw = []
+    # for branch_set in glt.branch_sets:
+    #     bsw = 0.0
+    #     for branch in branch_set.branches:
+    #         bsw += branch.weight
+    #     bw.append(bsw)
+
+    slt_reduced_to_highest_weighted = reduce_to_highest_weighted_branch(slt)
+
 
 # slt_selected_branch_sets = select_source_branch_sets(logic_tree=source_logic_tree, branch_set_short_names_to_select = ['HIK', 'PUY', 'SLAB'])
 # slt_selected_branch_sets.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_HIK_PUY_SLAB.json')
