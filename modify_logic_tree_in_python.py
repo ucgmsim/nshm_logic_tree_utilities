@@ -87,10 +87,14 @@ def logic_tree_single_source_type(source_logic_tree, selected_source_type: str):
 
     return modified_source_logic_tree
 
+# def sum_weights_in_all_branch_sets(logic_tree):
+
+
+
 
 if __name__ == "__main__":
 
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
 
     ## copying logging from scripts/cli.py
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -115,7 +119,46 @@ if __name__ == "__main__":
     slt = args.srm_logic_tree
     glt = args.gmcm_logic_tree
 
-    source_logic_tree = copy.deepcopy(slt)
+    slt_copy = copy.deepcopy(slt)
+    glt_copy = copy.deepcopy(glt)
+
+    slt_copy2 = copy.deepcopy(slt)
+    glt_copy2 = copy.deepcopy(glt)
+
+
+    slt_hw = reduce_to_highest_weighted_branch(slt_copy)
+    glt_hw = reduce_to_highest_weighted_branch(glt_copy)
+
+    logic_tree = copy.deepcopy(slt_copy)
+    # branch_set_summed_weights = []
+    print()
+    # for branch_set in logic_tree.branch_sets:
+    #
+    #     branch_set_running_sum = 0.0
+    #
+    #     for branch in branch_set.branches:
+    #         branch_set_running_sum += branch.weight
+    #
+    #         print(branch_set)
+    #         print(branch)
+    #         print(f'{branch.branch_id} {branch.weight} {branch_set_running_sum}')
+    #         print()
+    #
+    #     branch_set_summed_weights.append(branch_set_running_sum)
+
+    branch_set_
+    for branch_set_index in range(len(slt.branch_sets)):
+
+        branch_set_running_sum = 0.0
+
+        for branch_index in range(len(slt.branch_sets[branch_set_index].branches)):
+            branch_set_running_sum +=
+
+
+
+
+print()
+    # bs = slt.branch_sets[2]
 
 
     # Confirming that all branch weights within a branch set need to sum to 1.0
@@ -126,7 +169,7 @@ if __name__ == "__main__":
     #         bsw += branch.weight
     #     bw.append(bsw)
 
-    slt_reduced_to_highest_weighted = reduce_to_highest_weighted_branch(slt)
+    # slt_reduced_to_highest_weighted = reduce_to_highest_weighted_branch(slt)
 
 
 # slt_selected_branch_sets = select_source_branch_sets(logic_tree=source_logic_tree, branch_set_short_names_to_select = ['HIK', 'PUY', 'SLAB'])
