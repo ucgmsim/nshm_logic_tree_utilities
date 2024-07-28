@@ -68,36 +68,35 @@ print()
 for run_counter in range(num_runs_to_do):
 
     if run_counter == 0:
-        slt = copy.deepcopy(slt_full)
-        glt = copy.deepcopy(glt_full)
+        modified_slt = copy.deepcopy(slt_full)
+        modified_glt = copy.deepcopy(glt_full)
 
     if run_counter == 1:
-        slt = copy.deepcopy(slt_full)
-        glt = copy.deepcopy(glt_highest_weighted_branch)
+        modified_slt = copy.deepcopy(slt_full)
+        modified_glt = copy.deepcopy(glt_highest_weighted_branch)
 
     if run_counter == 2:
-        slt = copy.deepcopy(slt_highest_weighted_branch)
-        glt = copy.deepcopy(glt_full)
+        modified_slt = copy.deepcopy(slt_highest_weighted_branch)
+        modified_glt = copy.deepcopy(glt_full)
 
     if run_counter == 3:
-        slt = copy.deepcopy(slt_highest_weighted_branch)
-        glt = copy.deepcopy(glt_highest_weighted_branch)
+        modified_slt = copy.deepcopy(slt_highest_weighted_branch)
+        modified_glt = copy.deepcopy(glt_highest_weighted_branch)
 
+    # check the validity of the weights
+    modify_logic_tree_in_python.check_weight_validity(modified_slt)
+    modify_logic_tree_in_python.check_weight_validity(modified_glt)
 
-    ## Change logic tree and save to json
-
-    slt.to_json(staging_output_dir / f"slt_{run_counter}.json")
-    glt.to_json(staging_output_dir / f"glt_{run_counter}.json")
+    modified_slt.to_json(staging_output_dir / f"slt_{run_counter}.json")
+    modified_glt.to_json(staging_output_dir / f"glt_{run_counter}.json")
 
     for location in locations:
         print(f'doing run {run_counter} and location {location}')
-
 
         toml_dict['site']['locations'] = [location]
         toml_dict["general"]["hazard_model_id"] = f'run_{run_counter}'
         toml_dict["logic_trees"]["srm_file"] = staging_output_dir / f"slt_{run_counter}.json"
         toml_dict["logic_trees"]["gmcm_file"] = staging_output_dir / f"glt_{run_counter}.json"
-
 
         with open((temp_input_file) , "w") as f:
             toml.dump(toml_dict, f)

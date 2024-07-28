@@ -10,7 +10,7 @@ def reduce_to_highest_weighted_branch(logic_tree):
 
     modified_logic_tree = copy.deepcopy(logic_tree)
 
-    for branch_set_idx, branch_set in enumerate(logic_tree.branch_sets):
+    for branch_set_idx, branch_set in enumerate(modified_logic_tree.branch_sets):
 
         highest_weight = 0.0
 
@@ -89,7 +89,29 @@ def logic_tree_single_source_type(source_logic_tree, selected_source_type: str):
 
 # def sum_weights_in_all_branch_sets(logic_tree):
 
+def check_weight_validity(logic_tree):
 
+    """
+    Check that the weights of branches in each branch_set sum to 1.0
+    """
+
+    lt = copy.deepcopy(logic_tree)
+
+    branch_set_summed_weights = []
+    for branch_set in lt.branch_sets:
+
+        branch_set_running_sum = 0.0
+
+        for branch in branch_set.branches:
+            branch_set_running_sum += branch.weight
+
+        branch_set_summed_weights.append(branch_set_running_sum)
+
+    if not all(np.isclose(np.array(branch_set_summed_weights), 1.0, rtol=1e-15)):
+        raise ValueError(
+            f"The weights of branches in each branch_set do not sum to 1.0.\nThe summed weights for each branch_set are {branch_set_summed_weights}.")
+
+    return True
 
 
 if __name__ == "__main__":
@@ -129,30 +151,17 @@ if __name__ == "__main__":
     slt_hw = reduce_to_highest_weighted_branch(slt_copy)
     glt_hw = reduce_to_highest_weighted_branch(glt_copy)
 
-    logic_tree = copy.deepcopy(slt_copy)
-    # branch_set_summed_weights = []
+    test = check_weight_validity(slt)
+
     print()
-    # for branch_set in logic_tree.branch_sets:
+
+
+    # for branch_set_index in range(len(slt.branch_sets)):
     #
     #     branch_set_running_sum = 0.0
     #
-    #     for branch in branch_set.branches:
-    #         branch_set_running_sum += branch.weight
-    #
-    #         print(branch_set)
-    #         print(branch)
-    #         print(f'{branch.branch_id} {branch.weight} {branch_set_running_sum}')
-    #         print()
-    #
-    #     branch_set_summed_weights.append(branch_set_running_sum)
-
-    branch_set_
-    for branch_set_index in range(len(slt.branch_sets)):
-
-        branch_set_running_sum = 0.0
-
-        for branch_index in range(len(slt.branch_sets[branch_set_index].branches)):
-            branch_set_running_sum +=
+    #     for branch_index in range(len(slt.branch_sets[branch_set_index].branches)):
+    #         branch_set_running_sum += 0
 
 
 
