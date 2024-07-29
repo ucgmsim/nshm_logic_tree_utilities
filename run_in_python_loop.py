@@ -129,7 +129,8 @@ for branch_set_index, branch_set in enumerate(slt_full.branch_sets):
     values_list = []
 
     for branch_index, branch in enumerate(branch_set.branches):
-        values_list.append(branch.values)
+        values_as_str = [str(value) for value in branch.values]
+        values_list.append(values_as_str)
 
     values_dict[branch_set_index] = values_list
 
@@ -151,7 +152,7 @@ for branch_set_index, list_of_branch_values in transpose_dict.items():
 
         print(value_idx, values)
 
-        unique_values_dict[branch_set_index][value_idx] = list(set(strvalues))
+        unique_values_dict[branch_set_index][value_idx] = list(set(values))
 
 
 
