@@ -72,10 +72,7 @@ def combine_logic_tree_permutations(slt_permutations, glt_permutations):
 
     return combined_permutations
 
-def transpose_lists(lists):
-    # Use zip to combine the lists element-wise and convert to a list of lists
-    transposed = list(map(list, zip(*lists)))
-    return transposed
+
 
 ## copying logging from scripts/cli.py
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -116,7 +113,7 @@ glt_full = args.gmcm_logic_tree
 slt_full_copy = copy.deepcopy(slt_full)
 glt_full_copy = copy.deepcopy(glt_full)
 
-values_dict = {}
+
 
 
 # for branch_set in slt_full.branch_sets:
@@ -124,39 +121,6 @@ values_dict = {}
 #     for branch in branch_set.branches:
 #
 
-for branch_set_index, branch_set in enumerate(slt_full.branch_sets):
-
-    values_list = []
-
-    for branch_index, branch in enumerate(branch_set.branches):
-        values_as_str = [str(value) for value in branch.values]
-        values_list.append(values_as_str)
-
-    values_dict[branch_set_index] = values_list
-
-transpose_dict = copy.deepcopy(values_dict)
-
-for key, value in values_dict.items():
-    transpose_dict[key] = transpose_lists(value)
-
-
-unique_values_dict = copy.deepcopy(transpose_dict)
-
-print()
-
-for branch_set_index, list_of_branch_values in transpose_dict.items():
-
-    print()
-
-    for value_idx, values in enumerate(list_of_branch_values):
-
-        print(value_idx, values)
-
-        unique_values_dict[branch_set_index][value_idx] = list(set(values))
-
-
-
-print()
 
 
 

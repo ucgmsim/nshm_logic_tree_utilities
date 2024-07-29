@@ -113,6 +113,82 @@ def check_weight_validity(logic_tree):
 
     return True
 
+def transpose_lists(lists):
+    # Use zip to combine the lists element-wise and convert to a list of lists
+    transposed = list(map(list, zip(*lists)))
+    return transposed
+
+def get_branch_parameters(logic_tree):
+    values_dict = {}
+
+    for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
+
+        values_list = []
+
+        for branch_index, branch in enumerate(branch_set.branches):
+            values_as_str = [str(value) for value in branch.values]
+            values_list.append(values_as_str)
+
+        values_dict[branch_set_index] = values_list
+
+    transpose_dict = copy.deepcopy(values_dict)
+
+    for key, value in values_dict.items():
+        transpose_dict[key] = transpose_lists(value)
+
+
+    unique_values_dict = copy.deepcopy(transpose_dict)
+
+    print()
+
+    for branch_set_index, list_of_branch_values in transpose_dict.items():
+
+        print()
+
+        for value_idx, values in enumerate(list_of_branch_values):
+
+            print(value_idx, values)
+
+            unique_values_dict[branch_set_index][value_idx] = list(set(values))
+
+    return unique_values_dict
+
+def get_params_with_num_options(logic_tree, num_options):
+
+    unique_values_dict = get_branch_parameters(logic_tree)
+
+    dict_n_unique_vals = {}
+    for key, item in unique_values_dict.items():
+        dict_n_unique_vals[key] = []
+
+
+
+    for key, item in unique_values_dict.items():
+
+        for unique_val_idx, unique_values in enumerate(item):
+
+            if len(unique_values) == num_options:
+
+                print()
+
+                dict_n_unique_vals[key].extend(unique_values)
+
+    return dict_n_unique_vals
+
+
+
+
+
+
+
+
+
+
+
+
+
+    print()
+
 
 if __name__ == "__main__":
 
@@ -151,7 +227,13 @@ if __name__ == "__main__":
     slt_hw = reduce_to_highest_weighted_branch(slt_copy)
     glt_hw = reduce_to_highest_weighted_branch(glt_copy)
 
-    test = check_weight_validity(slt)
+
+
+    #unique_param_dict = get_branch_parameters(slt)
+
+    test = get_params_with_num_options(slt, 2)
+    print()
+    testg = get_params_with_num_options(glt, 2)
 
     print()
 
