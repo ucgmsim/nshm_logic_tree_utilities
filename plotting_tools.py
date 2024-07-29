@@ -43,7 +43,6 @@ def load_resultsV2(output_dir: Path, location: str) -> pd.DataFrame:
 
         full_df = pd.concat([full_df, pd.read_parquet(file)], ignore_index=True)
 
-    print()
     return full_df
 
 # def get_data_from_df(full_df, imt, agg):
@@ -72,9 +71,6 @@ plot_style_dict["color"]["AKL"] = "red"
 plot_style_dict["linestyle"][225] = ":"
 plot_style_dict["linestyle"][400] = "-"
 plot_style_dict["linestyle"][750] = "--"
-
-
-
 
 pdf_mean_vs_dispersion = PdfPages(Path(plot_output_dir) / plot_file_name)
 
