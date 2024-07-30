@@ -169,25 +169,9 @@ def get_params_with_num_options(logic_tree, num_options):
 
             if len(unique_values) == num_options:
 
-                print()
-
                 dict_n_unique_vals[key].extend(unique_values)
 
     return dict_n_unique_vals
-
-
-
-
-
-
-
-
-
-
-
-
-
-    print()
 
 
 if __name__ == "__main__":

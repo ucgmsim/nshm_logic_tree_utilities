@@ -11,43 +11,97 @@ from pathlib import Path
 import subprocess
 import shutil
 import modify_logic_tree_in_python
+from dataclasses import dataclass
+from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
+from typing import Optional
+import pandas as pd
 
+@dataclass
+class CustomLogicTreeSet:
+    """
+    A dataclass to hold a set of custom logic trees that are to be used in a single run of
+    the logic tree realization.
 
-def run_with_modified_logic_trees(run_group_name, run_counter, slt, glt, locations, toml_dict, temp_input_file, staging_output_dir):
+    slt: SourceLogicTree, optional
+        The seismicity rate model (SRM) logic tree to be used in the run.
+    glt: GMCMLogicTree, optional
+        The ground motion characterization model (GMCM) logic tree to be used in the run
+    slt_note: str, optional
+        A human-readable note describing changes to the SourceLogicTree.
+    glt_note: str, optional
+        A human-readable note describing changes to the GMCMLogicTree.
+    other_notes: str, optional
+        Any other notes that are relevant.
+    """
 
-    modified_slt = copy.deepcopy(slt)
-    modified_glt = copy.deepcopy(glt)
+    slt: Optional[SourceLogicTree] = None
+    glt: Optional[GMCMLogicTree] = None
+
+    slt_note: Optional[str] = None
+    glt_note: Optional[str] = None
+    other_notes: Optional[str] = None
+
+    def notes_to_toml(self, path: Path):
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
+        with path.open('w') as f:
+            toml.dump(data, f)
+
+    def notes_to_pandas_df(self):
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
+        return pd.DataFrame(data, index=[0])
+
+def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
+
+    run_group_name = output_dir.name
+
+    modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
+    modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
     # check the validity of the weights
-    modify_logic_tree_in_python.check_weight_validity(slt)
-    modify_logic_tree_in_python.check_weight_validity(glt)
+    modify_logic_tree_in_python.check_weight_validity(custom_logic_tree_set.slt)
+    modify_logic_tree_in_python.check_weight_validity(custom_logic_tree_set.glt)
 
-    modified_slt.to_json(staging_output_dir / f"slt_{run_counter}.json")
-    modified_glt.to_json(staging_output_dir / f"glt_{run_counter}.json")
+    modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
+    modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
+
+    custom_logic_tree_set.notes_to_toml(output_staging_dir / f"run_{run_counter}_notes.toml")
+
+    if "model_version" in toml_dict["logic_trees"]:
+        ## delete the key-value pair specifying that the logic tree should be the full built in logic tree
+        del toml_dict["logic_trees"]["model_version"]
 
     for location in locations:
         print(f'doing run {run_counter} and location {location}')
 
         toml_dict['site']['locations'] = [location]
         toml_dict["general"]["hazard_model_id"] = f'run_{run_counter}'
-        toml_dict["logic_trees"]["srm_file"] = str(staging_output_dir / f"slt_{run_counter}.json")
-        toml_dict["logic_trees"]["gmcm_file"] = str(staging_output_dir / f"glt_{run_counter}.json")
 
-        with open((temp_input_file), "w") as f:
+        ## set the key-value pair specifying that the logic tree should come from the custom logic tree files previously written
+        toml_dict["logic_trees"]["srm_file"] = str(output_staging_dir / f"slt_{run_counter}.json")
+        toml_dict["logic_trees"]["gmcm_file"] = str(output_staging_dir / f"glt_{run_counter}.json")
+
+        with open("temp_input.toml", "w") as f:
             toml.dump(toml_dict, f)
 
         result = subprocess.run("python cli.py aggregate --config-file .env_home temp_input.toml",
                                 shell=True, capture_output=True, text=True)
 
-    output_staging_dir = Path("/home/arr65/data/nshm/nshm_output_staging")
-
-    run_output_dir = Path(f"/home/arr65/data/nshm/auto_output/{run_group_name}/run_{run_counter}")
+    run_output_dir = output_dir / f"run_{run_counter}"
     run_output_dir.mkdir(parents=True, exist_ok=True)
 
     for file in output_staging_dir.iterdir():
         shutil.move(file, run_output_dir)
 
 def make_logic_tree_permutation_list_branch_sets(full_logic_tree, logic_tree_highest_weighted_branches):
+    #from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
 
     logic_tree_permutation_list = []
 
@@ -58,7 +112,15 @@ def make_logic_tree_permutation_list_branch_sets(full_logic_tree, logic_tree_hig
         modified_logic_tree.branch_sets[branch_set_index] = logic_tree_highest_weighted_branches.branch_sets[branch_set_index]
         modified_logic_tree.correlations = LogicTreeCorrelations()
 
-        logic_tree_permutation_list.append(modified_logic_tree)
+        if isinstance(full_logic_tree, SourceLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(slt = modified_logic_tree,
+                        slt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
+
+        elif isinstance(full_logic_tree, GMCMLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(glt = modified_logic_tree,
+                         glt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
+
+        logic_tree_permutation_list.append(custom_logic_tree_entry)
 
     return logic_tree_permutation_list
 
@@ -66,12 +128,34 @@ def combine_logic_tree_permutations(slt_permutations, glt_permutations):
 
     combined_permutations = []
 
-    for slt in slt_permutations:
-        for glt in glt_permutations:
-            combined_permutations.append([slt, glt])
+    for custom_slt_entry in slt_permutations:
 
+        for custom_glt_entry in glt_permutations:
+
+            slt_glt_entry = CustomLogicTreeSet(slt=custom_slt_entry.slt,
+                                               slt_note=custom_slt_entry.slt_note,
+                                               glt=custom_glt_entry.glt,
+                                               glt_note=custom_glt_entry.glt_note)
+
+            combined_permutations.append(slt_glt_entry)
+
+    # check that all required parameters are present
+    check_validity_of_permutations(combined_permutations)
     return combined_permutations
 
+def check_validity_of_permutations(logic_tree_permutation_list):
+
+    for custom_logic_tree_entry in logic_tree_permutation_list:
+        if custom_logic_tree_entry.slt is None:
+            raise ValueError("slt is None")
+        if custom_logic_tree_entry.slt_note is None:
+            raise ValueError("slt_note is None")
+        if custom_logic_tree_entry.glt is None:
+            raise ValueError("glt is None")
+        if custom_logic_tree_entry.glt_note is None:
+            raise ValueError("glt_note is None")
+
+    return True
 
 
 ## copying logging from scripts/cli.py
@@ -86,24 +170,25 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
 #os.environ['THP_ENV_FILE'] = str("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home")
 
-working_dir = Path("/home/arr65/src/gns/toshi-hazard-post/scripts")
-os.chdir(working_dir)
+toshi_hazard_post_scripts_dir = Path("/home/arr65/src/gns/toshi-hazard-post/scripts")
 
-run_group_name = "auto2"
+output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto2")
+output_dir.mkdir(parents=True, exist_ok=True)
 
-with open("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home", 'r') as file:
+initial_input_file = toshi_hazard_post_scripts_dir / "simple_input.toml"
+if not initial_input_file.exists():
+    shutil.copy("custom_input_files/simple_input.toml", initial_input_file)
+
+with open(toshi_hazard_post_scripts_dir / ".env_home", 'r') as file:
     env_lines = file.readlines()
 
-staging_output_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
-
-initial_input_file = Path("/home/arr65/src/gns/toshi-hazard-post/scripts/simple_input.toml")
-temp_input_file = Path("/home/arr65/src/gns/toshi-hazard-post/scripts/temp_input.toml")
+output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
 
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-locations = ["AKL","WLG","CHC"]
-#locations = ["WLG"]
+#locations = ["AKL","WLG","CHC"]
+locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -113,60 +198,42 @@ glt_full = args.gmcm_logic_tree
 slt_full_copy = copy.deepcopy(slt_full)
 glt_full_copy = copy.deepcopy(glt_full)
 
-
-
-
-# for branch_set in slt_full.branch_sets:
-#
-#     for branch in branch_set.branches:
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-print()
-
-
-
-
-
-
-
-
-####
-
-
-
-
 slt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(slt_full_copy)
 glt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(glt_full_copy)
-
-
-logic_tree_list = [
-    [slt_full, glt_full],
-    [slt_highest_weighted_branch, glt_full],
-    [slt_full, glt_highest_weighted_branch],
-    [slt_highest_weighted_branch, glt_highest_weighted_branch]
-    ]
-
 
 slt_perm = make_logic_tree_permutation_list_branch_sets(slt_full, slt_highest_weighted_branch)
 glt_perm = make_logic_tree_permutation_list_branch_sets(glt_full, glt_highest_weighted_branch)
 
-logic_tree_list.extend(combine_logic_tree_permutations(
-    make_logic_tree_permutation_list_branch_sets(slt_full, slt_highest_weighted_branch),
-    make_logic_tree_permutation_list_branch_sets(glt_full, glt_highest_weighted_branch)
-))
+slt_full_and_highest = [CustomLogicTreeSet(slt = slt_full,
+                                           slt_note = "Full SRM logic tree."),
+                        CustomLogicTreeSet(slt = slt_highest_weighted_branch,
+                                             slt_note = "SRM logic tree reduced to its single highest weighted branch. No other changes.")]
 
-for run_counter, [slt, glt] in enumerate(logic_tree_list):
-    run_with_modified_logic_trees(run_group_name, run_counter, slt, glt, locations, toml_dict, temp_input_file, staging_output_dir)
+glt_full_and_highest = [CustomLogicTreeSet(glt = glt_full,
+                                           glt_note = "Full GMCM logic tree."),
+                        CustomLogicTreeSet(glt = glt_highest_weighted_branch,
+                                           glt_note = "GMCM logic tree reduced to its single highest weighted branch. No other changes.")]
+
+# slt_perm = slt_full_and_highest + slt_perm
+# glt_perm = glt_full_and_highest + glt_perm
+
+slt_perm = slt_full_and_highest
+glt_perm = glt_full_and_highest
+
+logic_tree_list = []
+logic_tree_list.extend(combine_logic_tree_permutations(slt_perm, glt_perm))
+
+run_notes_df = pd.DataFrame()
+for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
+    notes_df = custom_logic_tree_set.notes_to_pandas_df()
+    notes_df['run_counter'] = [run_counter]
+    run_notes_df = pd.concat([run_notes_df, notes_df], ignore_index=True)
+
+# move the "run_counter" column to the left-most position
+run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
+run_notes_df.to_csv(output_dir / "run_notes.csv")
+
+os.chdir(toshi_hazard_post_scripts_dir)
+for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
+    run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir)
+

@@ -1,25 +1,18 @@
 [general]
 compatibility_key = "NZSHM22-0"
-hazard_model_id = "DEMO_MODEL"
+hazard_model_id = "temp"
 
 [logic_trees]
-#model_version = "NSHM_v1.0.4"
-
-# alternatively, specify a path to logic tree files
-srm_file = "/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_full_NSHM_v1.0.4.json"
-gmcm_file = "/home/arr65/src/logic_tree_study/custom_logic_trees/glt_full_NSHM_v1.0.4.json"
-
-
-
+model_version = "NSHM_v1.0.4"
+#srm_file = "custom_logic_trees/slt_full_NSHM_v1.0.4.json"
+#gmcm_file = "custom_logic_trees/glt_full_NSHM_v1.0.4.json"
 
 [site]
-#vs30s = [275, 400]
-vs30s = [400]
-locations = ["CHC"]
+vs30s = [ 225, 400, 750,]
+#vs30s = [400]
+locations = [ "CHC",]
 
 [calculation]
-
-imts= ['PGA']
-
-agg_types = ["mean", "cov", "std"]
-
+imts = [ "PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)",]
+#imts = [ "PGA"]
+agg_types = [ "mean", "std", "cov"]
