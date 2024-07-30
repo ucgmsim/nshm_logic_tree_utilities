@@ -187,8 +187,8 @@ output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-#locations = ["AKL","WLG","CHC"]
-locations = ["WLG"]
+locations = ["AKL","WLG","CHC"]
+#locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -214,14 +214,10 @@ glt_full_and_highest = [CustomLogicTreeSet(glt = glt_full,
                         CustomLogicTreeSet(glt = glt_highest_weighted_branch,
                                            glt_note = "GMCM logic tree reduced to its single highest weighted branch. No other changes.")]
 
-# slt_perm = slt_full_and_highest + slt_perm
-# glt_perm = glt_full_and_highest + glt_perm
+slt_perm = slt_full_and_highest + slt_perm
+glt_perm = glt_full_and_highest + glt_perm
 
-slt_perm = slt_full_and_highest
-glt_perm = glt_full_and_highest
-
-logic_tree_list = []
-logic_tree_list.extend(combine_logic_tree_permutations(slt_perm, glt_perm))
+logic_tree_list = combine_logic_tree_permutations(slt_perm, glt_perm)
 
 run_notes_df = pd.DataFrame()
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
