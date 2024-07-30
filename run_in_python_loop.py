@@ -16,47 +16,7 @@ from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTr
 from typing import Optional
 import pandas as pd
 
-@dataclass
-class CustomLogicTreeSet:
-    """
-    A dataclass to hold a set of custom logic trees that are to be used in a single run of
-    the logic tree realization.
 
-    slt: SourceLogicTree, optional
-        The seismicity rate model (SRM) logic tree to be used in the run.
-    glt: GMCMLogicTree, optional
-        The ground motion characterization model (GMCM) logic tree to be used in the run
-    slt_note: str, optional
-        A human-readable note describing changes to the SourceLogicTree.
-    glt_note: str, optional
-        A human-readable note describing changes to the GMCMLogicTree.
-    other_notes: str, optional
-        Any other notes that are relevant.
-    """
-
-    slt: Optional[SourceLogicTree] = None
-    glt: Optional[GMCMLogicTree] = None
-
-    slt_note: Optional[str] = None
-    glt_note: Optional[str] = None
-    other_notes: Optional[str] = None
-
-    def notes_to_toml(self, path: Path):
-        data = {
-            'slt_note': self.slt_note,
-            'glt_note': self.glt_note,
-            'other_notes': self.other_notes
-        }
-        with path.open('w') as f:
-            toml.dump(data, f)
-
-    def notes_to_pandas_df(self):
-        data = {
-            'slt_note': self.slt_note,
-            'glt_note': self.glt_note,
-            'other_notes': self.other_notes
-        }
-        return pd.DataFrame(data, index=[0])
 
 def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
 

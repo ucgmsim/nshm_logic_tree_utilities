@@ -5,6 +5,54 @@ import os
 import logging
 import numpy as np
 import copy
+import toml
+from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
+from typing import Optional
+import pandas as pd
+from pathlib import Path
+from dataclasses import dataclass
+
+@dataclass
+class CustomLogicTreeSet:
+    """
+    A dataclass to hold a set of custom logic trees that are to be used in a single run of
+    the logic tree realization.
+
+    slt: SourceLogicTree, optional
+        The seismicity rate model (SRM) logic tree to be used in the run.
+    glt: GMCMLogicTree, optional
+        The ground motion characterization model (GMCM) logic tree to be used in the run
+    slt_note: str, optional
+        A human-readable note describing changes to the SourceLogicTree.
+    glt_note: str, optional
+        A human-readable note describing changes to the GMCMLogicTree.
+    other_notes: str, optional
+        Any other notes that are relevant.
+    """
+
+    slt: Optional[SourceLogicTree] = None
+    glt: Optional[GMCMLogicTree] = None
+
+    slt_note: Optional[str] = None
+    glt_note: Optional[str] = None
+    other_notes: Optional[str] = None
+
+    def notes_to_toml(self, path: Path):
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
+        with path.open('w') as f:
+            toml.dump(data, f)
+
+    def notes_to_pandas_df(self):
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
+        return pd.DataFrame(data, index=[0])
 
 def reduce_to_highest_weighted_branch(logic_tree):
 
@@ -161,7 +209,7 @@ def get_params_with_num_options(logic_tree, num_options):
     for key, item in unique_values_dict.items():
         dict_n_unique_vals[key] = []
 
-
+    print()
 
     for key, item in unique_values_dict.items():
 
@@ -169,9 +217,73 @@ def get_params_with_num_options(logic_tree, num_options):
 
             if len(unique_values) == num_options:
 
-                dict_n_unique_vals[key].extend(unique_values)
+                dict_n_unique_vals[key].append(unique_values)
 
     return dict_n_unique_vals
+
+def get_slt_permutations_binary_options(logic_tree):
+
+    slt = copy.deepcopy(logic_tree)
+
+
+    binary_options_dict = get_params_with_num_options(slt, 2)
+    param_val_branch_set_idx_dict = {value: key for key in binary_options_dict for sublist in binary_options_dict[key] for value in sublist}
+
+    modified_slt_list = []
+
+    for param_val in param_val_branch_set_idx_dict.keys():
+
+        modified_slt = copy.deepcopy(slt)
+
+        for branch_set_index, branch_set in enumerate(slt.branch_sets):
+
+            if branch_set_index != param_val_branch_set_idx_dict[param_val]:
+
+                # This parameter value is not in this branch set so just continue to loop,
+                # leaving this branch_set unchanged from the copied original.
+
+                continue
+
+            else:
+
+                retained_branches = []
+                #discarded_branches = []
+                total_weighted_deleted_branches = 0.0
+
+                for branch in branch_set.branches:
+
+                    if str(param_val) in str(branch.values):
+                        retained_branches.append(copy.deepcopy(branch))
+                    else:
+                        total_weighted_deleted_branches += branch.weight
+
+                # equally divide the weights of the deleted branches among the retained branches
+
+                additional_weight_per_branch = total_weighted_deleted_branches/len(retained_branches)
+
+                for branch in retained_branches:
+                    branch.weight += additional_weight_per_branch
+
+                modified_slt.branch_sets[branch_set_index] = copy.deepcopy(retained_branches)
+
+        modified_slt_list.append(CustomLogicTreeSet(slt=modified_slt,
+                                                    slt_note=f'')
+
+    return
+
+
+
+
+
+
+
+
+
+
+
+
+        print()
+
 
 
 if __name__ == "__main__":
@@ -215,9 +327,17 @@ if __name__ == "__main__":
 
     #unique_param_dict = get_branch_parameters(slt)
 
-    test = get_params_with_num_options(slt, 2)
-    print()
-    testg = get_params_with_num_options(glt, 2)
+    # test = get_params_with_num_options(slt, 2)
+    # print()
+    # testg = get_params_with_num_options(glt, 2)
+
+    # val = 'dmgeodetic'
+    #
+    # b = slt.branch_sets[2].branches[0]
+    #
+    # print()
+
+    test = get_slt_permutations_binary_options(slt)
 
     print()
 
