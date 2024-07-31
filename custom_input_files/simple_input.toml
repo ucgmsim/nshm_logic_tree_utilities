@@ -4,9 +4,12 @@ hazard_model_id = "DEMO_MODEL"
 #hazard_model_id = "temp"
 
 [logic_trees]
-model_version = "NSHM_v1.0.4"
-#srm_file = "custom_logic_trees/slt_full_NSHM_v1.0.4.json"
-#gmcm_file = "custom_logic_trees/glt_full_NSHM_v1.0.4.json"
+#model_version = "NSHM_v1.0.4"
+#srm_file = "slt_full_NSHM_v1.0.4.json"
+#gmcm_file = "glt_full_NSHM_v1.0.4.json"
+
+srm_file = "nshm_v1.0.4_v2.json"
+gmcm_file = "gmcm_nshm_v1.0.4.json"
 
 [site]
 #vs30s = [ 225, 400, 750,]

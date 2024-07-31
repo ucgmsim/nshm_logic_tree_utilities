@@ -134,6 +134,33 @@ def reduce_to_nth_highest_weighted_branch(logic_tree, nth_highest):
 
     return modified_logic_tree
 
+def get_custom_logic_tree_entry_for_nth_highest_branch(logic_tree, nth_highest):
+
+    logic_tree = copy.deepcopy(logic_tree)
+
+    if isinstance(nth_highest,int):
+        nth_highest = [nth_highest]
+
+    nth_highest_lt_entries = []
+
+    for nth in nth_highest:
+
+        note = f"only {nth} (nth) h.w.b"
+
+        if isinstance(logic_tree, SourceLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(
+                slt=reduce_to_nth_highest_weighted_branch(logic_tree = logic_tree, nth_highest = nth),
+                slt_note=note)
+
+        elif isinstance(logic_tree, GMCMLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(
+                glt=reduce_to_nth_highest_weighted_branch(logic_tree = logic_tree, nth_highest = nth),
+                glt_note=note)
+
+        nth_highest_lt_entries.append(custom_logic_tree_entry)
+
+    return nth_highest_lt_entries
+
 
 
 
@@ -464,7 +491,6 @@ def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
         elif isinstance(unchanged_logic_tree, GMCMLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(glt = modified_logic_tree,
                          glt_note = f"{str(branch_set_short_names)}")
-            print()
 
         modified_logic_tree_list.append(custom_logic_tree_entry)
 
