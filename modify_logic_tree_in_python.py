@@ -11,6 +11,8 @@ from typing import Optional
 import pandas as pd
 from pathlib import Path
 from dataclasses import dataclass
+import itertools
+
 
 @dataclass
 class CustomLogicTreeSet:
@@ -74,6 +76,66 @@ def reduce_to_highest_weighted_branch(logic_tree):
     modified_logic_tree.correlations = LogicTreeCorrelations()
 
     return modified_logic_tree
+
+def reduce_to_nth_highest_weighted_branch(logic_tree, nth_highest):
+
+    """
+    Reduce a logic tree to only the nth highest weighted branch in each branch set.
+    The highest weighted branch is the 1st highest weighted branch (nth_highest = 1).
+    The second highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
+
+    Parameters
+    ----------
+    logic_tree : SourceLogicTree or GMCMLogicTree
+        The logic tree to be modified.
+
+    Returns
+    -------
+    modified_logic_tree : SourceLogicTree or GMCMLogicTree
+        The logic tree after being reduced only consisting of the nth highest branch in each branch_set.
+
+    Raises
+    ------
+    ValueError
+        If the branches in the modified_logic_tree do not have valid weights.
+        That is its branches in each branch_set do not sum to 1.0.
+
+    IndexError
+        If the nth_highest is greater than the number of branches in any branch_set
+    """
+
+    modified_logic_tree = copy.deepcopy(logic_tree)
+
+
+    # find the maximum number of branches in any branch set
+    max_num_branches = max([len(branch_set.branches) for branch_set in logic_tree.branch_sets])
+    if nth_highest > max_num_branches:
+        raise ValueError(f"nth_highest ({nth_highest}) is greater than the maximum number of branches in any branch set ({max_num_branches})")
+
+    for branch_set_idx, branch_set in enumerate(modified_logic_tree.branch_sets):
+
+        reverse_sorted_branches = sorted(branch_set.branches, key=lambda x: x.weight, reverse=True)
+        if len(reverse_sorted_branches) == 1:
+            print(f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to nth highest branch."
+                  f" Leaving this branch_set unchanged.")
+            selected_branch = copy.deepcopy(reverse_sorted_branches[0])
+        elif nth_highest > len(reverse_sorted_branches):
+            selected_branch = copy.deepcopy(reverse_sorted_branches[len(reverse_sorted_branches) - 1])
+            print(f"Branch set {branch_set.long_name} ({branch_set.short_name}) has fewer than {nth_highest} "
+                  f"branches so reducing to its lowest weighted branch (branch {len(reverse_sorted_branches)} of {len(reverse_sorted_branches)}).")
+        else:
+            selected_branch = copy.deepcopy(reverse_sorted_branches[nth_highest-1])
+        selected_branch.weight = 1.0
+        modified_logic_tree.branch_sets[branch_set_idx].branches = [selected_branch]
+
+    modified_logic_tree.correlations = LogicTreeCorrelations()
+
+    check_weight_validity(modified_logic_tree)
+
+    return modified_logic_tree
+
+
+
 
 def select_source_branch_sets(logic_tree, branch_set_short_names_to_select):
 
@@ -221,10 +283,33 @@ def get_params_with_num_options(logic_tree, num_options):
 
     return dict_n_unique_vals
 
-def get_slt_permutations_binary_options(logic_tree):
+def get_slt_permutations_binary_options(logic_tree: SourceLogicTree) -> list[CustomLogicTreeSet]:
+
+    """
+    Identifies all parameters with only two options (binary) and creates a new SourceLogicTree for each option.
+
+    Parameters
+    ----------
+    logic_tree : SourceLogicTree
+        The SourceLogicTree to be modified.
+
+    Returns
+    -------
+    modified_slt_list : list[CustomLogicTreeSet]
+        A list of CustomLogicTreeSet instances, each containing a modified SourceLogicTree with only one of the binary
+        options.
+
+    Raises
+    ------
+    ValueError
+        If the input is not a SourceLogicTree instance.
+        If the weights of branches in each branch_set do not sum to 1.0.
+    """
+
+    if not isinstance(logic_tree, SourceLogicTree):
+        raise ValueError("This function is only for SourceLogicTree instances.")
 
     slt = copy.deepcopy(logic_tree)
-
 
     binary_options_dict = get_params_with_num_options(slt, 2)
     param_val_branch_set_idx_dict = {value: key for key in binary_options_dict for sublist in binary_options_dict[key] for value in sublist}
@@ -247,7 +332,6 @@ def get_slt_permutations_binary_options(logic_tree):
             else:
 
                 retained_branches = []
-                #discarded_branches = []
                 total_weighted_deleted_branches = 0.0
 
                 for branch in branch_set.branches:
@@ -258,18 +342,133 @@ def get_slt_permutations_binary_options(logic_tree):
                         total_weighted_deleted_branches += branch.weight
 
                 # equally divide the weights of the deleted branches among the retained branches
-
                 additional_weight_per_branch = total_weighted_deleted_branches/len(retained_branches)
 
                 for branch in retained_branches:
                     branch.weight += additional_weight_per_branch
 
-                modified_slt.branch_sets[branch_set_index] = copy.deepcopy(retained_branches)
+                modified_slt.branch_sets[branch_set_index].branches = copy.deepcopy(retained_branches)
+                check_weight_validity(modified_slt)
 
-        modified_slt_list.append(CustomLogicTreeSet(slt=modified_slt,
-                                                    slt_note=f'')
+        modified_slt_list.append(
+            CustomLogicTreeSet(
+                slt=modified_slt,
+                slt_note=f'Using binary option {param_val} in '
+                         f'branch_set {slt.branch_sets[param_val_branch_set_idx_dict[param_val]].long_name} '
+                         f'({slt.branch_sets[param_val_branch_set_idx_dict[param_val]].short_name})')
+        )
 
-    return
+    return modified_slt_list
+
+    def retain_n_branch_sets_combination(logic_tree, n_branch_sets_to_retain):
+
+        modified_logic_tree = copy.deepcopy(logic_tree)
+
+        if n_branch_sets_to_retain > len(modified_logic_tree.branch_sets):
+            raise ValueError(f"n_branch_sets_to_retain ({n_branch_sets_to_retain}) is greater than the number of branch_sets in the logic tree ({len(modified_logic_tree.branch_sets)})")
+
+        return modified_logic_tree
+
+def make_logic_tree_combinations_list_branch_sets(full_logic_tree, logic_tree_highest_weighted_branches):
+    #from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
+
+    logic_tree_permutation_list = []
+
+    for branch_set_index, branch_set in enumerate(full_logic_tree.branch_sets):
+
+        modified_logic_tree = copy.deepcopy(full_logic_tree)
+
+        modified_logic_tree.branch_sets[branch_set_index] = logic_tree_highest_weighted_branches.branch_sets[branch_set_index]
+        modified_logic_tree.correlations = LogicTreeCorrelations()
+
+        if isinstance(full_logic_tree, SourceLogicTree):
+            custom_logic_tree_entry = modify_logic_tree_in_python.CustomLogicTreeSet(slt = modified_logic_tree,
+                        slt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
+
+        elif isinstance(full_logic_tree, GMCMLogicTree):
+            custom_logic_tree_entry = modify_logic_tree_in_python.CustomLogicTreeSet(glt = modified_logic_tree,
+                         glt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
+
+        logic_tree_permutation_list.append(custom_logic_tree_entry)
+
+    return logic_tree_permutation_list
+
+def combine_logic_tree_combinations(slt_permutations, glt_permutations):
+
+    combined_permutations = []
+
+    for custom_slt_entry in slt_permutations:
+
+        for custom_glt_entry in glt_permutations:
+
+            slt_glt_entry = modify_logic_tree_in_python.CustomLogicTreeSet(slt=custom_slt_entry.slt,
+                                               slt_note=custom_slt_entry.slt_note,
+                                               glt=custom_glt_entry.glt,
+                                               glt_note=custom_glt_entry.glt_note)
+
+            combined_permutations.append(slt_glt_entry)
+
+    # check that all required parameters are present
+    check_validity_of_combinations(combined_permutations)
+    return combined_permutations
+
+def check_validity_of_combinations(logic_tree_permutation_list):
+
+    for custom_logic_tree_entry in logic_tree_permutation_list:
+        if custom_logic_tree_entry.slt is None:
+            raise ValueError("slt is None")
+        if custom_logic_tree_entry.slt_note is None:
+            raise ValueError("slt_note is None")
+        if custom_logic_tree_entry.glt is None:
+            raise ValueError("glt is None")
+        if custom_logic_tree_entry.glt_note is None:
+            raise ValueError("glt_note is None")
+
+    return True
+
+def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
+
+    unchanged_logic_tree = copy.deepcopy(logic_tree)
+
+    modified_logic_tree_list = []
+
+    logic_tree_branch_set_indices = range(len(logic_tree.branch_sets))
+
+    branch_set_index_combinations = itertools.combinations(logic_tree_branch_set_indices, n_branch_sets_to_retain)
+
+    for combination in branch_set_index_combinations:
+
+        modified_logic_tree = copy.deepcopy(logic_tree)
+
+        modified_branch_set = []
+
+        for branch_set_index in logic_tree_branch_set_indices:
+
+            if branch_set_index in combination:
+                modified_branch_set.append(copy.deepcopy(unchanged_logic_tree.branch_sets[branch_set_index]))
+
+        modified_logic_tree.branch_sets = modified_branch_set
+        branch_set_short_names = [x.short_name for x in modified_branch_set]
+
+        if ("PUY" in branch_set_short_names) & ("HIK" in branch_set_short_names):
+            # retain the HIK to PUY correlations
+            pass
+        else:
+            # remove correlations
+            modified_logic_tree.correlations = LogicTreeCorrelations()
+
+        if isinstance(unchanged_logic_tree, SourceLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(slt = modified_logic_tree,
+                        slt_note = f"{str(branch_set_short_names)}")
+
+        elif isinstance(unchanged_logic_tree, GMCMLogicTree):
+            custom_logic_tree_entry = CustomLogicTreeSet(glt = modified_logic_tree,
+                         glt_note = f"{str(branch_set_short_names)}")
+            print()
+
+        modified_logic_tree_list.append(custom_logic_tree_entry)
+
+    return modified_logic_tree_list
 
 
 
@@ -282,7 +481,14 @@ def get_slt_permutations_binary_options(logic_tree):
 
 
 
-        print()
+
+
+
+
+
+
+
+
 
 
 
@@ -337,7 +543,13 @@ if __name__ == "__main__":
     #
     # print()
 
-    test = get_slt_permutations_binary_options(slt)
+    #test = get_slt_permutations_binary_options(slt)
+
+    #test = get_slt_permutations_binary_options(slt)
+
+    #test = reduce_to_nth_highest_weighted_branch(logic_tree = slt, nth_highest = 9)
+
+    test = combinations_of_n_branch_sets(slt, 1)
 
     print()
 

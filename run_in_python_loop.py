@@ -15,12 +15,15 @@ from dataclasses import dataclass
 from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
 from typing import Optional
 import pandas as pd
+import time
 
 
 
 def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
 
-    run_group_name = output_dir.name
+    run_start_time = time.time()
+
+    #run_group_name = output_dir.name
 
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
@@ -28,6 +31,8 @@ def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set
     # check the validity of the weights
     modify_logic_tree_in_python.check_weight_validity(custom_logic_tree_set.slt)
     modify_logic_tree_in_python.check_weight_validity(custom_logic_tree_set.glt)
+
+    print()
 
     modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
     modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
@@ -51,6 +56,8 @@ def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set
         with open("temp_input.toml", "w") as f:
             toml.dump(toml_dict, f)
 
+
+
         result = subprocess.run("python cli.py aggregate --config-file .env_home temp_input.toml",
                                 shell=True, capture_output=True, text=True)
 
@@ -60,7 +67,10 @@ def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set
     for file in output_staging_dir.iterdir():
         shutil.move(file, run_output_dir)
 
-def make_logic_tree_permutation_list_branch_sets(full_logic_tree, logic_tree_highest_weighted_branches):
+    run_end_time = time.time()
+    print(f"Time taken for run {run_counter}: {(run_end_time - run_start_time)} mins")
+
+def make_logic_tree_combinations_list_branch_sets(full_logic_tree, logic_tree_highest_weighted_branches):
     #from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
 
     logic_tree_permutation_list = []
@@ -73,18 +83,18 @@ def make_logic_tree_permutation_list_branch_sets(full_logic_tree, logic_tree_hig
         modified_logic_tree.correlations = LogicTreeCorrelations()
 
         if isinstance(full_logic_tree, SourceLogicTree):
-            custom_logic_tree_entry = CustomLogicTreeSet(slt = modified_logic_tree,
+            custom_logic_tree_entry = modify_logic_tree_in_python.CustomLogicTreeSet(slt = modified_logic_tree,
                         slt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
 
         elif isinstance(full_logic_tree, GMCMLogicTree):
-            custom_logic_tree_entry = CustomLogicTreeSet(glt = modified_logic_tree,
+            custom_logic_tree_entry = modify_logic_tree_in_python.CustomLogicTreeSet(glt = modified_logic_tree,
                          glt_note = f"branch_set {branch_set.long_name} ({branch_set.short_name}) reduced to its single highest weighted branch. No other changes.")
 
         logic_tree_permutation_list.append(custom_logic_tree_entry)
 
     return logic_tree_permutation_list
 
-def combine_logic_tree_permutations(slt_permutations, glt_permutations):
+def combine_logic_tree_combinations(slt_permutations, glt_permutations):
 
     combined_permutations = []
 
@@ -92,7 +102,7 @@ def combine_logic_tree_permutations(slt_permutations, glt_permutations):
 
         for custom_glt_entry in glt_permutations:
 
-            slt_glt_entry = CustomLogicTreeSet(slt=custom_slt_entry.slt,
+            slt_glt_entry = modify_logic_tree_in_python.CustomLogicTreeSet(slt=custom_slt_entry.slt,
                                                slt_note=custom_slt_entry.slt_note,
                                                glt=custom_glt_entry.glt,
                                                glt_note=custom_glt_entry.glt_note)
@@ -100,10 +110,10 @@ def combine_logic_tree_permutations(slt_permutations, glt_permutations):
             combined_permutations.append(slt_glt_entry)
 
     # check that all required parameters are present
-    check_validity_of_permutations(combined_permutations)
+    check_validity_of_combinations(combined_permutations)
     return combined_permutations
 
-def check_validity_of_permutations(logic_tree_permutation_list):
+def check_validity_of_combinations(logic_tree_permutation_list):
 
     for custom_logic_tree_entry in logic_tree_permutation_list:
         if custom_logic_tree_entry.slt is None:
@@ -117,6 +127,7 @@ def check_validity_of_permutations(logic_tree_permutation_list):
 
     return True
 
+start_time = time.time()
 
 ## copying logging from scripts/cli.py
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -132,7 +143,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
 toshi_hazard_post_scripts_dir = Path("/home/arr65/src/gns/toshi-hazard-post/scripts")
 
-output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto2")
+output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto5")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 initial_input_file = toshi_hazard_post_scripts_dir / "simple_input.toml"
@@ -147,37 +158,72 @@ output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-locations = ["AKL","WLG","CHC"]
-#locations = ["WLG"]
+#locations = ["AKL","WLG","CHC"]
+locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
 slt_full = args.srm_logic_tree
 glt_full = args.gmcm_logic_tree
 
-slt_full_copy = copy.deepcopy(slt_full)
-glt_full_copy = copy.deepcopy(glt_full)
+glt_full.to_json("/home/arr65/data/nshm/auto_output/glt_full.json")
 
-slt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(slt_full_copy)
-glt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(glt_full_copy)
+print()
 
-slt_perm = make_logic_tree_permutation_list_branch_sets(slt_full, slt_highest_weighted_branch)
-glt_perm = make_logic_tree_permutation_list_branch_sets(glt_full, glt_highest_weighted_branch)
+#slt_comb = modify_logic_tree_in_python.combinations_of_n_branch_sets(slt_full, 1)
 
-slt_full_and_highest = [CustomLogicTreeSet(slt = slt_full,
-                                           slt_note = "Full SRM logic tree."),
-                        CustomLogicTreeSet(slt = slt_highest_weighted_branch,
-                                             slt_note = "SRM logic tree reduced to its single highest weighted branch. No other changes.")]
+slt_comb = [modify_logic_tree_in_python.CustomLogicTreeSet(
+    slt = modify_logic_tree_in_python.reduce_to_nth_highest_weighted_branch(
+        logic_tree = slt_full,
+        nth_highest = 1),
+    slt_note = "SRM h.w.b.")]
 
-glt_full_and_highest = [CustomLogicTreeSet(glt = glt_full,
-                                           glt_note = "Full GMCM logic tree."),
-                        CustomLogicTreeSet(glt = glt_highest_weighted_branch,
-                                           glt_note = "GMCM logic tree reduced to its single highest weighted branch. No other changes.")]
+glt_comb = modify_logic_tree_in_python.combinations_of_n_branch_sets(glt_full, 1)
 
-slt_perm = slt_full_and_highest + slt_perm
-glt_perm = glt_full_and_highest + glt_perm
+logic_tree_list = combine_logic_tree_combinations(slt_comb, glt_comb)
 
-logic_tree_list = combine_logic_tree_permutations(slt_perm, glt_perm)
+print()
+
+# slt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(slt_full)
+# glt_highest_weighted_branch = modify_logic_tree_in_python.reduce_to_highest_weighted_branch(glt_full)
+
+
+# slt_perm = make_logic_tree_combinations_list_branch_sets(slt_full, slt_highest_weighted_branch)
+# glt_perm = make_logic_tree_combinations_list_branch_sets(glt_full, glt_highest_weighted_branch)
+#
+# slt_full_and_highest = [modify_logic_tree_in_python.CustomLogicTreeSet(slt = slt_full,
+#                                            slt_note = "Full SRM logic tree."),
+#                         modify_logic_tree_in_python.CustomLogicTreeSet(slt = slt_highest_weighted_branch,
+#                                              slt_note = "SRM logic tree reduced to its single highest weighted branch. No other changes.")]
+#
+# glt_full_and_highest = [modify_logic_tree_in_python.CustomLogicTreeSet(glt = glt_full,
+#                                            glt_note = "Full GMCM logic tree."),
+#                         modify_logic_tree_in_python.CustomLogicTreeSet(glt = glt_highest_weighted_branch,
+#                                            glt_note = "GMCM logic tree reduced to its single highest weighted branch. No other changes.")]
+
+
+## Trying the first 5 highest weighted branches from the SRM to see if the selected branch makes any difference
+
+# slt_combinations = [
+#     modify_logic_tree_in_python.CustomLogicTreeSet(
+#         slt = modify_logic_tree_in_python.reduce_to_nth_highest_weighted_branch(logic_tree = slt_full, nth_highest = n),
+#         slt_note = f"SRM {n}th h.w.b.")
+#     for n in range(1, 6)
+# ]
+#
+# glt_combinations = [
+#     modify_logic_tree_in_python.CustomLogicTreeSet(
+#         glt = glt_full,
+#         glt_note = f"GMCM full")
+# ]
+#
+# logic_tree_list = combine_logic_tree_combinations(slt_combinations, glt_combinations)
+
+### End
+
+
+
+
 
 run_notes_df = pd.DataFrame()
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
@@ -193,3 +239,5 @@ os.chdir(toshi_hazard_post_scripts_dir)
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
     run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir)
 
+end_time = time.time()
+print(f"Time taken: {(end_time - start_time)} mins for {len(logic_tree_list)} runs")

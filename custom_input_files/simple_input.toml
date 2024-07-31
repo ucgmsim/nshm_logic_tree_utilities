@@ -1,6 +1,7 @@
 [general]
 compatibility_key = "NZSHM22-0"
-hazard_model_id = "temp"
+hazard_model_id = "DEMO_MODEL"
+#hazard_model_id = "temp"
 
 [logic_trees]
 model_version = "NSHM_v1.0.4"
@@ -8,11 +9,11 @@ model_version = "NSHM_v1.0.4"
 #gmcm_file = "custom_logic_trees/glt_full_NSHM_v1.0.4.json"
 
 [site]
-vs30s = [ 225, 400, 750,]
-#vs30s = [400]
+#vs30s = [ 225, 400, 750,]
+vs30s = [400]
 locations = [ "CHC",]
 
 [calculation]
-imts = [ "PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)",]
-#imts = [ "PGA"]
+#imts = [ "PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)",]
+imts = [ "PGA"]
 agg_types = [ "mean", "std", "cov"]
