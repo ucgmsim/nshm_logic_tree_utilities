@@ -35,9 +35,9 @@ class CustomLogicTreeSet:
     slt: Optional[SourceLogicTree] = None
     glt: Optional[GMCMLogicTree] = None
 
-    slt_note: Optional[str] = None
-    glt_note: Optional[str] = None
-    other_notes: Optional[str] = None
+    slt_note: Optional[str] = ""
+    glt_note: Optional[str] = ""
+    other_notes: Optional[str] = ""
 
     def notes_to_toml(self, path: Path):
         data = {
@@ -145,7 +145,7 @@ def get_custom_logic_tree_entry_for_nth_highest_branch(logic_tree, nth_highest):
 
     for nth in nth_highest:
 
-        note = f"{nth} (nth) h.w.b."
+        note = f"{nth} (nth) h.w.b.; "
 
         if isinstance(logic_tree, SourceLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(
@@ -497,6 +497,81 @@ def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
         modified_logic_tree_list.append(custom_logic_tree_entry)
 
     return modified_logic_tree_list
+
+
+def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
+
+    if isinstance(trts,str):
+        trts = [trts]
+
+    modified_logic_tree = copy.deepcopy(logic_tree)
+
+    #available_trts = [branch_set.tectonic_region_type for branch_set in logic_tree.branch_sets]
+    new_branch_sets = []
+    for branch_set in logic_tree.branch_sets:
+        if isinstance(logic_tree, SourceLogicTree):
+            for tectonic_region_type in branch_set.tectonic_region_types:
+                if tectonic_region_type in trts:
+                    if tectonic_region_type == "Subduction Interface":
+                        if which_interface == "both":
+                            new_branch_sets.append(copy.deepcopy(branch_set))
+                        elif which_interface == "HIK":
+                            if branch_set.short_name == "HIK":
+                                new_branch_sets.append(copy.deepcopy(branch_set))
+                        elif which_interface == "PUY":
+                            if branch_set.short_name == "PUY":
+                                new_branch_sets.append(copy.deepcopy(branch_set))
+
+                    else:
+                        new_branch_sets.append(copy.deepcopy(branch_set))
+
+        if isinstance(logic_tree, GMCMLogicTree):
+            if branch_set.tectonic_region_type in trts:
+                new_branch_sets.append(copy.deepcopy(branch_set))
+
+    modified_logic_tree.branch_sets = new_branch_sets
+    branch_set_short_names = [x.short_name for x in new_branch_sets]
+
+    if ("PUY" in branch_set_short_names) & ("HIK" in branch_set_short_names):
+        # retain the HIK to PUY correlations
+        pass
+    else:
+        # remove correlations
+        modified_logic_tree.correlations = LogicTreeCorrelations()
+    print()
+    return modified_logic_tree
+
+
+def get_trt_set(initial_lt_set, trts, which_interface = "both"): # options are "both", "HIK", "PUY"
+
+    modified_lt_set = copy.deepcopy(initial_lt_set)
+
+    slt = initial_lt_set.slt
+    glt = initial_lt_set.glt
+
+    modified_slt = select_trt_branch_sets(slt, trts, which_interface)
+    modified_glt = select_trt_branch_sets(glt, trts)
+
+    if "Subduction Interface" in trts:
+        modified_lt_set.slt_note += f"Selected TRTs: {','.join(trts)}, which_interface = {which_interface}; "
+    else:
+        modified_lt_set.slt_note += f"Selected TRTs: {','.join(trts)}; "
+
+    modified_lt_set.glt_note += f"Selected TRTs: {','.join(trts)}; "
+
+    modified_lt_set.slt = copy.deepcopy(modified_slt)
+    modified_lt_set.glt = copy.deepcopy(modified_glt)
+
+    print(f"Notes written for trt combination {trts}")
+    print(modified_lt_set.slt_note)
+    print(modified_lt_set.glt_note)
+    print()
+
+    print()
+
+    return modified_lt_set
+
+
 
 
 def print_info(logic_tree_set_list):

@@ -16,10 +16,72 @@ from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTr
 from typing import Optional
 import pandas as pd
 import time
+import itertools
+
+
+def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir):
+
+    run_start_time = time.time()
+
+    #run_group_name = output_dir.name
+
+    modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
+    modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
+
+    logic_tree_tools.print_info(custom_logic_tree_set)
+
+    # check the validity of the weights
+    logic_tree_tools.check_weight_validity(custom_logic_tree_set.slt)
+    logic_tree_tools.check_weight_validity(custom_logic_tree_set.glt)
+
+    modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
+    modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
+
+
+    print()
+
+    custom_logic_tree_set.notes_to_toml(output_staging_dir / f"run_{run_counter}_notes.toml")
+
+    if "model_version" in toml_dict["logic_trees"]:
+        ## delete the key-value pair specifying that the logic tree should be the full built in logic tree
+        del toml_dict["logic_trees"]["model_version"]
+
+    for location in locations:
+        print(f'doing run {run_counter} and location {location}')
+
+        args.locations = [location]
+        #toml_dict['site']['locations'] = [location]
+        #toml_dict["general"]["hazard_model_id"] = f'run_{run_counter}'
+        args.hazard_model_id = f'run_{run_counter}'
+
+        ## set the key-value pair specifying that the logic tree should come from the custom logic tree files previously written
+        # toml_dict["logic_trees"]["srm_file"] = str(output_staging_dir / f"slt_{run_counter}.json")
+        # toml_dict["logic_trees"]["gmcm_file"] = str(output_staging_dir / f"glt_{run_counter}.json")
+
+        args.srm_logic_tree = modified_slt
+        args.gmcm_logic_tree = modified_glt
+
+
+        # result = subprocess.run("python cli.py aggregate --config-file .env_home temp_input.toml",
+        #                         shell=True, capture_output=True, text=True)
+
+        # print(result.stdout)
+        # print(result.stderr)
+        run_aggregation(args)
+
+
+    run_output_dir = output_dir / f"run_{run_counter}"
+    run_output_dir.mkdir(parents=True, exist_ok=False)
+
+    for file in output_staging_dir.iterdir():
+        shutil.move(file, run_output_dir)
+
+    run_end_time = time.time()
+    print(f"Time taken for run {run_counter}: {(run_end_time - run_start_time)/60} mins")
 
 
 
-def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
+def OLD_run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
 
     run_start_time = time.time()
 
@@ -152,31 +214,15 @@ logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-#os.environ['THP_ENV_FILE'] = str("/home/arr65/src/gns/toshi-hazard-post/scripts/.env_home")
-
-toshi_hazard_post_scripts_dir = Path("/home/arr65/src/gns/toshi-hazard-post/scripts")
-
-output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto6")
+input_file_dir = Path("custom_input_files")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto6")
 output_dir.mkdir(parents=True, exist_ok=True)
 
-initial_input_file = toshi_hazard_post_scripts_dir / "simple_input.toml"
-#if not initial_input_file.exists():
-shutil.copy(Path("custom_input_files") / initial_input_file.name, initial_input_file)
+os.environ['THP_ENV_FILE'] = str(input_file_dir / ".env_home")
 
-# initial_srm_logic_tree_file = toshi_hazard_post_scripts_dir / "gmcm_nshm_v1.0.4.json"
-# initial_gmcm_logic_tree_file = toshi_hazard_post_scripts_dir / "nshm_v1.0.4_v2.json"
+initial_input_file = input_file_dir / "simple_input.toml"
 
-initial_srm_logic_tree_file = toshi_hazard_post_scripts_dir / "nshm_v1.0.4_v2.json"
-initial_gmcm_logic_tree_file = toshi_hazard_post_scripts_dir / "gmcm_nshm_v1.0.4.json"
-
-
-shutil.copy(Path("custom_logic_trees") / initial_srm_logic_tree_file.name, initial_srm_logic_tree_file)
-shutil.copy(Path("custom_logic_trees") / initial_gmcm_logic_tree_file.name, initial_gmcm_logic_tree_file)
-
-env_input_file = toshi_hazard_post_scripts_dir / ".env_home"
-shutil.copy(Path("custom_input_files") / env_input_file.name, env_input_file)
-
-with open(toshi_hazard_post_scripts_dir / ".env_home", 'r') as file:
+with open(input_file_dir / ".env_home", 'r') as file:
     env_lines = file.readlines()
 
 output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
@@ -184,27 +230,71 @@ output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-#locations = ["AKL","WLG","CHC"]
-locations = ["WLG"]
+locations = ["AKL","WLG","CHC"]
+#locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
+
+args.locations = locations
 
 slt_full = args.srm_logic_tree
 glt_full = args.gmcm_logic_tree
 
-#nth_highest_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
+#["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
+# options are "both", "HIK", "PUY"
+
+# slt_crust = logic_tree_tools.select_trt_branch_sets(slt_full, ["Active Shallow Crust"])
+# glt_crust = logic_tree_tools.select_trt_branch_sets(glt_full, ["Active Shallow Crust"])
+
+slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
+
+print()
+
+trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
+    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+    glt = copy.deepcopy(glt_full),
+    slt_note = slt_highest_entry_list[0].slt_note,
+    glt_note = 'full; ')
+
+available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
+which_interfaces = ["both", "HIK", "PUY"]
+
+logic_tree_list = []
+
+for which_interface in which_interfaces:
+
+    for num_trts in range(len(available_trts)):
+
+        combs = list(itertools.combinations(available_trts, num_trts+1))
+
+        for comb in combs:
+
+            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
+
+            logic_tree_list.append(lt_entry_for_trts)
+
+
+
+
+#lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = ["Active Shallow Crust", "Subduction Interface"], which_interface="HIK")
+
+print()
+
 #highest = logic_tree_tools.reduce_to_highest_weighted_branch(glt_full)
 
 #nth_highest_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,list(range(1,6)))
 
-slt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
-glt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
+# slt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
+# glt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
+#
+# slt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(slt_full, 1)
+# glt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(glt_full, 1)
+#
+# slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_full, slt_note = "slt full")]
+# glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full, glt_note = "glt full")]
 
-slt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(slt_full, 1)
-glt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(glt_full, 1)
-
-slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_full, slt_note = "slt full")]
-glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full, glt_note = "glt full")]
+# slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_crust, slt_note = "slt crust")]
+# glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_crust, glt_note = "glt crust")]
 
 # print(len(glt_single_branch_set_list))
 #
@@ -224,8 +314,16 @@ glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full, glt_note = "glt 
 #logic_tree_list = combine_logic_tree_combinations(slt_highest_weighted_branch_list, glt_highest_weighted_branch_list)
 
 #logic_tree_list = combine_logic_tree_combinations(slt_list, glt_list)
+#logic_tree_list = combine_logic_tree_combinations(slt_entry_for_trts, glt_entry_for_trts)
+
+#logic_tree_list = [lt_entry_for_trts]
+
+print()
+
 #logic_tree_list = combine_logic_tree_combinations(slt_single_branch_set_list, glt_list)
-logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
+#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
+
+#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
 
 ## Trying the first 5 highest weighted branches from the SRM to see if the selected branch makes any difference
 
@@ -257,9 +355,11 @@ run_notes_df.to_csv(output_dir / "run_notes.csv")
 
 print()
 print("Trying from inside function")
-os.chdir(toshi_hazard_post_scripts_dir)
+
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
-    run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir)
+    run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir)
 
 end_time = time.time()
 print(f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_list)} runs")
+
+# def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
