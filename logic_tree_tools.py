@@ -145,7 +145,7 @@ def get_custom_logic_tree_entry_for_nth_highest_branch(logic_tree, nth_highest):
 
     for nth in nth_highest:
 
-        note = f"only {nth} (nth) h.w.b"
+        note = f"{nth} (nth) h.w.b."
 
         if isinstance(logic_tree, SourceLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(
@@ -459,23 +459,23 @@ def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
 
     modified_logic_tree_list = []
 
-    logic_tree_branch_set_indices = range(len(logic_tree.branch_sets))
+    logic_tree_branch_set_indices = copy.deepcopy(list(range(len(logic_tree.branch_sets))))
 
-    branch_set_index_combinations = itertools.combinations(logic_tree_branch_set_indices, n_branch_sets_to_retain)
+    branch_set_index_combinations = copy.deepcopy(list(itertools.combinations(logic_tree_branch_set_indices, n_branch_sets_to_retain)))
 
     for combination in branch_set_index_combinations:
 
-        modified_logic_tree = copy.deepcopy(logic_tree)
+        modified_logic_tree = copy.deepcopy(unchanged_logic_tree)
 
-        modified_branch_set = []
+        new_branch_sets = []
 
         for branch_set_index in logic_tree_branch_set_indices:
 
             if branch_set_index in combination:
-                modified_branch_set.append(copy.deepcopy(unchanged_logic_tree.branch_sets[branch_set_index]))
+                new_branch_sets.append(copy.deepcopy(unchanged_logic_tree.branch_sets[branch_set_index]))
 
-        modified_logic_tree.branch_sets = modified_branch_set
-        branch_set_short_names = [x.short_name for x in modified_branch_set]
+        modified_logic_tree.branch_sets = new_branch_sets
+        branch_set_short_names = [x.short_name for x in new_branch_sets]
 
         if ("PUY" in branch_set_short_names) & ("HIK" in branch_set_short_names):
             # retain the HIK to PUY correlations
@@ -484,17 +484,62 @@ def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
             # remove correlations
             modified_logic_tree.correlations = LogicTreeCorrelations()
 
+        note = ', '.join(branch_set_short_names)
+
         if isinstance(unchanged_logic_tree, SourceLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(slt = modified_logic_tree,
-                        slt_note = f"{str(branch_set_short_names)}")
+                        slt_note = note)
 
         elif isinstance(unchanged_logic_tree, GMCMLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(glt = modified_logic_tree,
-                         glt_note = f"{str(branch_set_short_names)}")
+                         glt_note = note)
 
         modified_logic_tree_list.append(custom_logic_tree_entry)
 
     return modified_logic_tree_list
+
+
+def print_info(logic_tree_set_list):
+
+    if not isinstance(logic_tree_set_list, list):
+        logic_tree_set_list = [logic_tree_set_list]
+
+    num_sets = len(logic_tree_set_list)
+
+    for i in range(num_sets):
+        print(f"Run {i} overview")
+        print(f"slt_note: {logic_tree_set_list[i].slt_note}")
+        print(f"glt_note: {logic_tree_set_list[i].glt_note}")
+        print()
+
+        if logic_tree_set_list[i].slt is not None:
+
+            print("slt details:")
+
+            print(f"slt has {len(logic_tree_set_list[i].slt.branch_sets)} branch sets")
+
+            print(f"the name of slt's first branch_set is {logic_tree_set_list[i].slt.branch_sets[0].short_name}")
+
+            print(f"slt's first branch_set has {len(logic_tree_set_list[i].slt.branch_sets[0].branches)} branches")
+
+            print()
+
+        if logic_tree_set_list[i].glt is not None:
+
+            print("glt details:")
+
+            print(f"glt has {len(logic_tree_set_list[i].glt.branch_sets)} branch sets")
+
+            print(f"The name of glt's first branch_set is {logic_tree_set_list[i].glt.branch_sets[0].short_name}")
+
+            print(f"glt's first branch_set has {len(logic_tree_set_list[i].glt.branch_sets[0].branches)} branches")
+
+
+
+
+
+
+
 
 
 

@@ -28,14 +28,18 @@ def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
+    print()
+
+    logic_tree_tools.print_info(custom_logic_tree_set)
+
     # check the validity of the weights
     logic_tree_tools.check_weight_validity(custom_logic_tree_set.slt)
     logic_tree_tools.check_weight_validity(custom_logic_tree_set.glt)
 
-    print()
-
     modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
     modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
+
+    print()
 
     custom_logic_tree_set.notes_to_toml(output_staging_dir / f"run_{run_counter}_notes.toml")
 
@@ -61,14 +65,20 @@ def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set
         result = subprocess.run("python cli.py aggregate --config-file .env_home temp_input.toml",
                                 shell=True, capture_output=True, text=True)
 
+        print(result.stdout)
+        print(result.stderr)
+
+        print()
+
+
     run_output_dir = output_dir / f"run_{run_counter}"
-    run_output_dir.mkdir(parents=True, exist_ok=True)
+    run_output_dir.mkdir(parents=True, exist_ok=False)
 
     for file in output_staging_dir.iterdir():
         shutil.move(file, run_output_dir)
 
     run_end_time = time.time()
-    print(f"Time taken for run {run_counter}: {(run_end_time - run_start_time)} mins")
+    print(f"Time taken for run {run_counter}: {(run_end_time - run_start_time)/60} mins")
 
 def make_logic_tree_combinations_list_branch_sets(full_logic_tree, logic_tree_highest_weighted_branches):
     #from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
@@ -94,24 +104,27 @@ def make_logic_tree_combinations_list_branch_sets(full_logic_tree, logic_tree_hi
 
     return logic_tree_permutation_list
 
-def combine_logic_tree_combinations(slt_permutations, glt_permutations):
+def combine_logic_tree_combinations(slt_combinations, glt_combinations):
 
-    combined_permutations = []
+    combination_list = []
 
-    for custom_slt_entry in slt_permutations:
+    for custom_slt_entry in slt_combinations:
 
-        for custom_glt_entry in glt_permutations:
+        for custom_glt_entry in glt_combinations:
 
             slt_glt_entry = logic_tree_tools.CustomLogicTreeSet(slt=custom_slt_entry.slt,
                                                slt_note=custom_slt_entry.slt_note,
                                                glt=custom_glt_entry.glt,
                                                glt_note=custom_glt_entry.glt_note)
 
-            combined_permutations.append(slt_glt_entry)
+
+
+            combination_list.append(slt_glt_entry)
 
     # check that all required parameters are present
-    check_validity_of_combinations(combined_permutations)
-    return combined_permutations
+    print()
+    check_validity_of_combinations(combination_list)
+    return combination_list
 
 def check_validity_of_combinations(logic_tree_permutation_list):
 
@@ -143,7 +156,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
 toshi_hazard_post_scripts_dir = Path("/home/arr65/src/gns/toshi-hazard-post/scripts")
 
-output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto5")
+output_dir = Path(f"/home/arr65/data/nshm/auto_output/auto6")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 initial_input_file = toshi_hazard_post_scripts_dir / "simple_input.toml"
@@ -179,51 +192,44 @@ args = AggregationArgs(initial_input_file)
 slt_full = args.srm_logic_tree
 glt_full = args.gmcm_logic_tree
 
-## glt_full.to_json("/home/arr65/data/nshm/auto_output/glt_full.json")
+#nth_highest_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
+#highest = logic_tree_tools.reduce_to_highest_weighted_branch(glt_full)
 
-print()
+#nth_highest_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,list(range(1,6)))
 
-#slt_comb = logic_tree_tools.combinations_of_n_branch_sets(slt_full, 1)
+slt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
+glt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
 
-slt_comb = [logic_tree_tools.CustomLogicTreeSet(
-    slt = logic_tree_tools.reduce_to_nth_highest_weighted_branch(
-        logic_tree = slt_full,
-        nth_highest = 1),
-    slt_note = "SRM h.w.b.")]
+slt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(slt_full, 1)
+glt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(glt_full, 1)
 
-glt_comb = logic_tree_tools.combinations_of_n_branch_sets(glt_full, 1)
+slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_full, slt_note = "slt full")]
+glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full, glt_note = "glt full")]
 
-logic_tree_list = combine_logic_tree_combinations(slt_comb, glt_comb)
-logic_tree_list = logic_tree_list[0:1]
-
-print()
-
-# slt_highest_weighted_branch = logic_tree_tools.reduce_to_highest_weighted_branch(slt_full)
-# glt_highest_weighted_branch = logic_tree_tools.reduce_to_highest_weighted_branch(glt_full)
-
-
-# slt_perm = make_logic_tree_combinations_list_branch_sets(slt_full, slt_highest_weighted_branch)
-# glt_perm = make_logic_tree_combinations_list_branch_sets(glt_full, glt_highest_weighted_branch)
+# print(len(glt_single_branch_set_list))
 #
-# slt_full_and_highest = [logic_tree_tools.CustomLogicTreeSet(slt = slt_full,
-#                                            slt_note = "Full SRM logic tree."),
-#                         logic_tree_tools.CustomLogicTreeSet(slt = slt_highest_weighted_branch,
-#                                              slt_note = "SRM logic tree reduced to its single highest weighted branch. No other changes.")]
+# for i in range(len(glt_single_branch_set_list)):
 #
-# glt_full_and_highest = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full,
-#                                            glt_note = "Full GMCM logic tree."),
-#                         logic_tree_tools.CustomLogicTreeSet(glt = glt_highest_weighted_branch,
-#                                            glt_note = "GMCM logic tree reduced to its single highest weighted branch. No other changes.")]
+#     print(f"{len(glt_single_branch_set_list[i].glt.branch_sets)} branch sets")
+#
+#     print(f"{glt_single_branch_set_list[i].glt.branch_sets[0].short_name}")
+#
+#     print(f"has {len(glt_single_branch_set_list[i].glt.branch_sets[0].branches)} branches")
+#
+#
+#
+# print()
 
+#logic_tree_list = combine_logic_tree_combinations(slt_highest_weighted_branch_list, glt_single_branch_set_list)
+#logic_tree_list = combine_logic_tree_combinations(slt_highest_weighted_branch_list, glt_highest_weighted_branch_list)
+
+#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_list)
+#logic_tree_list = combine_logic_tree_combinations(slt_single_branch_set_list, glt_list)
+logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
 
 ## Trying the first 5 highest weighted branches from the SRM to see if the selected branch makes any difference
 
-# slt_combinations = [
-#     logic_tree_tools.CustomLogicTreeSet(
-#         slt = logic_tree_tools.reduce_to_nth_highest_weighted_branch(logic_tree = slt_full, nth_highest = n),
-#         slt_note = f"SRM {n}th h.w.b.")
-#     for n in range(1, 6)
-# ]
+# slt_combinations = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,list(range(1,6)))
 #
 # glt_combinations = [
 #     logic_tree_tools.CustomLogicTreeSet(
@@ -237,7 +243,7 @@ print()
 
 
 
-
+logic_tree_tools.print_info(logic_tree_list)
 
 run_notes_df = pd.DataFrame()
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
@@ -249,9 +255,11 @@ for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
 run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
 run_notes_df.to_csv(output_dir / "run_notes.csv")
 
+print()
+print("Trying from inside function")
 os.chdir(toshi_hazard_post_scripts_dir)
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
     run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir)
 
 end_time = time.time()
-print(f"Time taken: {(end_time - start_time)} mins for {len(logic_tree_list)} runs")
+print(f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_list)} runs")

@@ -7,6 +7,7 @@ import pandas as pd
 from cycler import cycler
 import natsort
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib import pyplot as plt, ticker as mticker
 
 # named_color_list = list(matplotlib.colors.cnames.keys())
 # named_color_list = named_color_list[::5]
@@ -46,8 +47,8 @@ custom_cycler = (cycler(color=colors) *
 # default_cycler = (cycler(color=['r', 'g', 'b', 'y']) +
 #                   cycler(linestyle=['-', '--', ':', '-.']))
 
-def load_resultsV2(output_dir: Path, location: str) -> pd.DataFrame:
-    full_df = pd.DataFrame()
+def load_location_from_run(output_dir: Path, location: str) -> pd.DataFrame:
+    results_df = pd.DataFrame()
 
     if location not in ["AKL","WLG","CHC"]:
         raise ValueError('location must be AKL, WLG or CHC')
@@ -63,15 +64,35 @@ def load_resultsV2(output_dir: Path, location: str) -> pd.DataFrame:
 
     for index, file in enumerate(results_dir.glob('*.parquet')):
 
-        full_df = pd.concat([full_df, pd.read_parquet(file)], ignore_index=True)
+        results_df = pd.concat([results_df, pd.read_parquet(file)], ignore_index=True)
 
-    return full_df
+    return results_df
+
+
+# def insert_ln_std(df):
+#
+#     print()
+
+
+
+
+#def load_locations_from_run(output_dir: Path, locations: list[str]):
+
+
+    
+
+
+# test = load_location_from_run(Path("/home/arr65/data/nshm/auto_output/auto4/run_0"),"CHC")
+#
+# test2 = insert_ln_std(test)
+
+# print()
 
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto1")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto2")
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto3")
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto4")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto3")
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto5")
 plot_output_dir = Path("/home/arr65/data/nshm/output_plots")
 
 #location = "WLG"
@@ -83,10 +104,10 @@ run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
 pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_sln_vs_mean_all_ims.pdf")
 
 ims = ["PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
-locations = ["AKL","WLG","CHC"]
+#ims = ["PGA"]
 
-fig1 = plt.figure(1)
-fig2 = plt.figure(2)
+
+locations = ["AKL","WLG","CHC"]
 
 def do_plots(over_plot_all=False):
 
@@ -106,24 +127,26 @@ def do_plots(over_plot_all=False):
                 run_counter = int(run_dir.name.split("_")[-1])
 
                 # Get all the files in the results directory
-                df = load_resultsV2(output_dir = run_dir, location = location)
+                df = load_location_from_run(output_dir = run_dir, location = location)
 
                 mean = df[(df["agg"] == "mean") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
                 cov = df[(df["agg"] == "cov") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
 
                 sln = np.sqrt(np.log(cov ** 2 + 1))
                 # skip the single branch run with no variance
-                if np.all(np.isclose(sln,0.0)):
-                    continue
-                # ax = plt.gca()
-                # ax.set_prop_cycle(default_cycler)
-                #plt.semilogy(sln, mean, label=f"{run_dir.name} {im} in {location} (Vs30 = {vs30} m/s)")
+                # if np.all(np.isclose(sln,0.0)):
+                #     continue
+
                 plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
                               f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
                 plt.semilogy(sln, mean, label=plot_label)
 
+        plt.ylim(1e-13,1e0)
+        plt.xlim(-0.01, 0.9)
         plt.xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
         plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+        plt.grid(which='major', linestyle='--', linewidth='0.5', color='black')
+
 
         if not over_plot_all:
             plt.title(f'Fixed: IM={im}, Vs30 = 400 m/s')
@@ -133,59 +156,55 @@ def do_plots(over_plot_all=False):
 
 
     if over_plot_all:
-
+        plt.title(f'All IMs, fixed Vs30 = 400 m/s')
         pdf_all_ims.savefig()
 
 do_plots(over_plot_all=True)
 
 do_plots(over_plot_all=False)
 
-
-
-
-
-    pdf_all_ims.savefig()
-    #plt.savefig(plot_output_dir / f"{auto_dir.name}_sln_vs_mean.pdf")
-
-    #plt.show()
-plt.close("all")
-for im in ims:
-
-    plt.rc('axes', prop_cycle=custom_cycler)
-    for location in ["AKL","WLG","CHC"]:
-    #for location in ["WLG"]:
-    #for location in [location]:
-
-        dir_list = natsort.natsorted([x for x in auto_dir.iterdir() if x.is_dir()])
-
-        for run_dir in dir_list:
-
-            run_counter = int(run_dir.name.split("_")[-1])
-
-            # Get all the files in the results directory
-            df = load_resultsV2(output_dir = run_dir, location = location)
-
-            mean = df[(df["agg"] == "mean") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
-            cov = df[(df["agg"] == "cov") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
-
-            sln = np.sqrt(np.log(cov ** 2 + 1))
-            # skip the single branch run with no variance
-            if np.all(np.isclose(sln,0.0)):
-                continue
-            # ax = plt.gca()
-            # ax.set_prop_cycle(default_cycler)
-            #plt.semilogy(sln, mean, label=f"{run_dir.name} {im} in {location} (Vs30 = {vs30} m/s)")
-            plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
-                          f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
-            plt.semilogy(sln, mean, label=plot_label)
-
-            #plt.semilogy(sln, mean, "k.")
-
-    plt.xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
-    plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
-    plt.title(f'All IMs, fixed Vs30 = 400 m/s')
-    #plt.legend(prop={'size': 8})
-pdf_all_ims.savefig()
 pdf_all_ims.close()
 
 print()
+
+# plt.close("all")
+# for im in ims:
+#
+#     plt.rc('axes', prop_cycle=custom_cycler)
+#     for location in ["AKL","WLG","CHC"]:
+#     #for location in ["WLG"]:
+#     #for location in [location]:
+#
+#         dir_list = natsort.natsorted([x for x in auto_dir.iterdir() if x.is_dir()])
+#
+#         for run_dir in dir_list:
+#
+#             run_counter = int(run_dir.name.split("_")[-1])
+#
+#             # Get all the files in the results directory
+#             df = load_location_from_run(output_dir = run_dir, location = location)
+#
+#             mean = df[(df["agg"] == "mean") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
+#             cov = df[(df["agg"] == "cov") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
+#
+#             sln = np.sqrt(np.log(cov ** 2 + 1))
+#             # skip the single branch run with no variance
+#             if np.all(np.isclose(sln,0.0)):
+#                 continue
+#             # ax = plt.gca()
+#             # ax.set_prop_cycle(default_cycler)
+#             #plt.semilogy(sln, mean, label=f"{run_dir.name} {im} in {location} (Vs30 = {vs30} m/s)")
+#             plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
+#                           f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
+#             plt.semilogy(sln, mean, label=plot_label)
+#
+#             #plt.semilogy(sln, mean, "k.")
+#
+#     plt.xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+#     plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+#     plt.title(f'All IMs, fixed Vs30 = 400 m/s')
+#     #plt.legend(prop={'size': 8})
+# pdf_all_ims.savefig()
+# pdf_all_ims.close()
+#
+# print()
