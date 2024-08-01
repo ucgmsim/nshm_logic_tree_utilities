@@ -68,15 +68,53 @@ def load_location_from_run(output_dir: Path, location: str) -> pd.DataFrame:
 
     return results_df
 
+def insert_ln_std(df):
 
-# def insert_ln_std(df):
-#
-#     print()
+    # Initialize an empty DataFrame to hold the new rows
+    new_rows = []
+
+    # Iterate over the DataFrame
+    for index, row in df.iterrows():
+        # Append the current row to the list of new rows
+        new_rows.append(row)
+
+        # Check if the 'agg' column is 'cov'
+        if row['agg'] == 'cov':
+
+            cov_arr = row.loc["values"]
+            std_ln_arr = np.sqrt(np.log(cov_arr ** 2 + 1))
+
+            # Create a new row that's a copy of the current row
+            new_row = row.copy()
+
+            # Update the 'agg' and 'values' columns of the new row
+            new_row['agg'] = 'std_ln'
+            new_row['values'] = std_ln_arr
+
+            # Append the new row to the list of new rows
+            new_rows.append(new_row)
+
+    # Create a new DataFrame from the list of new rows
+    new_df = pd.DataFrame(new_rows)
+
+    return new_df
+
+test = load_location_from_run(Path("/home/arr65/data/nshm/auto_output/auto5/run_0"),"CHC")
+
+print(test)
+
+# test2 = insert_ln_std(test)
+
+test2 = insert_ln_std(test)
+
+print(test2)
+
+print()
 
 
+# def load_locations_from_run(output_dir: Path, locations: list[str]):
 
 
-#def load_locations_from_run(output_dir: Path, locations: list[str]):
 
 
     
@@ -208,3 +246,4 @@ print()
 # pdf_all_ims.close()
 #
 # print()
+
