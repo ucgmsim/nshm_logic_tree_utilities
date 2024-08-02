@@ -12,8 +12,8 @@ srm_file = "../custom_logic_trees/nshm_v1.0.4_v2.json"
 gmcm_file = "../custom_logic_trees/gmcm_nshm_v1.0.4.json"
 
 [site]
-vs30s = [ 225, 400, 750,]
-#vs30s = [400]
+#vs30s = [ 225, 400, 750,]
+vs30s = [400]
 locations = [ "CHC",]
 
 [calculation]

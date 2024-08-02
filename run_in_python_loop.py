@@ -28,6 +28,8 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
+    print()
+
     logic_tree_tools.print_info(custom_logic_tree_set)
 
     # check the validity of the weights
@@ -202,6 +204,15 @@ def check_validity_of_combinations(logic_tree_permutation_list):
 
     return True
 
+def count_strings(string_list):
+    count_dict = {}
+    for string in string_list:
+        if string in count_dict:
+            count_dict[string] += 1
+        else:
+            count_dict[string] = 1
+    return count_dict
+
 start_time = time.time()
 
 ## copying logging from scripts/cli.py
@@ -215,7 +226,7 @@ logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto6")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 os.environ['THP_ENV_FILE'] = str(input_file_dir / ".env_home")
@@ -240,6 +251,37 @@ args.locations = locations
 slt_full = args.srm_logic_tree
 glt_full = args.gmcm_logic_tree
 
+count_dict = {}
+
+for branch_set in glt_full.branch_sets:
+
+    count_dict[branch_set.short_name] = {}
+
+    branch_gsim_name_list = []
+
+    for branch in branch_set.branches:
+
+        branch_gsim_name_list.append(branch.gsim_name)
+
+    count_dict[branch_set.short_name] = count_strings(branch_gsim_name_list)
+
+
+
+
+
+
+
+print()
+
+
+
+
+
+
+        #print(f"{branch_set.short_name}, {branch.gsim_name})
+
+print()
+
 #["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
 # options are "both", "HIK", "PUY"
 
@@ -248,37 +290,93 @@ glt_full = args.gmcm_logic_tree
 
 slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
 
-print()
-
 trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
     glt = copy.deepcopy(glt_full),
     slt_note = slt_highest_entry_list[0].slt_note,
-    glt_note = 'full; ')
+    glt_note = 'full > ')
 
 available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
 which_interfaces = ["both", "HIK", "PUY"]
 
 logic_tree_list = []
 
-for which_interface in which_interfaces:
+# for which_interface in which_interfaces:
+#
+#     for num_trts in range(len(available_trts)):
+#
+#         combs = list(itertools.combinations(available_trts, num_trts+1))
+#
+#         for comb in combs:
+#
+#             lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
+#
+#             logic_tree_list.append(lt_entry_for_trts)
 
-    for num_trts in range(len(available_trts)):
 
-        combs = list(itertools.combinations(available_trts, num_trts+1))
 
-        for comb in combs:
+#
+
+for trt in available_trts:
+
+    if trt == "Subduction Interface":
+
+        for which_interface in which_interfaces:
+
+            comb = [trt]
 
             lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
 
             logic_tree_list.append(lt_entry_for_trts)
 
+    else:
+
+        comb = [trt]
+
+        lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
+                                                         which_interface=None)
+
+        logic_tree_list.append(lt_entry_for_trts)
 
 
+logic_tree_list2 = []
+
+all_glt_gsim_names = []
+
+for lt_set in logic_tree_list:
+
+    assert len(lt_set.glt.branch_sets) == 1
+
+    glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
+    all_glt_gsim_names.append(glt_gsim_names)
+    print()
+
+    unique_gsim_names = list(set(glt_gsim_names))
+
+    for gsim_name in unique_gsim_names:
+
+        selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
+
+        selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
+                                 branch.gsim_name == gsim_name])
+
+        needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
+
+        scaled_weights = selected_glt_branch_weights * needed_scaling_factor
+
+        for i, branch in enumerate(selected_glt_branches):
+            branch.weight = scaled_weights[i]
+
+        modified_lt_set = copy.deepcopy(lt_set)
+
+        modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
+        modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
+
+        logic_tree_list2.append(modified_lt_set)
+
+logic_tree_list = logic_tree_list2
 
 #lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = ["Active Shallow Crust", "Subduction Interface"], which_interface="HIK")
-
-print()
 
 #highest = logic_tree_tools.reduce_to_highest_weighted_branch(glt_full)
 
@@ -318,7 +416,7 @@ print()
 
 #logic_tree_list = [lt_entry_for_trts]
 
-print()
+
 
 #logic_tree_list = combine_logic_tree_combinations(slt_single_branch_set_list, glt_list)
 #logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
@@ -353,8 +451,6 @@ for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
 run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
 run_notes_df.to_csv(output_dir / "run_notes.csv")
 
-print()
-print("Trying from inside function")
 
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
     run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir)

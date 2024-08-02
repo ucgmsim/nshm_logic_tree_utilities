@@ -145,7 +145,7 @@ def get_custom_logic_tree_entry_for_nth_highest_branch(logic_tree, nth_highest):
 
     for nth in nth_highest:
 
-        note = f"{nth} (nth) h.w.b.; "
+        note = f"{nth} (nth) h.w.b. > "
 
         if isinstance(logic_tree, SourceLogicTree):
             custom_logic_tree_entry = CustomLogicTreeSet(
@@ -542,7 +542,13 @@ def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
     return modified_logic_tree
 
 
-def get_trt_set(initial_lt_set, trts, which_interface = "both"): # options are "both", "HIK", "PUY"
+def get_trt_set(initial_lt_set, trts, which_interface = None): # options are None, "both", "HIK", "PUY"
+
+    trt_short_lookup_dict = {"Active Shallow Crust":"CRU",
+                             "Subduction Interface":"INTER",
+                             "Subduction Intraslab":"SLAB"}
+
+    short_trts = [trt_short_lookup_dict[trt] for trt in trts]
 
     modified_lt_set = copy.deepcopy(initial_lt_set)
 
@@ -553,25 +559,17 @@ def get_trt_set(initial_lt_set, trts, which_interface = "both"): # options are "
     modified_glt = select_trt_branch_sets(glt, trts)
 
     if "Subduction Interface" in trts:
-        modified_lt_set.slt_note += f"Selected TRTs: {','.join(trts)}, which_interface = {which_interface}; "
-    else:
-        modified_lt_set.slt_note += f"Selected TRTs: {','.join(trts)}; "
+        modified_lt_set.slt_note += f"TRTs:[{' '.join(short_trts)} {which_interface}] > "
 
-    modified_lt_set.glt_note += f"Selected TRTs: {','.join(trts)}; "
+    else:
+        modified_lt_set.slt_note += f"TRTs:[{' '.join(short_trts)}] > "
+
+    modified_lt_set.glt_note += f"TRTs:[{' '.join(short_trts)}] > "
 
     modified_lt_set.slt = copy.deepcopy(modified_slt)
     modified_lt_set.glt = copy.deepcopy(modified_glt)
 
-    print(f"Notes written for trt combination {trts}")
-    print(modified_lt_set.slt_note)
-    print(modified_lt_set.glt_note)
-    print()
-
-    print()
-
     return modified_lt_set
-
-
 
 
 def print_info(logic_tree_set_list):
