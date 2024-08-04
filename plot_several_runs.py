@@ -14,32 +14,32 @@ from matplotlib import pyplot as plt, ticker as mticker
 
 five_colors = ['b', 'g', 'r', 'c', 'm']
 
-# colors = [
-#     '#1f77b4',  # Blue
-#     '#ff7f0e',  # Orange
-#     '#2ca02c',  # Green
-#     '#d62728',  # Red
-#     '#9467bd',  # Purple
-#     '#8c564b',  # Brown
-#     '#e377c2',  # Pink
-#     '#7f7f7f',  # Gray
-#     '#bcbd22',  # Olive
-#     '#17becf',  # Cyan
-#     '#1f78b4',  # Dark Blue
-#     '#33a02c',  # Dark Green
-#     '#e31a1c',  # Dark Red
-#     '#ff7f00',  # Dark Orange
-#     '#6a3d9a',  # Dark Purple
-#     '#b15928',  # Dark Brown
-#     '#a6cee3',  # Light Blue
-#     '#b2df8a',  # Light Green
-#     '#fb9a99',  # Light Red
-#     '#fdbf6f'   # Light Orange
-# ]
+colors = [
+    '#1f77b4',  # Blue
+    '#ff7f0e',  # Orange
+    '#2ca02c',  # Green
+    '#d62728',  # Red
+    '#9467bd',  # Purple
+    '#8c564b',  # Brown
+    '#e377c2',  # Pink
+    '#7f7f7f',  # Gray
+    '#bcbd22',  # Olive
+    '#17becf',  # Cyan
+    '#1f78b4',  # Dark Blue
+    '#33a02c',  # Dark Green
+    '#e31a1c',  # Dark Red
+    '#ff7f00',  # Dark Orange
+    '#6a3d9a',  # Dark Purple
+    '#b15928',  # Dark Brown
+    '#a6cee3',  # Light Blue
+    '#b2df8a',  # Light Green
+    '#fb9a99',  # Light Red
+    '#fdbf6f'   # Light Orange
+]
 
 
-# custom_cycler = (cycler(color=colors) *
-#                   cycler(linestyle=['-', '--', ':', '-.']))
+custom_cycler = (cycler(color=colors) *
+                  cycler(linestyle=['-', '--', ':', '-.']))
 
 # custom_cycler = (cycler(color=colors) *
 #                   cycler(linestyle=['-', '--', '-.']))
@@ -47,9 +47,14 @@ five_colors = ['b', 'g', 'r', 'c', 'm']
 # default_cycler = (cycler(color=['r', 'g', 'b', 'y']) +
 #                   cycler(linestyle=['-', '--', ':', '-.']))
 
-custom_cycler_location_subplot = (cycler(color=five_colors) +
-                  cycler(linestyle=['-', '--', ':', '-.',(0, (5, 10))]))
 
+
+custom_cycler_slt_nth_branch = (cycler(linestyle=['--', ':', '-.'])*
+                                  cycler(color=five_colors))
+
+
+custom_cycler_location_subplot = (cycler(linestyle=['--', ':', '-.'])*
+                                  cycler(color=colors))
 def load_locations_from_run(output_dir: Path, locations: list[str]) -> pd.DataFrame:
     results_df = pd.DataFrame()
 
@@ -177,7 +182,7 @@ def do_plots(over_plot_all=False):
         if not over_plot_all:
             plt.close("all")
 
-        plt.rc('axes', prop_cycle=custom_cycler)
+        plt.rc('axes', prop_cycle=custom_cycler_slt_nth_branch)
         for location in locations:
 
             nloc_001_str = locations_nloc_dict[location]
@@ -201,20 +206,24 @@ def do_plots(over_plot_all=False):
                 plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
                               f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
                 plt.semilogy(std_ln, mean, label=plot_label)
+                print(f"plotting: {im} {location} {run}")
                 num_hazard_curves_on_plot += 1
 
-        plt.ylim(1e-13,1e0)
-        plt.xlim(-0.01, 0.9)
+        plt.ylim(1e-5,1e0)
+        plt.xlim(-0.01, 0.7)
+
 
         plt.xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
         plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
         plt.grid(which='major', linestyle='--', linewidth='0.5', color='black')
 
+
+
+
         if not over_plot_all:
 
-            print(f"plotting: {im} {location} {run}")
-            plt.title(f'Fixed: IM={im}, Vs30 = 400 m/s ({num_hazard_curves_on_plot} lines)')
-            #plt.legend(prop={'size': 8})
+            plt.title(f'Fixed: IM={im}, Vs30 = 400 m/s')
+            plt.legend(loc="lower left", prop={'size': 6})
             pdf_all_ims.savefig()
 
 
@@ -224,13 +233,17 @@ def do_plots(over_plot_all=False):
 
 def do_plots_with_seperate_location_subplots(over_plot_all=False):
 
-    plt.rc('axes', prop_cycle=custom_cycler_location_subplot)
+    #plt.rc('axes', prop_cycle=custom_cycler_location_subplot)
+
+    if over_plot_all:
+        fig, axes = plt.subplots(1, 3)
+        plt.subplots_adjust(wspace=0.0)
 
     for im in ims:
 
-        #fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig, axes = plt.subplots(1, 3)
-        plt.subplots_adjust(wspace=0.0)
+        if not over_plot_all:
+            fig, axes = plt.subplots(1, 3)
+            plt.subplots_adjust(wspace=0.0)
 
         for location_idx, location in enumerate(locations):
 
@@ -242,8 +255,6 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
                 nloc_001_str = locations_nloc_dict[location]
 
                 run_counter = int(run.split("_")[-1])
-
-                print()
 
                 mean = df[(df["agg"] == "mean") &
                           (df["vs30"] == vs30) &
@@ -274,15 +285,21 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
                     ## only plot the inteface both
                     continue
 
-
-
+                if "CRU" in plot_label_short:
+                    linestyle = '--'
+                if "INTER" in plot_label_short:
+                    linestyle = "-."
+                if "SLAB" in plot_label_short:
+                    linestyle = ":"
 
                 plot_label = plot_label_short
 
-                axes[location_idx].semilogy(std_ln, mean, label=plot_label)
+                if not over_plot_all:
+                    axes[location_idx].semilogy(std_ln, mean, label=plot_label,
+                                                linestyle=linestyle)
 
-                axes[location_idx].set_ylim(1e-5,1e0)
-                axes[location_idx].set_xlim(-0.01, 0.9)
+                axes[location_idx].set_ylim(1e-5,0.6)
+                axes[location_idx].set_xlim(-0.01, 0.7)
                 axes[location_idx].set_title(location)
 
                 if location_idx == 0:
@@ -295,66 +312,32 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
                     axes[location_idx].set_yticklabels([])
 
             axes[location_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
-            axes[location_idx].legend(loc="lower left", prop={'size': 4})
+            if not over_plot_all:
+                if location_idx == 0:
+                    axes[location_idx].legend(loc="lower left", prop={'size': 3},
+                                                  handlelength=5)
+            if over_plot_all:
+                axes[location_idx].legend(loc="lower left", prop={'size': 3},
+                                          handlelength=5, ncol=4)
 
-
-        fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
+            if over_plot_all:
+                axes[location_idx].semilogy(std_ln, mean, label=f"{im} " + plot_label,
+                                            linestyle=linestyle)
 
         if not over_plot_all:
+            fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
             pdf_all_ims.savefig(fig)
 
-
+    if over_plot_all:
+        fig.suptitle(f'All IMs, Vs30 = 400 m/s')
+        pdf_all_ims.savefig(fig)
 
 
 # do_plots(over_plot_all=True)
-#
 # do_plots(over_plot_all=False)
 
-#do_plots_with_seperate_location_subplots(over_plot_all=True)
-
+do_plots_with_seperate_location_subplots(over_plot_all=True)
 do_plots_with_seperate_location_subplots(over_plot_all=False)
 
 pdf_all_ims.close()
-
-# plt.close("all")
-# for im in ims:
-#
-#     plt.rc('axes', prop_cycle=custom_cycler)
-#     for location in ["AKL","WLG","CHC"]:
-#     #for location in ["WLG"]:
-#     #for location in [location]:
-#
-#         dir_list = natsort.natsorted([x for x in auto_dir.iterdir() if x.is_dir()])
-#
-#         for run_dir in dir_list:
-#
-#             run_counter = int(run_dir.name.split("_")[-1])
-#
-#             # Get all the files in the results directory
-#             df = load_location_from_run(output_dir = run_dir, location = location)
-#
-#             mean = df[(df["agg"] == "mean") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
-#             cov = df[(df["agg"] == "cov") & (df["vs30"] == vs30) & (df["imt"] == im)]["values"].values[0]
-#
-#             sln = np.sqrt(np.log(cov ** 2 + 1))
-#             # skip the single branch run with no variance
-#             if np.all(np.isclose(sln,0.0)):
-#                 continue
-#             # ax = plt.gca()
-#             # ax.set_prop_cycle(default_cycler)
-#             #plt.semilogy(sln, mean, label=f"{run_dir.name} {im} in {location} (Vs30 = {vs30} m/s)")
-#             plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
-#                           f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
-#             plt.semilogy(sln, mean, label=plot_label)
-#
-#             #plt.semilogy(sln, mean, "k.")
-#
-#     plt.xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
-#     plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
-#     plt.title(f'All IMs, fixed Vs30 = 400 m/s')
-#     #plt.legend(prop={'size': 8})
-# pdf_all_ims.savefig()
-# pdf_all_ims.close()
-#
-# print()
 
