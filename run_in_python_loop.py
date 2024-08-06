@@ -28,8 +28,6 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
-    print()
-
     logic_tree_tools.print_info(custom_logic_tree_set)
 
     # check the validity of the weights
@@ -38,9 +36,6 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
 
     modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
     modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
-
-
-    print()
 
     custom_logic_tree_set.notes_to_toml(output_staging_dir / f"run_{run_counter}_notes.toml")
 
@@ -226,7 +221,7 @@ logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 os.environ['THP_ENV_FILE'] = str(input_file_dir / ".env_home")
@@ -241,8 +236,8 @@ output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-locations = ["AKL","WLG","CHC"]
-#locations = ["WLG"]
+#locations = ["AKL","WLG","CHC"]
+locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -266,21 +261,7 @@ for branch_set in glt_full.branch_sets:
     count_dict[branch_set.short_name] = count_strings(branch_gsim_name_list)
 
 
-
-
-
-
-
-print()
-
-
-
-
-
-
         #print(f"{branch_set.short_name}, {branch.gsim_name})
-
-print()
 
 #["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
 # options are "both", "HIK", "PUY"
@@ -296,8 +277,17 @@ trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt_note = slt_highest_entry_list[0].slt_note,
     glt_note = 'full > ')
 
-available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
-which_interfaces = ["both", "HIK", "PUY"]
+full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
+    slt = copy.deepcopy(slt_full),
+    glt = copy.deepcopy(glt_full),
+    slt_note = "full > ",
+    glt_note = 'full > ')
+
+# available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
+# which_interfaces = ["both", "HIK", "PUY"]
+
+available_trts = ["Active Shallow Crust"]
+which_interfaces = ["both"]
 
 logic_tree_list = []
 
@@ -349,9 +339,10 @@ for lt_set in logic_tree_list:
 
     glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
     all_glt_gsim_names.append(glt_gsim_names)
-    print()
 
     unique_gsim_names = list(set(glt_gsim_names))
+
+    unique_gsim_names = ['Bradley2013']
 
     for gsim_name in unique_gsim_names:
 
@@ -374,7 +365,9 @@ for lt_set in logic_tree_list:
 
         logic_tree_list2.append(modified_lt_set)
 
-logic_tree_list = logic_tree_list2
+#logic_tree_list = logic_tree_list2
+
+logic_tree_list = [full_full_input_entry]
 
 #lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = ["Active Shallow Crust", "Subduction Interface"], which_interface="HIK")
 

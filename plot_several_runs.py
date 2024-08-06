@@ -141,6 +141,7 @@ def insert_ln_std(df):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto1")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto2")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto3")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto4")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto5")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto6")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto7")
@@ -157,10 +158,11 @@ vs30 = 400
 
 run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
 
-pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pdf")
+#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pdf")
+pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion_seperate_trt.pdf")
 
-ims = ["PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
-#ims = ["PGA"]
+#ims = ["PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
+ims = ["PGA"]
 
 
 locations = ["AKL","WLG","CHC"]
@@ -273,10 +275,15 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
 
                 trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
                 glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+                glt_model = glt_model_from_note.split("*")[0]
+                glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+
 
                 #plot_label_short = plot_label.split(">")[-2].strip().split(":")[-1].strip("[]")
 
-                plot_label_short = f"{trts_from_note} {glt_model_from_note}"
+                #plot_label_short = f"{trts_from_note} {glt_model_from_note}"
+
+                plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
 
                 # if plot_label_short != "INTER HIK":
                 #     continue
@@ -313,9 +320,9 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
 
             axes[location_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
             if not over_plot_all:
-                if location_idx == 0:
-                    axes[location_idx].legend(loc="lower left", prop={'size': 3},
-                                                  handlelength=5)
+                #if location_idx == 0:
+                axes[location_idx].legend(loc="lower left", prop={'size': 3},
+                                              handlelength=5)
             if over_plot_all:
                 axes[location_idx].legend(loc="lower left", prop={'size': 3},
                                           handlelength=5, ncol=4)
@@ -333,11 +340,101 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
         pdf_all_ims.savefig(fig)
 
 
-# do_plots(over_plot_all=True)
-# do_plots(over_plot_all=False)
+def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
 
-do_plots_with_seperate_location_subplots(over_plot_all=True)
-do_plots_with_seperate_location_subplots(over_plot_all=False)
+    fig, axes = plt.subplots(1, 3)
+    plt.subplots_adjust(wspace=0.0)
+
+    for run in run_list:
+
+        nloc_001_str = locations_nloc_dict[location]
+
+        run_counter = int(run.split("_")[-1])
+
+        mean = df[(df["agg"] == "mean") &
+                  (df["vs30"] == vs30) &
+                  (df["imt"] == im) &
+                  (df["hazard_model_id"] == run) &
+                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+        std_ln = df[(df["agg"] == "std_ln") &
+                  (df["vs30"] == vs30) &
+                  (df["imt"] == im) &
+                  (df["hazard_model_id"] == run) &
+                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+        slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+        glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
+
+        trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+        glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+        glt_model = glt_model_from_note.split("*")[0]
+        glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+
+        if "CRU" in trts_from_note:
+            subplot_idx = 0
+        if "INTER" in trts_from_note:
+            subplot_idx = 1
+        if "SLAB" in trts_from_note:
+            subplot_idx = 2
+
+        plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+
+        # if plot_label_short != "INTER HIK":
+        #     continue
+
+        if ("HIK" in plot_label_short) or ("PUY" in plot_label_short):
+            ## only plot the inteface both
+            continue
+
+        if "CRU" in plot_label_short:
+            linestyle = '--'
+        if "INTER" in plot_label_short:
+            linestyle = "-."
+        if "SLAB" in plot_label_short:
+            linestyle = ":"
+
+        plot_label = plot_label_short
+
+
+        axes[subplot_idx].semilogy(std_ln, mean, label=plot_label,
+                                    linestyle=linestyle)
+
+        axes[subplot_idx].set_ylim(1e-5,0.6)
+        axes[subplot_idx].set_xlim(-0.01, 0.7)
+
+        axes[0].set_title("Active Shallow Crust",fontsize=11)
+        axes[1].set_title("Subduction Interface",fontsize=11)
+        axes[2].set_title("Subduction Intraslab",fontsize=11)
+
+        if subplot_idx == 0:
+            axes[subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+
+        if subplot_idx == 1:
+            axes[subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+            axes[subplot_idx].set_yticklabels([])
+        if subplot_idx == 2:
+            axes[subplot_idx].set_yticklabels([])
+
+        axes[subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+
+        #if subplot_idx == 0:
+        axes[subplot_idx].legend(loc="lower left", prop={'size': 3},
+                                      handlelength=5)
+
+    fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
+    pdf_all_ims.savefig(fig)
+
+do_plots_with_seperate_tectonic_region_type_per_location("AKL", over_plot_all=False)
+do_plots_with_seperate_tectonic_region_type_per_location("WLG", over_plot_all=False)
+do_plots_with_seperate_tectonic_region_type_per_location("CHC", over_plot_all=False)
+
+
+#do_plots(over_plot_all=True)
+#do_plots(over_plot_all=False)
+
+#do_plots_with_seperate_location_subplots(over_plot_all=True)
+#do_plots_with_seperate_location_subplots(over_plot_all=False)
 
 pdf_all_ims.close()
 
