@@ -87,8 +87,6 @@ def OLD_run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
-    print()
-
     logic_tree_tools.print_info(custom_logic_tree_set)
 
     # check the validity of the weights
@@ -97,8 +95,6 @@ def OLD_run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree
 
     modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
     modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
-
-    print()
 
     custom_logic_tree_set.notes_to_toml(output_staging_dir / f"run_{run_counter}_notes.toml")
 
@@ -181,7 +177,6 @@ def combine_logic_tree_combinations(slt_combinations, glt_combinations):
             combination_list.append(slt_glt_entry)
 
     # check that all required parameters are present
-    print()
     check_validity_of_combinations(combination_list)
     return combination_list
 
@@ -220,8 +215,14 @@ logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
+delete_exisiting_output = True
+
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
+
+if delete_exisiting_output:
+    shutil.rmtree(output_dir, ignore_errors=True)
+
 output_dir.mkdir(parents=True, exist_ok=True)
 
 os.environ['THP_ENV_FILE'] = str(input_file_dir / ".env_home")
@@ -232,6 +233,10 @@ with open(input_file_dir / ".env_home", 'r') as file:
     env_lines = file.readlines()
 
 output_staging_dir = Path(env_lines[-1].split('=')[1].strip("\n \' \" "))
+if delete_exisiting_output:
+    shutil.rmtree(output_staging_dir, ignore_errors=True)
+    output_staging_dir.mkdir(parents=True, exist_ok=True)
+
 
 toml_dict = toml.load(initial_input_file)
 
@@ -242,9 +247,23 @@ locations = ["WLG"]
 args = AggregationArgs(initial_input_file)
 
 args.locations = locations
+args.output_individual_realizations = True
 
 slt_full = args.srm_logic_tree
 glt_full = args.gmcm_logic_tree
+
+def print_branch_set_total_weight(logic_tree):
+
+    logic_tree = copy.deepcopy(logic_tree)
+    total_weight = 0.0
+
+    for branch_set in logic_tree.branch_sets:
+        for branch in branch_set.branches:
+            total_weight += branch.weight
+        print(f"{branch_set.short_name} total weight: {total_weight}")
+        total_weight = 0.0
+
+print()
 
 count_dict = {}
 
@@ -270,6 +289,7 @@ for branch_set in glt_full.branch_sets:
 # glt_crust = logic_tree_tools.select_trt_branch_sets(glt_full, ["Active Shallow Crust"])
 
 slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
+glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
 
 trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
@@ -283,91 +303,87 @@ full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt_note = "full > ",
     glt_note = 'full > ')
 
+highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
+    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+    glt = copy.deepcopy(glt_highest_entry_list[0].glt),
+    slt_note = slt_highest_entry_list[0].slt_note,
+    glt_note = glt_highest_entry_list[0].glt_note)
+
 # available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
 # which_interfaces = ["both", "HIK", "PUY"]
 
 available_trts = ["Active Shallow Crust"]
 which_interfaces = ["both"]
 
-logic_tree_list = []
+logic_tree_list = [full_full_input_entry]
 
-# for which_interface in which_interfaces:
+## For getting all ground motion models
+
+# for trt in available_trts:
 #
-#     for num_trts in range(len(available_trts)):
+#     if trt == "Subduction Interface":
 #
-#         combs = list(itertools.combinations(available_trts, num_trts+1))
+#         for which_interface in which_interfaces:
 #
-#         for comb in combs:
+#             comb = [trt]
 #
 #             lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
 #
 #             logic_tree_list.append(lt_entry_for_trts)
-
-
-
 #
+#     else:
+#
+#         comb = [trt]
+#
+#         lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
+#                                                          which_interface=None)
+#
+#         logic_tree_list.append(lt_entry_for_trts)
+#
+# logic_tree_list2 = []
+#
+# all_glt_gsim_names = []
+#
+# for lt_set in logic_tree_list:
+#
+#     assert len(lt_set.glt.branch_sets) == 1
+#
+#     glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
+#     all_glt_gsim_names.append(glt_gsim_names)
+#
+#     unique_gsim_names = list(set(glt_gsim_names))
+#
+#     unique_gsim_names = ['Bradley2013']
+#
+#     for gsim_name in unique_gsim_names:
+#
+#         selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
+#
+#         selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
+#                                  branch.gsim_name == gsim_name])
+#
+#         needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
+#
+#         scaled_weights = selected_glt_branch_weights * needed_scaling_factor
+#
+#         for i, branch in enumerate(selected_glt_branches):
+#             branch.weight = scaled_weights[i]
+#
+#         modified_lt_set = copy.deepcopy(lt_set)
+#
+#         modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
+#         modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
+#
+#         logic_tree_list2.append(modified_lt_set)
+#
+#
+#
+# logic_tree_list = logic_tree_list2
 
-for trt in available_trts:
-
-    if trt == "Subduction Interface":
-
-        for which_interface in which_interfaces:
-
-            comb = [trt]
-
-            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
-
-            logic_tree_list.append(lt_entry_for_trts)
-
-    else:
-
-        comb = [trt]
-
-        lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
-                                                         which_interface=None)
-
-        logic_tree_list.append(lt_entry_for_trts)
+## end code for getting all ground motion models
 
 
-logic_tree_list2 = []
-
-all_glt_gsim_names = []
-
-for lt_set in logic_tree_list:
-
-    assert len(lt_set.glt.branch_sets) == 1
-
-    glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
-    all_glt_gsim_names.append(glt_gsim_names)
-
-    unique_gsim_names = list(set(glt_gsim_names))
-
-    unique_gsim_names = ['Bradley2013']
-
-    for gsim_name in unique_gsim_names:
-
-        selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
-
-        selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
-                                 branch.gsim_name == gsim_name])
-
-        needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
-
-        scaled_weights = selected_glt_branch_weights * needed_scaling_factor
-
-        for i, branch in enumerate(selected_glt_branches):
-            branch.weight = scaled_weights[i]
-
-        modified_lt_set = copy.deepcopy(lt_set)
-
-        modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
-        modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
-
-        logic_tree_list2.append(modified_lt_set)
-
-#logic_tree_list = logic_tree_list2
-
-logic_tree_list = [full_full_input_entry]
+#logic_tree_list = [full_full_input_entry]
 
 #lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = ["Active Shallow Crust", "Subduction Interface"], which_interface="HIK")
 
@@ -430,8 +446,6 @@ logic_tree_list = [full_full_input_entry]
 
 ### End
 
-
-
 logic_tree_tools.print_info(logic_tree_list)
 
 run_notes_df = pd.DataFrame()
@@ -443,7 +457,6 @@ for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
 # move the "run_counter" column to the left-most position
 run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
 run_notes_df.to_csv(output_dir / "run_notes.csv")
-
 
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
     run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir)

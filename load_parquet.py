@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+import toshi_hazard_post.calculators as calculators
+
 NSHM_IM_LEVELS = np.array([
     0.0001,
     0.0002,
@@ -49,11 +51,75 @@ NSHM_IM_LEVELS = np.array([
     9.0,
     10.0])
 
-data_dir = Path('/home/arr65/data/nshm/auto_output/auto10/run_0/nloc_0=-41.0~175.0')
+data_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/nloc_0=-41.0~175.0")
+realization_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
-df = pd.read_parquet(data_dir / 'realizations_723ecb5c-eecc-4872-8bf7-bc936b84a286-part-0.parquet')
+
+df = pd.read_parquet(realization_dir / '9e9650eb-7e50-4290-adc7-fcc9aa2fdb36-part-0.parquet')
+
+rate_array = np.zeros((len(df), len(NSHM_IM_LEVELS)))
 
 print()
+
+for i in range(len(df)):
+    if i % 1000 == 0.0:
+        print(i)
+    rate_array[i] = df['branches_hazard_rates'][i]
+
+weights = df["branch_weight"].values
+
+weighted_avg_rate = np.average(rate_array, weights=weights, axis=0)
+
+weighted_avg_prob_from_rate = calculators.rate_to_prob(weighted_avg_rate, 1.0)
+
+
+df_agg = pd.read_parquet(data_dir / '16dd2556-b1b9-4bb4-a173-0a82e004655e-part-0.parquet')
+
+agg_mean = df_agg[df_agg["agg"] == "mean"]["values"][0]
+
+print()
+
+plt.loglog(NSHM_IM_LEVELS, weighted_avg_prob_from_rate, label='weighted_avg_prob')
+plt.loglog(NSHM_IM_LEVELS, agg_mean, label='agg_mean')
+plt.ylabel("Annual exceedance rate")
+plt.xlabel("PGA")
+plt.legend()
+plt.show()
+
+residual = np.log(weighted_avg_prob_from_rate) - np.log(agg_mean)
+
+plt.figure()
+plt.semilogx(NSHM_IM_LEVELS, residual, '.')
+plt.ylabel("log10(weighted_avg_prob) - log10(agg_mean)")
+plt.xlabel("PGA")
+plt.show()
+
+print()
+
+###################
+## Trying the actual functions from aggregation_calc.py
+
+from toshi_hazard_post import aggregation_calc
+
+hazard = aggregation_calc.calculate_aggs(rate_array, weights, ["mean"])
+
+probs = calculators.rate_to_prob(hazard, 1.0)
+
+plt.loglog(NSHM_IM_LEVELS, probs[0], label='hazard_mean')
+plt.loglog(NSHM_IM_LEVELS, agg_mean, label='agg_mean')
+plt.show()
+
+residual2 = np.log(probs[0]) - np.log(agg_mean)
+
+plt.figure()
+plt.semilogx(NSHM_IM_LEVELS, residual2, '.')
+plt.ylabel("log10(weighted_avg_prob) - log10(agg_mean)")
+plt.xlabel("PGA")
+plt.show()
+
+
+
+
 
 # #df = pd.read_parquet(data_dir / '2dbaf8f2-9f19-4d33-b852-366dda120b54-part-0.parquet')
 # df = pd.read_parquet(data_dir / 'b75b4f5b-7a18-404d-a29e-9b661c1fd893-part-0.parquet')
