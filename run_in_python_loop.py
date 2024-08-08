@@ -215,7 +215,7 @@ logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-delete_exisiting_output = False
+delete_exisiting_output = True
 
 input_file_dir = Path("custom_input_files")
 output_dir = Path("/home/arr65/data/nshm/auto_output/auto12")

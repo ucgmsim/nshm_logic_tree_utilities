@@ -69,7 +69,7 @@ source_registry_csv = pd.read_csv(registry_dir / 'source_branches.csv')
 print()
 
 data_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/nloc_0=-41.0~175.0")
-realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
+realization_dir = Path("/home/arr65/data/nshm/auto_output/auto12/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/individual_realizations")
 
@@ -82,6 +82,9 @@ print()
 #df = ds.dataset(source=realization_dir,format="parquet")
 
 df = ds.dataset(source=realization_dir,format="parquet").to_table().to_pandas()
+
+print()
+
 
 hwbidx = np.argmax(df["branch_weight"])
 
