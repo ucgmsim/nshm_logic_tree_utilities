@@ -81,24 +81,67 @@ print()
 
 #df = ds.dataset(source=realization_dir,format="parquet")
 
-df = ds.dataset(source=realization_dir,format="parquet").to_table().to_pandas()
+df = ds.dataset(source=realization_dir, format="parquet").to_table().to_pandas()
+
+gmm_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("gmm" in str(x)))]
+source_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("source" in str(x)))]
+
+
+
+desired_gmm_name = "Bradley2013"
+
+needed_gmm_hash_ids = gmm_registry_csv[gmm_registry_csv["identity"].str.contains(desired_gmm_name)]["hash_digest"].values
+
+# mask = df[id_col_names] == needed_gmm_hash_ids[0]
+# for needed_gmm_id in needed_gmm_hash_ids[1:]:
+#     mask |= df[id_col_names] == needed_gmm_id
+
+mask_list = []
+
+mask_2d = np.zeros((len(df), 4), dtype=bool)
+
+
+
+for col_idx, id_col_name in enumerate(gmm_id_col_names):
+
+    mask_2d[:,col_idx] = df[id_col_name].str.contains(needed_gmm_hash_ids[0]).values
+
+mask = np.any(mask_2d, axis=1)
+masked_df = df[mask]
+
+highest_weighted_row_masked_idx = masked_df["branch_weight"].argmax()
+
+highest_weighted_branch_in_selection = masked_df.loc[highest_weighted_row_masked_idx]
+
+
+
 
 print()
+
+
+
+
+
+
+
+
+
 
 
 hwbidx = np.argmax(df["branch_weight"])
 
 #"gsim_name": "Bradley2013",
 
-desired_gmm_name = "Bradley2013"
 
 needed_gmm_hash_ids = []
 
 
-for idx, row in gmm_registry_csv.iterrows():
 
-    if desired_gmm_name in row["identity"]:
-        needed_gmm_hash_ids.append(row["hash_digest"])
+
+# for idx, row in gmm_registry_csv.iterrows():
+#
+#     if desired_gmm_name in row["identity"]:
+#         needed_gmm_hash_ids.append(row["hash_digest"])
 
 print()
 
@@ -139,7 +182,7 @@ component_hash_id_lens = np.array(component_hash_id_lens)
 # print()
 #
 #
-        
+
 
 
 

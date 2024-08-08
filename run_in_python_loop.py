@@ -218,7 +218,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = True
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -291,6 +291,8 @@ for branch_set in glt_full.branch_sets:
 slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
 glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
 
+print()
+
 trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
     glt = copy.deepcopy(glt_full),
@@ -315,73 +317,78 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
 available_trts = ["Active Shallow Crust"]
 which_interfaces = ["both"]
 
-logic_tree_list = [full_full_input_entry]
+
 
 ## For getting all ground motion models
 
-# for trt in available_trts:
-#
-#     if trt == "Subduction Interface":
-#
-#         for which_interface in which_interfaces:
-#
-#             comb = [trt]
-#
-#             lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
-#
-#             logic_tree_list.append(lt_entry_for_trts)
-#
-#     else:
-#
-#         comb = [trt]
-#
-#         lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
-#                                                          which_interface=None)
-#
-#         logic_tree_list.append(lt_entry_for_trts)
-#
-# logic_tree_list2 = []
-#
-# all_glt_gsim_names = []
-#
-# for lt_set in logic_tree_list:
-#
-#     assert len(lt_set.glt.branch_sets) == 1
-#
-#     glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
-#     all_glt_gsim_names.append(glt_gsim_names)
-#
-#     unique_gsim_names = list(set(glt_gsim_names))
-#
-#     unique_gsim_names = ['Bradley2013']
-#
-#     for gsim_name in unique_gsim_names:
-#
-#         selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
-#
-#         selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
-#                                  branch.gsim_name == gsim_name])
-#
-#         needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
-#
-#         scaled_weights = selected_glt_branch_weights * needed_scaling_factor
-#
-#         for i, branch in enumerate(selected_glt_branches):
-#             branch.weight = scaled_weights[i]
-#
-#         modified_lt_set = copy.deepcopy(lt_set)
-#
-#         modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
-#         modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
-#
-#         logic_tree_list2.append(modified_lt_set)
-#
-#
-#
-# logic_tree_list = logic_tree_list2
+logic_tree_list = []
+
+for trt in available_trts:
+
+    if trt == "Subduction Interface":
+
+        for which_interface in which_interfaces:
+
+            comb = [trt]
+
+            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
+
+            logic_tree_list.append(lt_entry_for_trts)
+
+    else:
+
+        comb = [trt]
+
+        lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
+                                                         which_interface=None)
+
+        logic_tree_list.append(lt_entry_for_trts)
+
+logic_tree_list2 = []
+
+all_glt_gsim_names = []
+
+for lt_set in logic_tree_list:
+
+    assert len(lt_set.glt.branch_sets) == 1
+
+    glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
+    all_glt_gsim_names.append(glt_gsim_names)
+
+    unique_gsim_names = list(set(glt_gsim_names))
+
+    unique_gsim_names = ['Bradley2013']
+
+    for gsim_name in unique_gsim_names:
+
+        selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
+
+        selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
+                                 branch.gsim_name == gsim_name])
+
+        needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
+
+        scaled_weights = selected_glt_branch_weights * needed_scaling_factor
+
+        for i, branch in enumerate(selected_glt_branches):
+            branch.weight = scaled_weights[i]
+
+        modified_lt_set = copy.deepcopy(lt_set)
+
+        modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
+        modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
+
+        logic_tree_list2.append(modified_lt_set)
+
+
+
+logic_tree_list = logic_tree_list2
 
 ## end code for getting all ground motion models
 
+#logic_tree_list = [full_full_input_entry]
+
+######################################################################
 
 #logic_tree_list = [full_full_input_entry]
 
