@@ -3,55 +3,60 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import pyarrow.dataset as ds
+import natsort
+import copy
+from matplotlib.backends.backend_pdf import PdfPages
 
+from toshi_hazard_post import aggregation_calc
 import toshi_hazard_post.calculators as calculators
+
+def remove_special_characters(s):
+    chars_to_remove = ["'", "[", "]", '"']
+
+    translation_table = str.maketrans('', '', ''.join(chars_to_remove))
+    return s.translate(translation_table)
+
+group_id_to_color = {"AbrahamsonEtAl2014":"blue",
+                     "Atkinson2022Crust":"orange",
+                        "BooreEtAl2014":"green",
+                        "Bradley2013":"red",
+                        "CampbellBozorgnia2014":"purple",
+                        "ChiouYoungs2014":"brown",
+                        "Stafford2022":"pink"}
+
+
+def plot_residuals(group_id, stat_from_realizations, stat_from_toshi_hazard_post, stat_name):
+
+    residual = np.log(stat_from_realizations) - np.log(stat_from_toshi_hazard_post)
+
+    label_font_size = 10
+
+    plt.close("all")
+
+    plt.subplot(2, 1, 1)
+    plt.title(f"{group_id} {stat_name}")
+    plt.loglog(nshm_im_levels, stat_from_toshi_hazard_post,label="toshi hazard post")
+    plt.loglog(nshm_im_levels, stat_from_realizations, "r--",label="realizations")
+    plt.legend()
+
+    plt.ylabel('APoE',fontsize=label_font_size)
+    plt.xlabel('acceleration (g)',fontsize=label_font_size)
+
+    plt.subplot(2, 1, 2)
+    plt.title(f'{group_id} residual in {stat_name}')
+    plt.semilogx(nshm_im_levels, residual, '.-')
+    plt.xlabel('acceleration (g)',fontsize=label_font_size)
+    plt.ylabel('ln(real.) - ln(thp)',fontsize=label_font_size)
+    plt.subplots_adjust(left=0.15,hspace=0.6)
+
+
 import nzshm_model.branch_registry
 
-nshm_im_levels = np.array([
-    0.0001,
-    0.0002,
-    0.0004,
-    0.0006,
-    0.0008,
-    0.001,
-    0.002,
-    0.004,
-    0.006,
-    0.008,
-    0.01,
-    0.02,
-    0.04,
-    0.06,
-    0.08,
-    0.1,
-    0.2,
-    0.3,
-    0.4,
-    0.5,
-    0.6,
-    0.7,
-    0.8,
-    0.9,
-    1.0,
-    1.2,
-    1.4,
-    1.6,
-    1.8,
-    2.0,
-    2.2,
-    2.4,
-    2.6,
-    2.8,
-    3.0,
-    3.5,
-    4,
-    4.5,
-    5.0,
-    6.0,
-    7.0,
-    8.0,
-    9.0,
-    10.0])
+plot_all_residuals = False
+plot_poe_comparisons = True
+
+if plot_all_residuals:
+    residual_pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / "residuals_realizations_thp.pdf")
 
 nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
@@ -59,17 +64,309 @@ nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 #registry = nzshm_model.branch_registry.Registry()
 
 registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-gmm_registry_csv = pd.read_csv(registry_dir / 'gmm_branches.csv')
-source_registry_csv = pd.read_csv(registry_dir / 'source_branches.csv')
+gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
+source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 
 ### registry can be accessed like:
 ## entry = registry.source_registry.get_by_hash("af9ec2b004d7")
 
+
+# data_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/nloc_0=-41.0~175.0")
+# realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
+
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+
+run_dirs = [x for x in base_dir.iterdir() if x.is_dir()]
+run_dirs = natsort.natsorted(run_dirs)
+
+statistical_aggregation_df = pd.DataFrame()
+individual_realization_df = pd.DataFrame()
+
+for run_dir in run_dirs:
+
+    temp_df = ds.dataset(source=run_dir / "individual_realizations", format="parquet").to_table().to_pandas()
+
+    individual_realization_df = pd.concat([individual_realization_df, temp_df], ignore_index=True)
+
+    location_dirs = [x for x in run_dir.iterdir() if (x.is_dir() & ("nloc" in str(x)))]
+
+    for location_dir in location_dirs:
+
+        temp_df = ds.dataset(source=location_dir, format="parquet").to_table().to_pandas()
+
+        statistical_aggregation_df = pd.concat([statistical_aggregation_df, temp_df],ignore_index=True)
+
+source_ids = []
+gmm_ids = []
+
+
+### Get all realization ids
+for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == "-41.300~174.780"].iterrows():
+
+    contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
+    contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
+
+    for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
+
+        source_id = contributing_branches_hash_id[0:12]
+        gmm_id = contributing_branches_hash_id[12:24]
+
+        gmm_reg_idx = gmm_registry_df["hash_digest"] == gmm_id
+        gmm_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
+
+        source_reg_idx = source_registry_df["hash_digest"] == source_id
+        source_id = source_registry_df[source_reg_idx]["extra"].values[0]
+
+        source_ids.append(source_id)
+        gmm_ids.append(gmm_id)
+
+source_ids = np.array(source_ids)
+assert np.all(source_ids == source_ids[0]), "All source ids should be the same"
 print()
 
-data_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/nloc_0=-41.0~175.0")
-realization_dir = Path("/home/arr65/data/nshm/auto_output/auto12/run_0/individual_realizations/nloc_0=-41.0~175.0")
+gmm_id_groups = []
+
+for gmm_id in gmm_ids:
+
+    gmm_group_id = gmm_id.split("(")[0]
+    if gmm_group_id not in gmm_id_groups:
+        gmm_id_groups.append(gmm_group_id)
+
+gmm_id_groups = natsort.natsorted(gmm_id_groups)
+
+id_to_upper_central_lower_dict = {"Bradley2013":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
+                                  "Stafford2022":{"upper":"mu_branch=Upper","central":"mu_branch=Central","lower":"mu_branch=Lower"},
+                                 "BooreEtAl2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
+                                 "Atkinson2022Crust":{"upper":"epistemic=Upper, modified_sigma=true","central":"epistemic=Central, modified_sigma=true","lower":"epistemic=Lower, modified_sigma=true"},
+                                 "AbrahamsonEtAl2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
+                                 "CampbellBozorgnia2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
+                                 "ChiouYoungs2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"}}
+
+id_to_rate_array_dict = copy.deepcopy(id_to_upper_central_lower_dict)
+id_to_weight_dict = copy.deepcopy(id_to_upper_central_lower_dict)
+id_to_rate_agg_stats_dict = copy.deepcopy(id_to_upper_central_lower_dict)
+id_to_prob_agg_stats_dict = {}
+id_to_prob_array_dict = {}
+
+group_id_to_run_dict = {}
+
+for key in id_to_rate_array_dict.keys():
+    id_to_rate_array_dict[key] = np.zeros((3, len(nshm_im_levels)))
+
+for key in id_to_weight_dict.keys():
+    id_to_weight_dict[key] = np.zeros(3)
+
+location_code_str = "-41.300~174.780"
+
+for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == location_code_str].iterrows():
+
+    hazard_rate = row["branches_hazard_rates"]
+
+    contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
+    contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
+
+    realization_id = ""
+
+    # get the ids of all branches that contributed to this realization
+    assert len(contributing_branches_hash_ids_clean) == 1, "realizations from multiple branches are not yet fully supported"
+    for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
+
+        source_id = contributing_branches_hash_id[0:12]
+        gmm_id = contributing_branches_hash_id[12:24]
+
+        gmm_reg_idx = gmm_registry_df["hash_digest"] == gmm_id
+        gmm_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
+
+        source_reg_idx = source_registry_df["hash_digest"] == source_id
+        source_id = source_registry_df[source_reg_idx]["extra"].values[0]
+
+        #realization_id += f"{source_id}_{gmm_id}_"
+        realization_id += f"{gmm_id}_"
+
+    gmm_group_id = realization_id.split("(")[0]
+    id_within_group = realization_id.split("(")[1].strip("_)(")
+
+    if gmm_group_id not in group_id_to_run_dict.keys():
+        group_id_to_run_dict[gmm_group_id] = row["hazard_model_id"]
+
+    upper_key = id_to_upper_central_lower_dict[gmm_group_id]["upper"]
+    central_key = id_to_upper_central_lower_dict[gmm_group_id]["central"]
+    lower_key = id_to_upper_central_lower_dict[gmm_group_id]["lower"]
+
+    if id_within_group == upper_key:
+        id_to_rate_array_dict[gmm_group_id][0] = hazard_rate
+        id_to_weight_dict[gmm_group_id][0] = row["branch_weight"]
+
+    elif id_within_group == central_key:
+        id_to_rate_array_dict[gmm_group_id][1] = hazard_rate
+        id_to_weight_dict[gmm_group_id][1] = row["branch_weight"]
+
+    elif id_within_group == lower_key:
+        id_to_rate_array_dict[gmm_group_id][2] = hazard_rate
+        id_to_weight_dict[gmm_group_id][2] = row["branch_weight"]
+
+for gmm_group_id in gmm_id_groups:
+
+    rate_array = id_to_rate_array_dict[gmm_group_id]
+
+    id_to_rate_agg_stats_dict[gmm_group_id] = aggregation_calc.calculate_aggs(rate_array, id_to_weight_dict[gmm_group_id], ["mean", "std", "cov"])
+    id_to_prob_agg_stats_dict[gmm_group_id] = calculators.rate_to_prob(id_to_rate_agg_stats_dict[gmm_group_id], 1.0)
+
+    id_to_prob_array_dict[gmm_group_id] = calculators.rate_to_prob(id_to_rate_array_dict[gmm_group_id], 1.0)
+
+    if plot_all_residuals:
+
+        run_name = group_id_to_run_dict[gmm_group_id]
+
+        agg_stat_toshi_hazard_post = statistical_aggregation_df[(statistical_aggregation_df["nloc_001"] == location_code_str)
+        & (statistical_aggregation_df["hazard_model_id"] == run_name)]
+
+        ### The aggregate statistics provided directly from the GNS package toshi-hazard-post
+        thp_agg_stats_mean = agg_stat_toshi_hazard_post[agg_stat_toshi_hazard_post["agg"] == "mean"]["values"].values[0]
+        thp_agg_stats_std = agg_stat_toshi_hazard_post[agg_stat_toshi_hazard_post["agg"] == "std"]["values"].values[0]
+        thp_agg_stats_cov = agg_stat_toshi_hazard_post[agg_stat_toshi_hazard_post["agg"] == "cov"]["values"].values[0]
+
+        plot_residuals(gmm_group_id, id_to_prob_agg_stats_dict[gmm_group_id][0], thp_agg_stats_mean, "mean")
+        residual_pdf.savefig()
+        plot_residuals(gmm_group_id, id_to_prob_agg_stats_dict[gmm_group_id][1], thp_agg_stats_std, "std")
+        residual_pdf.savefig()
+        plot_residuals(gmm_group_id, id_to_prob_agg_stats_dict[gmm_group_id][2], thp_agg_stats_mean, "cov")
+        residual_pdf.savefig()
+
+if plot_all_residuals:
+    residual_pdf.close()
+
+if plot_poe_comparisons:
+
+    comparison_pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / "realization_comparison_plots.pdf")
+
+    comparison_base = "Bradley2013"
+    xlims = [1e-2, 5e0]
+    ylims = [1e-6, 1e0]
+
+    for gmm_group_id in gmm_id_groups:
+
+        residuals = np.log10(id_to_prob_array_dict[gmm_group_id]) - np.log10(id_to_prob_array_dict[comparison_base])
+
+        plt.close("all")
+
+        ax1 = plt.subplot(2,1,1)
+        ax1.set_xticklabels([])
+        plt.loglog(nshm_im_levels, id_to_prob_array_dict[gmm_group_id][1],linewidth=3, label=gmm_group_id)
+        plt.fill_between(nshm_im_levels, id_to_prob_array_dict[gmm_group_id][0], id_to_prob_array_dict[gmm_group_id][2], alpha=0.3)
+
+        plt.loglog(nshm_im_levels, id_to_prob_array_dict[comparison_base][0], linestyle=':', color="black",linewidth=3)
+        plt.loglog(nshm_im_levels, id_to_prob_array_dict[comparison_base][1],linestyle='--', color="black",linewidth=3,label=comparison_base)
+        plt.loglog(nshm_im_levels, id_to_prob_array_dict[comparison_base][2], linestyle=':', color="black",linewidth=3)
+
+        plt.legend(handlelength=4)
+        #plt.ylabel("Annual probability of exceedance")
+        plt.ylabel("APoE")
+        plt.xlabel("PGA (g)")
+        plt.title("Range indicates upper and lower realizations")
+
+        ax1.set_xticklabels([])
+
+
+        ax2 = plt.subplot(2, 1, 2)
+
+        idxs = np.where((nshm_im_levels >= xlims[0]) & (nshm_im_levels <= xlims[1]))[0]
+
+        plt.semilogx(nshm_im_levels[idxs], residuals[0,idxs], '.-', label="upper residuals")
+        plt.semilogx(nshm_im_levels[idxs], residuals[1,idxs], '.-', label="central residuals")
+        plt.semilogx(nshm_im_levels[idxs], residuals[2,idxs], '.-', label="lower residuals")
+
+        plt.xlabel("PGA (g)")
+        #plt.ylabel(f"log({gmm_group_id}) - log({comparison_base})")
+        plt.ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+        plt.legend()
+        plt.xlim([1e-2, 5e0])
+        #plt.ylim([1e-6, 1e0])
+        plt.subplots_adjust(hspace=0)
+        comparison_pdf.savefig()
+
+    comparison_pdf.close()
+
+
+
+
+
+
+
+
+
+
+
+print()
+
+
+
+
+#     print()
+#
+#
+#     #plt.fill_between(nshm_im_levels, rate_array[0], rate_array[2], alpha=0.3, label=f"{gmm_group_id}")
+#
+#     plt.loglog(nshm_im_levels, rate_array[1], color=group_id_to_color[gmm_group_id], linewidth = 1, linestyle="--", label=f"{gmm_group_id}")
+#     plt.loglog(nshm_im_levels, rate_array[0], color=group_id_to_color[gmm_group_id], linewidth = 1, linestyle=":")
+#     plt.loglog(nshm_im_levels, rate_array[2], color=group_id_to_color[gmm_group_id], linewidth=1, linestyle=":")
+#
+# plt.xlim([1e-2, 5e0])
+# plt.ylim([1e-6, 1e0])
+#
+# plt.legend(prop={'size': 3})
+# plt.savefig('test.pdf')
+# plt.show()
+#
+# print()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #plt.loglog(nshm_im_levels, prob_of_exceedance, label=gmm_id)
+
+
+
+
+# plt.xlim([1e-2, 5e0])
+# plt.ylim([1e-6, 1e0])
+#
+# plt.legend(prop={'size': 3})
+# plt.savefig('test.pdf')
+# plt.show()
+
+print()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto11/run_0/individual_realizations")
 
@@ -85,6 +382,8 @@ df = ds.dataset(source=realization_dir, format="parquet").to_table().to_pandas()
 
 gmm_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("gmm" in str(x)))]
 source_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("source" in str(x)))]
+
+print()
 
 
 
@@ -234,7 +533,7 @@ print()
 
 from toshi_hazard_post import aggregation_calc
 
-hazard = aggregation_calc.calculate_aggs(rate_array, weights, ["mean"])
+
 
 probs = calculators.rate_to_prob(hazard, 1.0)
 

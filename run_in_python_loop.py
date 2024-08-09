@@ -218,7 +218,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = True
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -241,8 +241,8 @@ if delete_exisiting_output:
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-#locations = ["AKL","WLG","CHC"]
-locations = ["WLG"]
+locations = ["AKL","WLG","CHC"]
+#locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -263,7 +263,6 @@ def print_branch_set_total_weight(logic_tree):
         print(f"{branch_set.short_name} total weight: {total_weight}")
         total_weight = 0.0
 
-print()
 
 count_dict = {}
 
@@ -357,7 +356,7 @@ for lt_set in logic_tree_list:
 
     unique_gsim_names = list(set(glt_gsim_names))
 
-    unique_gsim_names = ['Bradley2013']
+    #unique_gsim_names = ['Bradley2013']
 
     for gsim_name in unique_gsim_names:
 
