@@ -7,7 +7,7 @@ import numpy as np
 import copy
 import toml
 from nzshm_model.logic_tree import GMCMLogicTree, SourceBranchSet, SourceLogicTree
-from typing import Optional
+from typing import Optional, Union
 import pandas as pd
 from pathlib import Path
 from dataclasses import dataclass
@@ -498,11 +498,41 @@ def combinations_of_n_branch_sets(logic_tree, n_branch_sets_to_retain):
 
     return modified_logic_tree_list
 
+#Union
+def select_trt_branch_sets(logic_tree: Union[SourceLogicTree, GMCMLogicTree], tectonic_region_types: Union[list[str], str], which_interface: str = "both"):
 
-def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
+    """
+    Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
 
-    if isinstance(trts,str):
-        trts = [trts]
+    Parameters
+    ----------
+    logic_tree : SourceLogicTree or GMCMLogicTree
+        The logic tree to modify.
+
+    tectonic_region_types : list[str] or str
+        A list of the selected tectonic region types.
+        If selecting only a single tectonic region type, can be a string.
+        Valid tectonic region types are:
+            "Active Shallow Crust",
+            "Subduction Interface",
+            "Subduction Intraslab".
+
+    which_interface : str, default = "both"
+        Which subduction interfaces to include.
+        Valid options are:
+           "both" which includes both the Hikurangi–Kermadec (HIK) and Puysegur (PUY) subduction zones
+           "HIK" which includes only the Hikurangi–Kermadec (HIK) subduction zone
+           "PUY" which includes only the Puysegur (PUY) subduction zone.
+
+    Returns
+    -------
+    modified_logic_tree : SourceLogicTree or GMCMLogicTree
+        The modified logic tree that only includes branch sets corresponding
+        to the selected tectonic region type.
+    """
+
+    if isinstance(tectonic_region_types, str):
+        tectonic_region_types = [tectonic_region_types]
 
     modified_logic_tree = copy.deepcopy(logic_tree)
 
@@ -511,7 +541,7 @@ def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
     for branch_set in logic_tree.branch_sets:
         if isinstance(logic_tree, SourceLogicTree):
             for tectonic_region_type in branch_set.tectonic_region_types:
-                if tectonic_region_type in trts:
+                if tectonic_region_type in tectonic_region_types:
                     if tectonic_region_type == "Subduction Interface":
                         if which_interface == "both":
                             new_branch_sets.append(copy.deepcopy(branch_set))
@@ -526,7 +556,7 @@ def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
                         new_branch_sets.append(copy.deepcopy(branch_set))
 
         if isinstance(logic_tree, GMCMLogicTree):
-            if branch_set.tectonic_region_type in trts:
+            if branch_set.tectonic_region_type in tectonic_region_types:
                 new_branch_sets.append(copy.deepcopy(branch_set))
 
     modified_logic_tree.branch_sets = new_branch_sets
@@ -538,33 +568,62 @@ def select_trt_branch_sets(logic_tree, trts, which_interface = "both"):
     else:
         # remove correlations
         modified_logic_tree.correlations = LogicTreeCorrelations()
-    print()
     return modified_logic_tree
 
 
-def get_trt_set(initial_lt_set, trts, which_interface = None): # options are None, "both", "HIK", "PUY"
+def get_trt_set(initial_logic_tree_set: CustomLogicTreeSet, tectonic_region_types: Union[list[str], str], which_interface: Optional[str] = None):
+
+    """
+    Modifies a logic tree set to only include branch sets that correspond to the selected tectonic region types.
+
+    Parameters
+    ----------
+    logic_tree : SourceLogicTree or GMCMLogicTree
+        The logic tree to modify.
+
+    tectonic_region_types : list[str] or str
+        A list of the selected tectonic region types.
+        If selecting only a single tectonic region type, can be a string.
+        Valid tectonic region types are:
+            "Active Shallow Crust",
+            "Subduction Interface",
+            "Subduction Intraslab".
+
+    which_interface : str, default = "both"
+        Which subduction interfaces to include.
+        Valid options are:
+           "both" which includes both the Hikurangi–Kermadec (HIK) and Puysegur (PUY) subduction zones
+           "HIK" which includes only the Hikurangi–Kermadec (HIK) subduction zone
+           "PUY" which includes only the Puysegur (PUY) subduction zone.
+
+    Returns
+    -------
+    modified_logic_tree : SourceLogicTree or GMCMLogicTree
+        The modified logic tree that only includes branch sets corresponding
+        to the selected tectonic region type.
+    """
 
     trt_short_lookup_dict = {"Active Shallow Crust":"CRU",
                              "Subduction Interface":"INTER",
                              "Subduction Intraslab":"SLAB"}
 
-    short_trts = [trt_short_lookup_dict[trt] for trt in trts]
+    short_trts = [trt_short_lookup_dict[trt] for trt in tectonic_region_types]
 
-    modified_lt_set = copy.deepcopy(initial_lt_set)
+    modified_lt_set = copy.deepcopy(initial_logic_tree_set)
 
-    slt = initial_lt_set.slt
-    glt = initial_lt_set.glt
+    slt = initial_logic_tree_set.slt
+    glt = initial_logic_tree_set.glt
 
-    modified_slt = select_trt_branch_sets(slt, trts, which_interface)
-    modified_glt = select_trt_branch_sets(glt, trts)
+    modified_slt = select_trt_branch_sets(slt, tectonic_region_types, which_interface)
+    modified_glt = select_trt_branch_sets(glt, tectonic_region_types)
 
-    if "Subduction Interface" in trts:
-        modified_lt_set.slt_note += f"TRTs:[{' '.join(short_trts)} {which_interface}] > "
+    if "Subduction Interface" in tectonic_region_types:
+        modified_lt_set.slt_note += f"tectonic_region_types:[{' '.join(short_trts)} {which_interface}] > "
 
     else:
-        modified_lt_set.slt_note += f"TRTs:[{' '.join(short_trts)}] > "
+        modified_lt_set.slt_note += f"tectonic_region_types:[{' '.join(short_trts)}] > "
 
-    modified_lt_set.glt_note += f"TRTs:[{' '.join(short_trts)}] > "
+    modified_lt_set.glt_note += f"tectonic_region_types:[{' '.join(short_trts)}] > "
 
     modified_lt_set.slt = copy.deepcopy(modified_slt)
     modified_lt_set.glt = copy.deepcopy(modified_glt)

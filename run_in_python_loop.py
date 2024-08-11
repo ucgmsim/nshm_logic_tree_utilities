@@ -317,32 +317,36 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
 available_trts = ["Active Shallow Crust"]
 which_interfaces = ["both"]
 
-
+trt_combinations_to_process = [["Active Shallow Crust"]]
 
 ## For getting all ground motion models
 
 logic_tree_list = []
 
-for trt in available_trts:
+for trt_combination_list in trt_combinations_to_process:
 
-    if trt == "Subduction Interface":
+    for trt in trt_combination_list:
 
-        for which_interface in which_interfaces:
+        if trt == "Subduction Interface":
 
-            comb = [trt]
+            for which_interface in which_interfaces:
 
-            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = comb, which_interface=which_interface)
+                trt_list = [trt_combination_list]
+
+                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = trt_list, which_interface=which_interface)
+
+                logic_tree_list.append(lt_entry_for_trts)
+
+        else:
+
+            trt_list = [trt_combination_list]
+
+            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=trt_list,
+                                                             which_interface=None)
 
             logic_tree_list.append(lt_entry_for_trts)
 
-    else:
-
-        comb = [trt]
-
-        lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=comb,
-                                                         which_interface=None)
-
-        logic_tree_list.append(lt_entry_for_trts)
+print()
 
 logic_tree_list2 = []
 
