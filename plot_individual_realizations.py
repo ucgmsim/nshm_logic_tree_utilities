@@ -63,7 +63,8 @@ nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
 #registry = nzshm_model.branch_registry.Registry()
 
-registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+#registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
 gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
 source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -76,6 +77,9 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 # realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
 base_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+
+#realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
+
 
 run_dirs = [x for x in base_dir.iterdir() if x.is_dir()]
 run_dirs = natsort.natsorted(run_dirs)
@@ -232,6 +236,8 @@ for gmm_group_id in gmm_id_groups:
         thp_agg_stats_std = agg_stat_toshi_hazard_post[agg_stat_toshi_hazard_post["agg"] == "std"]["values"].values[0]
         thp_agg_stats_cov = agg_stat_toshi_hazard_post[agg_stat_toshi_hazard_post["agg"] == "cov"]["values"].values[0]
 
+        print()
+
         plot_residuals(gmm_group_id, id_to_prob_agg_stats_dict[gmm_group_id][0], thp_agg_stats_mean, "mean")
         residual_pdf.savefig()
         plot_residuals(gmm_group_id, id_to_prob_agg_stats_dict[gmm_group_id][1], thp_agg_stats_std, "std")
@@ -247,7 +253,8 @@ if plot_poe_comparisons:
     comparison_pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / "realization_comparison_plots.pdf")
 
     comparison_base = "Bradley2013"
-    xlims = [1e-2, 5e0]
+    #xlims = [1e-2, 5e0]
+    xlims = [1e-3, 5e0]
     ylims = [1e-6, 1e0]
 
     # Overplot central realizations
@@ -406,7 +413,7 @@ print()
 
 #df = ds.dataset(source=realization_dir,format="parquet")
 
-df = ds.dataset(source=realization_dir, format="parquet").to_table().to_pandas()
+#df = ds.dataset(source=base_dir, format="parquet").to_table().to_pandas()
 
 gmm_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("gmm" in str(x)))]
 source_id_col_names = [str(x) for x in df.columns if (("component" in str(x)) & ("source" in str(x)))]
