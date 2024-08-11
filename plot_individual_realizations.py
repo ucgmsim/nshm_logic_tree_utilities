@@ -100,6 +100,8 @@ for run_dir in run_dirs:
 source_ids = []
 gmm_ids = []
 
+print()
+
 
 ### Get all realization ids
 for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == "-41.300~174.780"].iterrows():
@@ -142,6 +144,9 @@ id_to_upper_central_lower_dict = {"Bradley2013":{"upper":"sigma_mu_epsilon=1.281
                                  "AbrahamsonEtAl2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
                                  "CampbellBozorgnia2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
                                  "ChiouYoungs2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"}}
+
+
+realization_arm_index_to_name = {0:"upper", 1:"central", 2:"lower"}
 
 id_to_rate_array_dict = copy.deepcopy(id_to_upper_central_lower_dict)
 id_to_weight_dict = copy.deepcopy(id_to_upper_central_lower_dict)
@@ -244,6 +249,29 @@ if plot_poe_comparisons:
     comparison_base = "Bradley2013"
     xlims = [1e-2, 5e0]
     ylims = [1e-6, 1e0]
+
+    # Overplot central realizations
+    for realization_arm_index in range(3):
+
+        plt.close("all")
+
+        for gmm_group_id in gmm_id_groups:
+
+            residuals = np.log10(id_to_prob_array_dict[gmm_group_id]) - np.log10(id_to_prob_array_dict[comparison_base])
+
+            idxs = np.where((nshm_im_levels >= xlims[0]) & (nshm_im_levels <= xlims[1]))[0]
+
+            plt.semilogx(nshm_im_levels[idxs], residuals[realization_arm_index,idxs], '.-', label=gmm_group_id)
+
+            plt.xlabel("PGA (g)")
+            #plt.ylabel(f"log({gmm_group_id}) - log({comparison_base})")
+            plt.ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+            plt.legend()
+            plt.title(f"{realization_arm_index_to_name[realization_arm_index]} residuals relative to {comparison_base}")
+            #plt.ylim([1e-6, 1e0])
+            #plt.subplots_adjust(hspace=0)
+        plt.grid()
+        comparison_pdf.savefig()
 
     for gmm_group_id in gmm_id_groups:
 

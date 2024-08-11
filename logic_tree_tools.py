@@ -568,10 +568,11 @@ def select_trt_branch_sets(logic_tree: Union[SourceLogicTree, GMCMLogicTree], te
     else:
         # remove correlations
         modified_logic_tree.correlations = LogicTreeCorrelations()
+    print()
     return modified_logic_tree
 
 
-def get_trt_set(initial_logic_tree_set: CustomLogicTreeSet, tectonic_region_types: Union[list[str], str], which_interface: Optional[str] = None):
+def get_trt_set(initial_logic_tree_set: CustomLogicTreeSet, tectonic_region_type_sets: Union[list[str], str], which_interface: Optional[str] = None):
 
     """
     Modifies a logic tree set to only include branch sets that correspond to the selected tectonic region types.
@@ -581,7 +582,7 @@ def get_trt_set(initial_logic_tree_set: CustomLogicTreeSet, tectonic_region_type
     logic_tree : SourceLogicTree or GMCMLogicTree
         The logic tree to modify.
 
-    tectonic_region_types : list[str] or str
+    tectonic_region_type_sets : list[str] or str
         A list of the selected tectonic region types.
         If selecting only a single tectonic region type, can be a string.
         Valid tectonic region types are:
@@ -603,32 +604,41 @@ def get_trt_set(initial_logic_tree_set: CustomLogicTreeSet, tectonic_region_type
         to the selected tectonic region type.
     """
 
-    trt_short_lookup_dict = {"Active Shallow Crust":"CRU",
-                             "Subduction Interface":"INTER",
-                             "Subduction Intraslab":"SLAB"}
+    modified_logic_tree_sets = []
 
-    short_trts = [trt_short_lookup_dict[trt] for trt in tectonic_region_types]
+    slt = copy.deepcopy(initial_logic_tree_set.slt)
+    glt = copy.deepcopy(initial_logic_tree_set.glt)
 
-    modified_lt_set = copy.deepcopy(initial_logic_tree_set)
+    for tectonic_region_type_set in tectonic_region_type_sets:
 
-    slt = initial_logic_tree_set.slt
-    glt = initial_logic_tree_set.glt
+        modified_lt_set = copy.deepcopy(initial_logic_tree_set)
 
-    modified_slt = select_trt_branch_sets(slt, tectonic_region_types, which_interface)
-    modified_glt = select_trt_branch_sets(glt, tectonic_region_types)
+        trt_short_lookup_dict = {"Active Shallow Crust":"CRU",
+                                 "Subduction Interface":"INTER",
+                                 "Subduction Intraslab":"SLAB"}
 
-    if "Subduction Interface" in tectonic_region_types:
-        modified_lt_set.slt_note += f"tectonic_region_types:[{' '.join(short_trts)} {which_interface}] > "
+        short_trts = [trt_short_lookup_dict[trt] for trt in tectonic_region_type_set]
 
-    else:
-        modified_lt_set.slt_note += f"tectonic_region_types:[{' '.join(short_trts)}] > "
+        print()
 
-    modified_lt_set.glt_note += f"tectonic_region_types:[{' '.join(short_trts)}] > "
+        modified_slt = select_trt_branch_sets(slt, tectonic_region_type_set, which_interface)
+        modified_glt = select_trt_branch_sets(glt, tectonic_region_type_set)
 
-    modified_lt_set.slt = copy.deepcopy(modified_slt)
-    modified_lt_set.glt = copy.deepcopy(modified_glt)
+        if "Subduction Interface" in tectonic_region_type_sets:
+            modified_lt_set.slt_note += f"tectonic_region_type_sets:[{' '.join(short_trts)} {which_interface}] > "
 
-    return modified_lt_set
+        else:
+            modified_lt_set.slt_note += f"tectonic_region_type_sets:[{' '.join(short_trts)}] > "
+
+        modified_lt_set.glt_note += f"tectonic_region_type_sets:[{' '.join(short_trts)}] > "
+
+        modified_lt_set.slt = copy.deepcopy(modified_slt)
+        modified_lt_set.glt = copy.deepcopy(modified_glt)
+
+        modified_logic_tree_sets.append(modified_lt_set)
+
+    print()
+    return modified_logic_tree_sets
 
 
 def print_info(logic_tree_set_list):

@@ -215,7 +215,7 @@ logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-delete_exisiting_output = True
+delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
 output_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
@@ -241,8 +241,8 @@ if delete_exisiting_output:
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-locations = ["AKL","WLG","CHC"]
-#locations = ["WLG"]
+#locations = ["AKL","WLG","CHC"]
+locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -298,6 +298,8 @@ trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt_note = slt_highest_entry_list[0].slt_note,
     glt_note = 'full > ')
 
+print()
+
 full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_full),
     glt = copy.deepcopy(glt_full),
@@ -332,7 +334,7 @@ for trt_combination_list in trt_combinations_to_process:
 
                 trt_list = [trt_combination_list]
 
-                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = trt_list, which_interface=which_interface)
+                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = trt_list, which_interface=which_interface)[0]
 
                 logic_tree_list.append(lt_entry_for_trts)
 
@@ -340,8 +342,8 @@ for trt_combination_list in trt_combinations_to_process:
 
             trt_list = [trt_combination_list]
 
-            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts=trt_list,
-                                                             which_interface=None)
+            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, tectonic_region_type_sets=trt_list,
+                                                             which_interface=None)[0]
 
             logic_tree_list.append(lt_entry_for_trts)
 
