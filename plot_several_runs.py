@@ -149,10 +149,11 @@ def insert_ln_std(df):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto6")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto7")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto8")
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
-
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
 df = load_all_runs_in_rungroup(auto_dir)
 
 plot_output_dir = Path("/home/arr65/data/nshm/output_plots")
@@ -441,9 +442,9 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
     fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
     pdf_all_ims.savefig(fig)
 
-#do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
+do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
 do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
-#do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
 
 
 #do_plots(over_plot_all=True)

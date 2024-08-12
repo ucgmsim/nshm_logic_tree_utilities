@@ -52,7 +52,7 @@ def plot_residuals(group_id, stat_from_realizations, stat_from_toshi_hazard_post
 
 import nzshm_model.branch_registry
 
-plot_all_residuals = True
+plot_all_residuals = False
 plot_poe_comparisons = True
 
 if plot_all_residuals:
@@ -60,6 +60,7 @@ if plot_all_residuals:
 
 nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
+location_code_str = "-41.300~174.780"
 
 #registry = nzshm_model.branch_registry.Registry()
 
@@ -78,7 +79,7 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
@@ -109,8 +110,8 @@ gmm_ids = []
 print()
 
 
-### Get all realization ids
-for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == "-41.300~174.780"].iterrows():
+### Get all realization ids (consisting of source and gmm ids) for a single location
+for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == location_code_str].iterrows():
 
     contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
     contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
@@ -130,8 +131,13 @@ for idx, row in individual_realization_df[individual_realization_df["nloc_001"] 
         gmm_ids.append(gmm_id)
 
 source_ids = np.array(source_ids)
-assert np.all(source_ids == source_ids[0]), "All source ids should be the same"
-print()
+
+assert np.all(source_ids == source_ids[0]), ("Currently only supports realizations from single source\n"
+                                             "(tectonic region type). Please create realizations using a single\n"
+                                             "source type by using the logic tree manipulation tools, or manually\n"
+                                             "delete runs to ensure that only one source type (tectonic region type)\n"
+                                             "is present in the data.")
+
 
 gmm_id_groups = []
 
@@ -151,7 +157,6 @@ id_to_upper_central_lower_dict = {"Bradley2013":{"upper":"sigma_mu_epsilon=1.281
                                  "CampbellBozorgnia2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"},
                                  "ChiouYoungs2014":{"upper":"sigma_mu_epsilon=1.28155","central":"sigma_mu_epsilon=0.0","lower":"sigma_mu_epsilon=-1.28155"}}
 
-
 realization_arm_index_to_name = {0:"upper", 1:"central", 2:"lower"}
 
 id_to_rate_array_dict = copy.deepcopy(id_to_upper_central_lower_dict)
@@ -167,8 +172,6 @@ for key in id_to_rate_array_dict.keys():
 
 for key in id_to_weight_dict.keys():
     id_to_weight_dict[key] = np.zeros(3)
-
-location_code_str = "-41.300~174.780"
 
 for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == location_code_str].iterrows():
 
@@ -254,9 +257,10 @@ if plot_poe_comparisons:
 
     comparison_pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / "realization_comparison_plots.pdf")
 
-    comparison_base = "Bradley2013"
+    #comparison_base = "Bradley2013"
+    comparison_base = "Stafford2022"
     #xlims = [1e-2, 5e0]
-    xlims = [1e-3, 5e0]
+    im_plot_lims = [1e-3, 5e0]
     ylims = [1e-6, 1e0]
 
     # Overplot central realizations
@@ -268,7 +272,7 @@ if plot_poe_comparisons:
 
             residuals = np.log10(id_to_prob_array_dict[gmm_group_id]) - np.log10(id_to_prob_array_dict[comparison_base])
 
-            idxs = np.where((nshm_im_levels >= xlims[0]) & (nshm_im_levels <= xlims[1]))[0]
+            idxs = np.where((nshm_im_levels >= im_plot_lims[0]) & (nshm_im_levels <= im_plot_lims[1]))[0]
 
             plt.semilogx(nshm_im_levels[idxs], residuals[realization_arm_index,idxs], '.-', label=gmm_group_id)
 
@@ -302,13 +306,14 @@ if plot_poe_comparisons:
         plt.ylabel("APoE")
         plt.xlabel("PGA (g)")
         plt.title("Range indicates upper and lower realizations")
+        plt.xlim(im_plot_lims)
 
         ax1.set_xticklabels([])
 
 
         ax2 = plt.subplot(2, 1, 2)
 
-        idxs = np.where((nshm_im_levels >= xlims[0]) & (nshm_im_levels <= xlims[1]))[0]
+        idxs = np.where((nshm_im_levels >= im_plot_lims[0]) & (nshm_im_levels <= im_plot_lims[1]))[0]
 
         plt.semilogx(nshm_im_levels[idxs], residuals[0,idxs], '.-', label="upper residuals")
         plt.semilogx(nshm_im_levels[idxs], residuals[1,idxs], '.-', label="central residuals")
@@ -318,7 +323,7 @@ if plot_poe_comparisons:
         #plt.ylabel(f"log({gmm_group_id}) - log({comparison_base})")
         plt.ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
         plt.legend()
-        plt.xlim([1e-2, 5e0])
+        plt.xlim(im_plot_lims)
         #plt.ylim([1e-6, 1e0])
         plt.subplots_adjust(hspace=0)
         comparison_pdf.savefig()

@@ -215,7 +215,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto13")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -315,8 +315,8 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
 #available_trts = ["Active Shallow Crust"]
 which_interfaces = ["both"]
 
-#trt_combinations_to_process = [["Active Shallow Crust"]]
-trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
+trt_combinations_to_process = [["Active Shallow Crust"]]
+#trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
 
 
 ## For getting all ground motion models
