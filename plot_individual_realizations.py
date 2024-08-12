@@ -52,7 +52,7 @@ def plot_residuals(group_id, stat_from_realizations, stat_from_toshi_hazard_post
 
 import nzshm_model.branch_registry
 
-plot_all_residuals = False
+plot_all_residuals = True
 plot_poe_comparisons = True
 
 if plot_all_residuals:
@@ -63,8 +63,8 @@ nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
 #registry = nzshm_model.branch_registry.Registry()
 
-#registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+#registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
 gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
 source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -76,7 +76,9 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 # data_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/nloc_0=-41.0~175.0")
 # realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+#base_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 

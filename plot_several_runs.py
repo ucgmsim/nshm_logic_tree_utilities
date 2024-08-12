@@ -9,6 +9,9 @@ import natsort
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt, ticker as mticker
 
+nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
+
+
 # named_color_list = list(matplotlib.colors.cnames.keys())
 # named_color_list = named_color_list[::5]
 
@@ -147,9 +150,10 @@ def insert_ln_std(df):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto7")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto8")
 auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
-df = test = load_all_runs_in_rungroup(auto_dir)
+df = load_all_runs_in_rungroup(auto_dir)
 
 plot_output_dir = Path("/home/arr65/data/nshm/output_plots")
 
@@ -346,6 +350,8 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
     fig, axes = plt.subplots(1, 3)
     plt.subplots_adjust(wspace=0.0)
 
+    have_plotted_im_labels = np.zeros(3,dtype=bool)
+
     for run in run_list:
 
         nloc_001_str = locations_nloc_dict[location]
@@ -358,7 +364,8 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
                   (df["hazard_model_id"] == run) &
                   (df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-        print()
+        mean_max = np.max(mean)
+        print(f'run {run} max mean: {mean_max}')
 
         std_ln = df[(df["agg"] == "std_ln") &
                   (df["vs30"] == vs30) &
@@ -399,12 +406,18 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
 
         plot_label = plot_label_short
 
-
         axes[subplot_idx].semilogy(std_ln, mean, label=plot_label,
                                     linestyle=linestyle)
 
-        # axes[subplot_idx].set_ylim(1e-5,0.6)
-        # axes[subplot_idx].set_xlim(-0.01, 0.7)
+        # if not have_plotted_im_labels[subplot_idx]:
+            # for datapoint_idx in range(len(mean)):
+            #     axes[subplot_idx].text(std_ln[datapoint_idx], mean[datapoint_idx], f"{nshm_im_levels[datapoint_idx]:.1e}", fontsize=1)
+            #     #axes[subplot_idx].scatter(std_ln[datapoint_idx], mean[datapoint_idx], color='black', s=1)
+            #     have_plotted_im_labels[subplot_idx] = False
+
+        axes[subplot_idx].set_ylim(1e-5,0.6)
+        #axes[subplot_idx].set_ylim(bottom=1e-5)
+        axes[subplot_idx].set_xlim(-0.01, 0.7)
 
         axes[0].set_title("Active Shallow Crust",fontsize=11)
         axes[1].set_title("Subduction Interface",fontsize=11)
@@ -428,9 +441,9 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
     fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
     pdf_all_ims.savefig(fig)
 
-do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
+#do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
 do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
-do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+#do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
 
 
 #do_plots(over_plot_all=True)

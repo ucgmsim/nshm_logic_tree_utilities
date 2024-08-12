@@ -66,7 +66,6 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
         # print(result.stderr)
         run_aggregation(args)
 
-
     run_output_dir = output_dir / f"run_{run_counter}"
     run_output_dir.mkdir(parents=True, exist_ok=False)
 
@@ -172,8 +171,6 @@ def combine_logic_tree_combinations(slt_combinations, glt_combinations):
                                                glt=custom_glt_entry.glt,
                                                glt_note=custom_glt_entry.glt_note)
 
-
-
             combination_list.append(slt_glt_entry)
 
     # check that all required parameters are present
@@ -218,7 +215,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto10")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto13")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -241,8 +238,8 @@ if delete_exisiting_output:
 toml_dict = toml.load(initial_input_file)
 
 # All locations can be specified in the same input file but this uses more memory than doing one location at a time
-#locations = ["AKL","WLG","CHC"]
-locations = ["WLG"]
+locations = ["AKL","WLG","CHC"]
+#locations = ["WLG"]
 
 args = AggregationArgs(initial_input_file)
 
@@ -315,10 +312,12 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
 # available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
 # which_interfaces = ["both", "HIK", "PUY"]
 
-available_trts = ["Active Shallow Crust"]
+#available_trts = ["Active Shallow Crust"]
 which_interfaces = ["both"]
 
-trt_combinations_to_process = [["Active Shallow Crust"]]
+#trt_combinations_to_process = [["Active Shallow Crust"]]
+trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
+
 
 ## For getting all ground motion models
 
@@ -334,7 +333,7 @@ for trt_combination_list in trt_combinations_to_process:
 
                 trt_list = [trt_combination_list]
 
-                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = trt_list, which_interface=which_interface)[0]
+                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, tectonic_region_type_sets = trt_list, which_interface=which_interface)[0]
 
                 logic_tree_list.append(lt_entry_for_trts)
 
