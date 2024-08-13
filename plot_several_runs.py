@@ -151,9 +151,13 @@ def insert_ln_std(df):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto8")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto15")
+
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
+
 df = load_all_runs_in_rungroup(auto_dir)
 
 plot_output_dir = Path("/home/arr65/data/nshm/output_plots")
@@ -164,21 +168,60 @@ vs30 = 400
 
 run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
 
-#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pdf")
-pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion_seperate_trt.pdf")
+#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}.pdf")
+pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pdf")
+#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion_seperate_trt.pdf")
 
 #ims = ["PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
 ims = ["PGA"]
 
 
-locations = ["AKL","WLG","CHC"]
-#locations = ["WLG"]
+#locations = ["AKL","WLG","CHC"]
+locations = ["WLG"]
 
 locations_nloc_dict = {"AKL":"-36.870~174.770",
                        "WLG":"-41.300~174.780",
                        "CHC":"-43.530~172.630"}
 
 run_list = natsort.natsorted((df["hazard_model_id"].unique()))
+
+run_list_label_tuple_list = []
+
+##################################################################################################
+##################################################################################################
+
+### For sorting the runs by the model name and run number for tectonic type plots
+
+## Get the model name and run_number pairs
+# for run_index, run_name in enumerate(run_list):
+#
+#     for location in ['WLG']:
+#
+#         run_counter = int(run_name.split("_")[-1])
+#
+#         slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+#         glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
+#
+#         trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+#         glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+#         glt_model = glt_model_from_note.split("*")[0]
+#         glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+#
+#         plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+#
+#         run_list_label_tuple_list.append((run_name, plot_label_short))
+#
+#         print()
+#
+# sorted_run_list_label_tuple_list = natsort.natsorted(run_list_label_tuple_list, key=lambda x: x[1])
+#
+# print()
+#
+# run_list = [x[0] for x in sorted_run_list_label_tuple_list]
+
+##################################################################################################
+##################################################################################################
+
 #run_list = ["run_0"]
 #plt.rc('axes', prop_cycle=custom_cycler)
 
@@ -211,7 +254,7 @@ def do_plots(over_plot_all=False):
                           (df["hazard_model_id"] == run) &
                           (df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]} "
+                plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]}, "
                               f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
                 plt.semilogy(std_ln, mean, label=plot_label)
                 print(f"plotting: {im} {location} {run}")
@@ -442,13 +485,112 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
     fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
     pdf_all_ims.savefig(fig)
 
-do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
-do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
-do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+def make_cov_plots(over_plot_all=False):
+
+    for im in ims:
+
+        locations = ["WLG"]
+
+        for location in locations:
+
+            nloc_001_str = locations_nloc_dict[location]
+
+            mean_list = []
+            std_list = []
+            cov_list = []
+
+            for run_idx, run in enumerate(run_list):
+
+                print()
+
+                run_counter = int(run.split("_")[-1])
+
+                mean = df[(df["agg"] == "mean") &
+                          (df["vs30"] == vs30) &
+                          (df["imt"] == im) &
+                          (df["hazard_model_id"] == run) &
+                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                cov = df[(df["agg"] == "cov") &
+                          (df["vs30"] == vs30) &
+                          (df["imt"] == im) &
+                          (df["hazard_model_id"] == run) &
+                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                # std_ln = df[(df["agg"] == "std_ln") &
+                #           (df["vs30"] == vs30) &
+                #           (df["imt"] == im) &
+                #           (df["hazard_model_id"] == run) &
+                #           (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                std = df[(df["agg"] == "std") &
+                          (df["vs30"] == vs30) &
+                          (df["imt"] == im) &
+                          (df["hazard_model_id"] == run) &
+                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                mean_list.append(mean)
+                std_list.append(std)
+                cov_list.append(cov)
+                #std_list.append(std_ln)
+
+            #source_unc_plus_gmcm_unc = np.sqrt(np.array(std_list)**2 + np.array(cov_list)**2)
+            source_std_plus_gmcm_std = np.array(std_list[0]) + np.array(std_list[1])
+
+            cov_sum = np.array(cov_list[0]) + np.array(cov_list[1])
+            cov_sum2 = np.sqrt(np.array(cov_list[0])**2 + np.array(cov_list[1])**2)
+
+            mean_sum = np.array(mean_list[0]) + np.array(mean_list[1])
+            mean_sum2 = np.sqrt(np.array(mean_list[0])**2 + np.array(mean_list[1])**2)
+
+            std_sum = np.array(std_list[0]) + np.array(std_list[1])
+            std_sum2 = np.sqrt(np.array(std_list[0])**2 + np.array(std_list[1])**2)
+
+            plt.rcParams.update({'font.size': 14})
+
+            lw = 5
+
+            plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='SRM & GMCM')
+            plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='SRM')
+            plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='GMCM')
+            plt.legend(handlelength=5)
+            #plt.title(f"{location} {im}")
+            plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
+            plt.xlabel('peak ground acceleration (g)')
+            #plt.title("Wellington assuming Vs30 = 400 m/s")
+
+            # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
+            # plt.semilogx(nshm_im_levels, cov_sum2, linestyle='-.', label='sum2')
+
+            # plt.figure()
+            # plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
+            # plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
+            # plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
+            # plt.legend()
+            # #plt.title(f"{location} {im}")
+            # #plt.title("Wellington assuming Vs30 = 400 m/s")
+            # plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
+            # plt.xlabel('peak ground acceleration (g)')
+
+
+            #plt.show()
+            plt.tight_layout()
+            plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=400)
+
+
+
+
+#make_cov_plots()#
+
+#print()
+
+# do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
+# do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
+# do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
 
 
 #do_plots(over_plot_all=True)
-#do_plots(over_plot_all=False)
+do_plots(over_plot_all=False)
 
 #do_plots_with_seperate_location_subplots(over_plot_all=True)
 #do_plots_with_seperate_location_subplots(over_plot_all=False)

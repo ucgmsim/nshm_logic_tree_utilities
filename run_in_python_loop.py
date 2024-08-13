@@ -215,12 +215,12 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
 
-output_dir.mkdir(parents=True, exist_ok=True)
+output_dir.mkdir(parents=True, exist_ok=False)
 
 os.environ['THP_ENV_FILE'] = str(input_file_dir / ".env_home")
 
@@ -287,15 +287,23 @@ for branch_set in glt_full.branch_sets:
 slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
 glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
 
-print()
+full_slt = logic_tree_tools.CustomLogicTreeSet(
+    slt = copy.deepcopy(slt_full),
+    glt = copy.deepcopy(glt_highest_entry_list[0].glt),
+    slt_note = 'full > ',
+    glt_note = glt_highest_entry_list[0].glt_note)
+
+full_glt = logic_tree_tools.CustomLogicTreeSet(
+    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+    glt = copy.deepcopy(glt_full),
+    slt_note = slt_highest_entry_list[0].slt_note,
+    glt_note = 'full > ')
 
 trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
     glt = copy.deepcopy(glt_full),
     slt_note = slt_highest_entry_list[0].slt_note,
     glt_note = 'full > ')
-
-print()
 
 full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_full),
@@ -309,84 +317,42 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
     slt_note = slt_highest_entry_list[0].slt_note,
     glt_note = glt_highest_entry_list[0].glt_note)
 
-# available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
-# which_interfaces = ["both", "HIK", "PUY"]
-
-#available_trts = ["Active Shallow Crust"]
-which_interfaces = ["both"]
-
-trt_combinations_to_process = [["Active Shallow Crust"]]
-#trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
+# logic_tree_list = [full_slt, full_glt, full_full_input_entry]
 
 
 ## For getting all ground motion models
 
-logic_tree_list = []
 
-for trt_combination_list in trt_combinations_to_process:
+# available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
+# which_interfaces = ["both", "HIK", "PUY"]
 
-    for trt in trt_combination_list:
+# trt_combinations_to_process = [["Active Shallow Crust"]]
+# which_interfaces = ["both"]
+## trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
 
-        if trt == "Subduction Interface":
 
-            for which_interface in which_interfaces:
 
-                trt_list = [trt_combination_list]
 
-                lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, tectonic_region_type_sets = trt_list, which_interface=which_interface)[0]
+# test1 = get_logic_tree_entries_for_tectonic_selection(trt_combinations_to_process, which_interfaces, initial_logic_tree_set = trt_select_input_entry)
+#
+# test2 = get_logic_tree_entries_for_tectonic_selection(
+#     [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+#     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
 
-                logic_tree_list.append(lt_entry_for_trts)
+# test3 = get_logic_tree_entries_for_tectonic_selection(
+#     [["Active Shallow Crust"]],
+#     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
 
-        else:
+# logic_tree_set_list = logic_tree_tools.get_lt_sets_for_gmms(
+#     initial_logic_tree_set = trt_select_input_entry,
+#     trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+#     which_interfaces = ["both"])
 
-            trt_list = [trt_combination_list]
 
-            lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, tectonic_region_type_sets=trt_list,
-                                                             which_interface=None)[0]
+logic_tree_set_list = logic_tree_tools.make_logic_tree_sets_for_srm_models(slt_full, glt_full,2)
 
-            logic_tree_list.append(lt_entry_for_trts)
 
 print()
-
-logic_tree_list2 = []
-
-all_glt_gsim_names = []
-
-for lt_set in logic_tree_list:
-
-    assert len(lt_set.glt.branch_sets) == 1
-
-    glt_gsim_names = [branch.gsim_name for branch in lt_set.glt.branch_sets[0].branches]
-    all_glt_gsim_names.append(glt_gsim_names)
-
-    unique_gsim_names = list(set(glt_gsim_names))
-
-    #unique_gsim_names = ['Bradley2013']
-
-    for gsim_name in unique_gsim_names:
-
-        selected_glt_branches = [copy.deepcopy(branch) for branch in lt_set.glt.branch_sets[0].branches if branch.gsim_name == gsim_name]
-
-        selected_glt_branch_weights = np.array([copy.deepcopy(branch.weight) for branch in lt_set.glt.branch_sets[0].branches if
-                                 branch.gsim_name == gsim_name])
-
-        needed_scaling_factor = 1.0 / np.sum(selected_glt_branch_weights)
-
-        scaled_weights = selected_glt_branch_weights * needed_scaling_factor
-
-        for i, branch in enumerate(selected_glt_branches):
-            branch.weight = scaled_weights[i]
-
-        modified_lt_set = copy.deepcopy(lt_set)
-
-        modified_lt_set.glt.branch_sets[0].branches = selected_glt_branches
-        modified_lt_set.glt_note += f"[{gsim_name}*{needed_scaling_factor:.2f}] > "
-
-        logic_tree_list2.append(modified_lt_set)
-
-
-
-logic_tree_list = logic_tree_list2
 
 ## end code for getting all ground motion models
 
@@ -457,10 +423,10 @@ logic_tree_list = logic_tree_list2
 
 ### End
 
-logic_tree_tools.print_info(logic_tree_list)
+logic_tree_tools.print_info(logic_tree_set_list)
 
 run_notes_df = pd.DataFrame()
-for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
+for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
     notes_df = custom_logic_tree_set.notes_to_pandas_df()
     notes_df['run_counter'] = [run_counter]
     run_notes_df = pd.concat([run_notes_df, notes_df], ignore_index=True)
@@ -469,10 +435,10 @@ for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
 run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
 run_notes_df.to_csv(output_dir / "run_notes.csv")
 
-for run_counter, custom_logic_tree_set in enumerate(logic_tree_list):
+for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
     run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir)
 
 end_time = time.time()
-print(f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_list)} runs")
+print(f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_set_list)} runs")
 
 # def run_with_modified_logic_trees(output_dir, run_counter, custom_logic_tree_set, locations, toml_dict, output_staging_dir):
