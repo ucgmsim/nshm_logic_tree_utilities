@@ -620,17 +620,18 @@ def make_cov_plots(over_plot_all=False):
             std_sum = np.array(std_list[0]) + np.array(std_list[1])
             std_sum2 = np.sqrt(np.array(std_list[0])**2 + np.array(std_list[1])**2)
 
-            plt.rcParams.update({'font.size': 14})
+            plt.rcParams.update({'font.size': 12})
 
             lw = 5
 
-
+            plt.figure(figsize=(5.12,4.62))
             plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
             plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
             plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
-            plt.legend(handlelength=5)
+            plt.legend(handlelength=4)
             #plt.title(f"{location} {im}")
-            plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
+            #plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
+            plt.ylabel("modelling uncertainty\n(coefficient of variation of model predictions)")
             plt.xlabel('peak ground acceleration (g)')
             plt.xlim(1e-2,5)
             plt.ylim(0.05,0.8)
@@ -639,26 +640,28 @@ def make_cov_plots(over_plot_all=False):
             # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
             # plt.semilogx(nshm_im_levels, cov_sum2, linestyle='-.', label='sum2')
 
-
-
-
             #plt.show()
             plt.tight_layout()
-            plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=400)
+            plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=500)
 
-            plt.close()
 
-            plt.figure()
-            plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
-            plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
-            plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
-            plt.legend()
-            #plt.title(f"{location} {im}")
-            #plt.title("Wellington assuming Vs30 = 400 m/s")
-            plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
-            plt.xlabel('peak ground acceleration (g)')
-            plt.tight_layout()
-            plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
+
+
+
+            #
+            # plt.close()
+            #
+            # plt.figure()
+            # plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
+            # plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
+            # plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
+            # plt.legend()
+            # #plt.title(f"{location} {im}")
+            # #plt.title("Wellington assuming Vs30 = 400 m/s")
+            # plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
+            # plt.xlabel('peak ground acceleration (g)')
+            # plt.tight_layout()
+            # plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
 
 def do_srm_model_plots_with_seperate_location_subplots(over_plot_all=False):
 
