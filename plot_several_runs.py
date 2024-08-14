@@ -3,6 +3,7 @@ import matplotlib
 import numpy as np
 from pathlib import Path
 import pandas as pd
+import scipy
 
 from cycler import cycler
 import natsort
@@ -140,6 +141,16 @@ def insert_ln_std(df):
     return new_df
 
 
+def remove_duplicates_in_x(x, y):
+    # Find unique values in x and their indices
+    unique_x, indices = np.unique(x, return_index=True)
+
+    # Use indices to filter both x and y
+    filtered_x = x[indices]
+    filtered_y = y[indices]
+
+    return filtered_x, filtered_y
+
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto1")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto2")
@@ -152,11 +163,13 @@ def insert_ln_std(df):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13")
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13") ## For making the main GMCM dispersion plots
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto15")
 
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
+
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
 
 df = load_all_runs_in_rungroup(auto_dir)
 
@@ -176,8 +189,8 @@ pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pd
 ims = ["PGA"]
 
 
-#locations = ["AKL","WLG","CHC"]
-locations = ["WLG"]
+locations = ["AKL","WLG","CHC"]
+#locations = ["WLG"]
 
 locations_nloc_dict = {"AKL":"-36.870~174.770",
                        "WLG":"-41.300~174.780",
@@ -389,12 +402,19 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
         pdf_all_ims.savefig(fig)
 
 
+
 def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
+
+    plt.close("all")
 
     fig, axes = plt.subplots(1, 3)
     plt.subplots_adjust(wspace=0.0)
 
     have_plotted_im_labels = np.zeros(3,dtype=bool)
+
+    mean_list = []
+    std_ln_list = []
+    non_zero_run_list = []
 
     for run in run_list:
 
@@ -416,6 +436,10 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
                   (df["imt"] == im) &
                   (df["hazard_model_id"] == run) &
                   (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+        mean_list.append(mean)
+        std_ln_list.append(std_ln)
+        non_zero_run_list.append(run)
 
         slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
         glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
@@ -453,12 +477,6 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
         axes[subplot_idx].semilogy(std_ln, mean, label=plot_label,
                                     linestyle=linestyle)
 
-        # if not have_plotted_im_labels[subplot_idx]:
-            # for datapoint_idx in range(len(mean)):
-            #     axes[subplot_idx].text(std_ln[datapoint_idx], mean[datapoint_idx], f"{nshm_im_levels[datapoint_idx]:.1e}", fontsize=1)
-            #     #axes[subplot_idx].scatter(std_ln[datapoint_idx], mean[datapoint_idx], color='black', s=1)
-            #     have_plotted_im_labels[subplot_idx] = False
-
         axes[subplot_idx].set_ylim(1e-5,0.6)
         #axes[subplot_idx].set_ylim(bottom=1e-5)
         axes[subplot_idx].set_xlim(-0.01, 0.7)
@@ -484,6 +502,62 @@ def do_plots_with_seperate_tectonic_region_type_per_location(location, im):
 
     fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
     pdf_all_ims.savefig(fig)
+
+    mean_array = np.array(mean_list)
+    std_ln_array = np.array(std_ln_list)
+
+    num_mean_points = 1000
+    mm = np.logspace(-6, -1, num_mean_points)
+
+    num_runs = len(mean_array)
+
+    interp_disp_array = np.zeros((num_runs,num_mean_points))
+
+    ## Interpolation part
+    for run_idx in range(num_runs):
+
+        std_ln_vect = std_ln_array[run_idx]
+        mean_vect = mean_array[run_idx]
+
+        min_mean_value = 1e-9
+
+        std_ln_vect2 = std_ln_vect[mean_vect > min_mean_value]
+        mean_vect2 = mean_vect[mean_vect > min_mean_value]
+
+        mean_vect3, std_ln_vect3 = remove_duplicates_in_x(mean_vect2, std_ln_vect2)
+
+        if len(mean_vect3) == 0:
+            interp_disp_array[run_idx, :] = np.nan
+
+        else:
+            plt.figure()
+
+            print(f"run_idx: {run_idx}, run: {run_list[run_idx]}")
+
+            #plt.semilogy(std_ln_array[run_idx], mean_array[run_idx],  '.')
+            plt.semilogx(mean_vect, std_ln_vect, '.')
+
+            #plt.semilogx(mean_vect2, std_ln_vect2, 'r.')
+
+            plt.semilogx(mean_vect3, std_ln_vect3, 'r.')
+
+            plt.show()
+
+            mean_to_dispersion_func = scipy.interpolate.interp1d(mean_vect3, std_ln_vect3, kind='cubic')
+            interp_disp = mean_to_dispersion_func(mm)
+            interp_disp_array[run_idx, :] = interp_disp
+
+            plt.show()
+            print()
+            # plt.semilogy(std_ln_array[run_idx], mean_array[run_idx],  '.')
+            # plt.semilogy(interp_disp, mm, 'r--')
+            plt.semilogx(mean_array[run_idx], std_ln_array[run_idx], '.')
+            plt.semilogx(mm, interp_disp, 'r--')
+            plt.show()
+
+    return interp_disp_array, mm
+
+
 
 def make_cov_plots(over_plot_all=False):
 
@@ -562,38 +636,150 @@ def make_cov_plots(over_plot_all=False):
             # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
             # plt.semilogx(nshm_im_levels, cov_sum2, linestyle='-.', label='sum2')
 
-            # plt.figure()
-            # plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
-            # plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
-            # plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
-            # plt.legend()
-            # #plt.title(f"{location} {im}")
-            # #plt.title("Wellington assuming Vs30 = 400 m/s")
-            # plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
-            # plt.xlabel('peak ground acceleration (g)')
+
 
 
             #plt.show()
             plt.tight_layout()
             plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=400)
 
+            plt.close()
+
+            plt.figure()
+            plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
+            plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
+            plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
+            plt.legend()
+            #plt.title(f"{location} {im}")
+            #plt.title("Wellington assuming Vs30 = 400 m/s")
+            plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
+            plt.xlabel('peak ground acceleration (g)')
+            plt.tight_layout()
+            plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
+
+def do_srm_model_plots_with_seperate_location_subplots(over_plot_all=False):
+
+    #plt.rc('axes', prop_cycle=custom_cycler_location_subplot)
+
+    if over_plot_all:
+        fig, axes = plt.subplots(1, 3)
+        plt.subplots_adjust(wspace=0.0)
+
+    for im in ims:
+
+        if not over_plot_all:
+            fig, axes = plt.subplots(1, 3)
+            plt.subplots_adjust(wspace=0.0)
+
+        for location_idx, location in enumerate(locations):
+
+            if not over_plot_all:
+                plt.close("all")
+
+            for run in run_list:
+
+                nloc_001_str = locations_nloc_dict[location]
+
+                run_counter = int(run.split("_")[-1])
+
+                mean = df[(df["agg"] == "mean") &
+                          (df["vs30"] == vs30) &
+                          (df["imt"] == im) &
+                          (df["hazard_model_id"] == run) &
+                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                std_ln = df[(df["agg"] == "std_ln") &
+                          (df["vs30"] == vs30) &
+                          (df["imt"] == im) &
+                          (df["hazard_model_id"] == run) &
+                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+                slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+                glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
+
+                note = slt_note + "," + glt_note
 
 
 
+                # trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+                # glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+                # glt_model = glt_model_from_note.split("*")[0]
+                # glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+
+
+                #plot_label_short = plot_label.split(">")[-2].strip().split(":")[-1].strip("[]")
+
+                #plot_label_short = f"{trts_from_note} {glt_model_from_note}"
+
+                # plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+
+                # if plot_label_short != "INTER HIK":
+                #     continue
+
+
+                if not over_plot_all:
+                    axes[location_idx].semilogy(std_ln, mean, label=note),
+
+
+                axes[location_idx].set_ylim(1e-12,0.6)
+                axes[location_idx].set_xlim(-0.01, 0.6)
+                axes[location_idx].set_title(location)
+
+                if location_idx == 0:
+                    axes[location_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+
+                if location_idx == 1:
+                    axes[location_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                    axes[location_idx].set_yticklabels([])
+                if location_idx == 2:
+                    axes[location_idx].set_yticklabels([])
+
+            axes[location_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+            if not over_plot_all:
+                #if location_idx == 0:
+                axes[location_idx].legend(loc="lower left", prop={'size': 3},
+                                              handlelength=5)
+            if over_plot_all:
+                axes[location_idx].legend(loc="lower left", prop={'size': 3},
+                                          handlelength=5, ncol=4)
+
+            if over_plot_all:
+                axes[location_idx].semilogy(std_ln, mean, label=note)
+
+        if not over_plot_all:
+            fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
+            pdf_all_ims.savefig(fig)
+
+    if over_plot_all:
+        fig.suptitle(f'All IMs, Vs30 = 400 m/s')
+        pdf_all_ims.savefig(fig)
+
+
+### use autorun15 for these plots
 #make_cov_plots()#
 
 #print()
 
-# do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
-# do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
-# do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+### use autorun13 for these plots
+#do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
+interp_disp_array, mm = do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
 
+range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
+plt.figure()
+plt.semilogx(mm, range_dispersions, 'r--')
+plt.show()
+
+#do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+
+print()
 #do_plots(over_plot_all=True)
-do_plots(over_plot_all=False)
+#do_plots(over_plot_all=False)
 
 #do_plots_with_seperate_location_subplots(over_plot_all=True)
 #do_plots_with_seperate_location_subplots(over_plot_all=False)
+
+#do_srm_model_plots_with_seperate_location_subplots()
 
 pdf_all_ims.close()
 

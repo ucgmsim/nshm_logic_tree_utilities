@@ -884,11 +884,11 @@ def make_srm_model_branch_groups(slt, branch_set_idx_to_do):
 
 def make_logic_tree_sets_for_srm_models(slt, glt_matching_branch_set, branch_set_idx_to_do):
 
-    glt_hwb = get_custom_logic_tree_entry_for_nth_highest_branch(glt_matching_branch_set, 1)
-
     modified_glt = copy.deepcopy(glt_matching_branch_set)
 
-    modified_glt.branch_sets = [copy.deepcopy(glt_matching_branch_set.branch_sets[0])]
+    glt_hwb = get_custom_logic_tree_entry_for_nth_highest_branch(glt_matching_branch_set, 1)
+
+    modified_glt.branch_sets = [copy.deepcopy(glt_hwb[0].glt.branch_sets[0])]
 
     lt_set_with_slt = make_srm_model_branch_groups(slt, branch_set_idx_to_do)
 

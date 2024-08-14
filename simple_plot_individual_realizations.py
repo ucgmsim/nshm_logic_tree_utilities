@@ -81,7 +81,7 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
@@ -105,6 +105,104 @@ for run_dir in run_dirs:
         temp_df = ds.dataset(source=location_dir, format="parquet").to_table().to_pandas()
 
         statistical_aggregation_df = pd.concat([statistical_aggregation_df, temp_df],ignore_index=True)
+
+
+# def plot_individual_srm_models(run_names,imts,location_code_strs):
+#
+#     pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / f"{base_dir.name}_individual_srm_models.pdf")
+#
+#     for imt in imts:
+#
+#         for location_code_str in location_code_strs:
+#
+#             plt.close("all")
+#
+#             for run_name in run_names:
+#
+#                 print()
+#                 individual_realization_df2 = ds.dataset(source=f"/home/arr65/data/nshm/auto_output/auto18/{run_name}/individual_realizations", format="parquet").to_table().to_pandas()
+#
+#                 df2_masked = individual_realization_df2[(individual_realization_df2["hazard_model_id"] == run_name) &
+#                                                 (individual_realization_df2["nloc_001"] == location_code_str) &
+#                                                 (individual_realization_df2["imt"] == imt)]
+#
+#                 for idx, row in df2_masked.iterrows():
+#
+#                     hazard_rate = row["branches_hazard_rates"]
+#
+#                     hazard_prob = calculators.rate_to_prob(hazard_rate, 1.0)
+#
+#                     plt.loglog(nshm_im_levels, hazard_prob, label=f"{run_name} {idx}")
+#                     #plt.show()
+#                     #print()
+#             print('trying to save')
+#             pdf.savefig()
+#     #plt.close("all")
+#     pdf.close()
+#
+#
+# # locations_nloc_dict = {"AKL":"-36.870~174.770",
+# #                        "WLG":"-41.300~174.780",
+# #                        "CHC":"-43.530~172.630"
+#
+# plot_individual_srm_models(["run_0", "run_1", "run_2", "run_3"],
+#                            ["PGA"],
+#                            ["-36.870~174.770", "-41.300~174.780", "-43.530~172.630"])
+
+def plot_individual_srm_models_residual_per_location(run_names,location_code_strs):
+
+    pdf = PdfPages(Path("/home/arr65/data/nshm/output_plots") / f"{base_dir.name}_individual_srm_models_resid.pdf")
+
+    for location_code_str in location_code_strs:
+
+        comparison_hazard_prob = None
+
+        plt.close("all")
+
+        for run_name in run_names:
+
+            print()
+            individual_realization_df2 = ds.dataset(source=f"/home/arr65/data/nshm/auto_output/auto18/{run_name}/individual_realizations", format="parquet").to_table().to_pandas()
+
+            df2_masked = individual_realization_df2[(individual_realization_df2["hazard_model_id"] == run_name) &
+                                            (individual_realization_df2["nloc_001"] == location_code_str)]
+
+            rate_array = np.zeros((len(df2_masked), len(nshm_im_levels)))
+
+            for i in range(len(df2_masked)):
+                rate_array[i] = df2_masked.iloc[i]['branches_hazard_rates']
+
+            hazard_prob_array = calculators.rate_to_prob(rate_array, 1.0)
+
+            if comparison_hazard_prob is None:
+                comparison_hazard_prob = np.copy(hazard_prob_array[0])
+
+            residual_array = np.copy(hazard_prob_array)
+
+            for i in range(len(df2_masked)):
+                #residual_array[i] = np.log10(hazard_prob_array[i]) - np.log10(hazard_prob_array[0])
+                residual_array[i] = np.log10(hazard_prob_array[i]) - np.log10(comparison_hazard_prob)
+
+                plt.semilogx(nshm_im_levels, residual_array[i], linestyle='-.', label=f"{run_name} {i} {location_code_str}")
+                plt.xlabel('PGA (g)')
+                plt.ylabel("ln(APoE) - ln(APoE_0)")
+
+        plt.title(location_code_str)
+        plt.legend()
+        pdf.savefig()
+    pdf.close()
+
+
+
+
+# locations_nloc_dict = {"AKL":"-36.870~174.770",
+#                        "WLG":"-41.300~174.780",
+#                        "CHC":"-43.530~172.630"
+
+plot_individual_srm_models_residual_per_location(["run_0", "run_1", "run_2", "run_3"],
+                           ["-36.870~174.770", "-41.300~174.780", "-43.530~172.630"])
+
+print()
 
 source_ids = []
 gmm_ids = []
@@ -133,8 +231,6 @@ for idx, row in individual_realization_df[individual_realization_df["nloc_001"] 
         gmm_ids.append(gmm_id)
 
 source_ids = np.array(source_ids)
-
-
 
 print()
 
