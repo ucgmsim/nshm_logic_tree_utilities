@@ -163,9 +163,9 @@ def remove_duplicates_in_x(x, y):
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto9")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto11")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13") ## For making the main GMCM dispersion plots
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto13") ## For making the main GMCM dispersion plots
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto14")
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto15")
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto15")
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
 
@@ -624,13 +624,16 @@ def make_cov_plots(over_plot_all=False):
 
             lw = 5
 
-            plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='SRM & GMCM')
-            plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='SRM')
-            plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='GMCM')
+
+            plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
+            plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
+            plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
             plt.legend(handlelength=5)
             #plt.title(f"{location} {im}")
             plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
             plt.xlabel('peak ground acceleration (g)')
+            plt.xlim(1e-2,5)
+            plt.ylim(0.05,0.8)
             #plt.title("Wellington assuming Vs30 = 400 m/s")
 
             # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
@@ -756,23 +759,23 @@ def do_srm_model_plots_with_seperate_location_subplots(over_plot_all=False):
 
 
 ### use autorun15 for these plots
-#make_cov_plots()#
+make_cov_plots()#
 
 #print()
 
 ### use autorun13 for these plots
 #do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
-interp_disp_array, mm = do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
+#interp_disp_array, mm = do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
 
-range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
+#range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
-plt.figure()
-plt.semilogx(mm, range_dispersions, 'r--')
-plt.show()
+# plt.figure()
+# plt.semilogx(mm, range_dispersions, 'r--')
+# plt.show()
 
 #do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
 
-print()
+#print()
 #do_plots(over_plot_all=True)
 #do_plots(over_plot_all=False)
 
@@ -781,5 +784,5 @@ print()
 
 #do_srm_model_plots_with_seperate_location_subplots()
 
-pdf_all_ims.close()
+#pdf_all_ims.close()
 
