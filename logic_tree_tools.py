@@ -236,7 +236,7 @@ def transpose_lists(lists):
     transposed = list(map(list, zip(*lists)))
     return transposed
 
-def get_branch_parameters(logic_tree):
+def get_source_branch_parameters(logic_tree):
     values_dict = {}
 
     for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
@@ -247,7 +247,7 @@ def get_branch_parameters(logic_tree):
             values_as_str = [str(value) for value in branch.values]
             values_list.append(values_as_str)
 
-        values_dict[branch_set_index] = values_list
+        values_dict[branch_set.short_name] = values_list
 
     transpose_dict = copy.deepcopy(values_dict)
 
@@ -273,7 +273,7 @@ def get_branch_parameters(logic_tree):
 
 def get_params_with_num_options(logic_tree, num_options):
 
-    unique_values_dict = get_branch_parameters(logic_tree)
+    unique_values_dict = get_source_branch_parameters(logic_tree)
 
     dict_n_unique_vals = {}
     for key, item in unique_values_dict.items():
@@ -699,7 +699,7 @@ def get_logic_tree_sets_for_individual_source_models(initial_logic_tree_set: Cus
 
     for lt_set in input_logic_tree_set_list:
 
-        modified_logic_tree_sets.extend(make_srm_model_branch_groups(lt_set.slt,0))
+        modified_logic_tree_sets.extend(get_needed_source_branches(lt_set))
 
         print()
 
@@ -730,10 +730,89 @@ def remove_single_quotes(input_string: str) -> str:
     modified_string = input_string.replace("'", "")
     return modified_string
 
+def get_needed_source_branches(logic_tree_set):
 
-def get_needed_source_branches(slt, branch_set_idx_to_do):
 
-    slt_branch_params = get_branch_parameters(slt)
+    results = {}
+
+    # all_branch_sets = []
+    # branch_param_index_list = []
+
+
+    initial_logic_tree_set = copy.deepcopy(logic_tree_set)
+
+    slt_branch_params = get_source_branch_parameters(logic_tree_set.slt)
+
+    print()
+
+    slt_highest_weighted_branches = reduce_logic_tree_to_nth_highest_weighted_branch(logic_tree_set.slt, 1)
+
+    slt_branch_set_short_names = [x.short_name for x in logic_tree_set.slt.branch_sets]
+
+    for slt_branch_set_short_name in slt_branch_set_short_names:
+        results[slt_branch_set_short_name] = {}
+
+    if (("HIK" in slt_branch_set_short_names) & ("PUY" in slt_branch_set_short_names)):
+
+    ## Need to correlate the HIK and PUY branch sets
+
+        pass
+
+    else:
+
+        for branch_set_index, branch_set in enumerate(logic_tree_set.slt.branch_sets):
+
+            num_params = len(slt_branch_params[branch_set.short_name])
+
+
+
+            for branch_param_idx in range(num_params):
+
+                selected_branches_per_param = []
+
+                ## Allow both values at index branch_param_idx and keep everything else as the highest weighted branch
+
+                possible_values_for_this_param_index = slt_branch_params[branch_set.short_name][branch_param_idx]
+                print()
+
+                if len(possible_values_for_this_param_index) == 1:
+                    continue
+
+                hwb_values = slt_highest_weighted_branches.branch_sets[branch_set_index].branches[0].values
+                print()
+
+                ## branch_values_to_find list will be modifed for each param value
+                branch_values_to_find = copy.deepcopy(hwb_values)
+
+                for possible_param_value in possible_values_for_this_param_index:
+
+                    branch_values_to_find[branch_param_idx] = possible_param_value
+
+                    ## This is needed as some string conversions return the text of interest surrounded by ' '
+                    search_str = remove_single_quotes(str(branch_values_to_find))
+
+                    for branch in branch_set.branches:
+
+                        print()
+
+                        if search_str == str(branch.values):
+                            selected_branches_per_param.append(copy.deepcopy(branch))
+
+
+                results[branch_set.short_name]["selected_branches_per_param"] = selected_branches_per_param
+
+                all_branch_sets.append(selected_branches_per_param)
+                branch_param_index_list.append(branch_param_idx)
+
+
+    print()
+    return all_branch_sets
+
+
+
+def OLD_get_needed_source_branches(slt, branch_set_idx_to_do):
+
+    slt_branch_params = get_source_branch_parameters(slt)
 
     slt_highest_entry_list = get_custom_logic_tree_entry_for_nth_highest_branch(slt, 1)
 
@@ -748,20 +827,20 @@ def get_needed_source_branches(slt, branch_set_idx_to_do):
 
         ## Allow both values at index branch_param_idx and keep everything else as the highest weighted branch
 
-        param_values = slt_branch_params[branch_set_idx_to_do][branch_param_idx]
+        possible_values_for_this_param_index = slt_branch_params[branch_set_idx_to_do][branch_param_idx]
 
-        if len(param_values) == 1:
+        if len(possible_values_for_this_param_index) == 1:
             continue
 
         hwb_values = slt_highest_entry_list[0].slt.branch_sets[branch_set_idx_to_do].branches[0].values
 
-        values_to_find = copy.deepcopy(hwb_values)
+        branch_values_to_find = copy.deepcopy(hwb_values)
 
-        for param_value in param_values:
+        for possible_param_value in possible_values_for_this_param_index:
 
-            values_to_find[branch_param_idx] = param_value
+            branch_values_to_find[branch_param_idx] = possible_param_value
 
-            search_str = remove_single_quotes(str(values_to_find))
+            search_str = remove_single_quotes(str(branch_values_to_find))
 
             for branch in slt.branch_sets[branch_set_idx_to_do].branches:
 
@@ -896,7 +975,7 @@ if __name__ == "__main__":
 
 
 
-    #unique_param_dict = get_branch_parameters(slt)
+    #unique_param_dict = get_source_branch_parameters(slt)
 
     # test = get_params_with_num_options(slt, 2)
     # print()
@@ -927,7 +1006,7 @@ if __name__ == "__main__":
 
         #
         #
-        # for target_value in param_values:
+        # for target_value in possible_values_for_this_param_index:
         #
         #     search_str =
         #
