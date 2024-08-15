@@ -23,8 +23,6 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
 
     run_start_time = time.time()
 
-    #run_group_name = output_dir.name
-
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
@@ -215,7 +213,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = True
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -284,38 +282,47 @@ for branch_set in glt_full.branch_sets:
 # slt_crust = logic_tree_tools.select_trt_branch_sets(slt_full, ["Active Shallow Crust"])
 # glt_crust = logic_tree_tools.select_trt_branch_sets(glt_full, ["Active Shallow Crust"])
 
-slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
-glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
+# slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
+# glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
 
-full_slt = logic_tree_tools.CustomLogicTreeSet(
-    slt = copy.deepcopy(slt_full),
-    glt = copy.deepcopy(glt_highest_entry_list[0].glt),
-    slt_note = 'full > ',
-    glt_note = glt_highest_entry_list[0].glt_note)
+# full_slt = logic_tree_tools.CustomLogicTreeSet(
+#     slt = copy.deepcopy(slt_full),
+#     glt = copy.deepcopy(glt_highest_entry_list[0].glt),
+#     slt_note = 'full > ',
+#     glt_note = glt_highest_entry_list[0].glt_note)
+#
+# full_glt = logic_tree_tools.CustomLogicTreeSet(
+#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+#     glt = copy.deepcopy(glt_full),
+#     slt_note = slt_highest_entry_list[0].slt_note,
+#     glt_note = 'full > ')
+#
+# trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
+#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+#     glt = copy.deepcopy(glt_full),
+#     slt_note = slt_highest_entry_list[0].slt_note,
+#     glt_note = 'full > ')
 
-full_glt = logic_tree_tools.CustomLogicTreeSet(
-    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-    glt = copy.deepcopy(glt_full),
-    slt_note = slt_highest_entry_list[0].slt_note,
-    glt_note = 'full > ')
+# full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
+#     slt = copy.deepcopy(slt_full),
+#     glt = copy.deepcopy(glt_full),
+#     slt_note = "full > ",
+#     glt_note = 'full > ')
 
-trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
-    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-    glt = copy.deepcopy(glt_full),
-    slt_note = slt_highest_entry_list[0].slt_note,
-    glt_note = 'full > ')
+# highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
+#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
+#     glt = copy.deepcopy(glt_highest_entry_list[0].glt),
+#     slt_note = slt_highest_entry_list[0].slt_note,
+#     glt_note = glt_highest_entry_list[0].glt_note)
 
-full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
+
+
+full_lt_set = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_full),
     glt = copy.deepcopy(glt_full),
     slt_note = "full > ",
     glt_note = 'full > ')
 
-highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
-    slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-    glt = copy.deepcopy(glt_highest_entry_list[0].glt),
-    slt_note = slt_highest_entry_list[0].slt_note,
-    glt_note = glt_highest_entry_list[0].glt_note)
 
 # logic_tree_list = [full_slt, full_glt, full_full_input_entry]
 
@@ -333,23 +340,33 @@ highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
 
 
 
-# test1 = get_logic_tree_entries_for_tectonic_selection(trt_combinations_to_process, which_interfaces, initial_logic_tree_set = trt_select_input_entry)
+# test1 = get_logic_tree_sets_for_tectonic_selection(trt_combinations_to_process, which_interfaces, initial_logic_tree_set = trt_select_input_entry)
 #
-# test2 = get_logic_tree_entries_for_tectonic_selection(
+# test2 = get_logic_tree_sets_for_tectonic_selection(
 #     [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
 #     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
 
-# test3 = get_logic_tree_entries_for_tectonic_selection(
+# test3 = get_logic_tree_sets_for_tectonic_selection(
 #     [["Active Shallow Crust"]],
 #     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
 
-# logic_tree_set_list = logic_tree_tools.get_lt_sets_for_gmms(
-#     initial_logic_tree_set = trt_select_input_entry,
-#     trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-#     which_interfaces = ["both"])
+# logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
+#     initial_logic_tree_set = full_lt_set,
+#     #trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+#     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"]],
+#     #which_interfaces = ["both"])
+#     which_interfaces = ["HIK_and_PUY"])
 
 
-logic_tree_set_list = logic_tree_tools.make_logic_tree_sets_for_srm_models(slt_full, glt_full,2)
+logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
+    initial_logic_tree_set = full_lt_set,
+    #trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+    tectonic_region_type_sets=[["Active Shallow Crust"]],
+    #which_interfaces = ["both"])
+    which_interfaces = ["HIK_and_PUY"])
+
+
+#logic_tree_set_list = logic_tree_tools.make_logic_tree_sets_for_srm_models(slt_full, glt_full,2)
 
 
 print()
@@ -434,6 +451,8 @@ for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
 # move the "run_counter" column to the left-most position
 run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
 run_notes_df.to_csv(output_dir / "run_notes.csv")
+
+print()
 
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
     run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir)
