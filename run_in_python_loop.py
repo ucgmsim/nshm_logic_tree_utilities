@@ -26,7 +26,7 @@ def run_with_modified_logic_trees(args, output_dir, run_counter, custom_logic_tr
     modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
     modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
 
-    logic_tree_tools.print_info(custom_logic_tree_set)
+    logic_tree_tools.print_info_about_logic_tree_sets(custom_logic_tree_set)
 
     # check the validity of the weights
     logic_tree_tools.check_weight_validity(custom_logic_tree_set.slt)
@@ -210,10 +210,10 @@ logging.getLogger('toshi_hazard_post.logic_tree').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
 logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-delete_exisiting_output = True
+delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto20")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -259,188 +259,25 @@ def print_branch_set_total_weight(logic_tree):
         total_weight = 0.0
 
 
-count_dict = {}
-
-for branch_set in glt_full.branch_sets:
-
-    count_dict[branch_set.short_name] = {}
-
-    branch_gsim_name_list = []
-
-    for branch in branch_set.branches:
-
-        branch_gsim_name_list.append(branch.gsim_name)
-
-    count_dict[branch_set.short_name] = count_strings(branch_gsim_name_list)
-
-
-        #print(f"{branch_set.short_name}, {branch.gsim_name})
-
-#["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
-# options are "both", "HIK", "PUY"
-
-# slt_crust = logic_tree_tools.select_trt_branch_sets(slt_full, ["Active Shallow Crust"])
-# glt_crust = logic_tree_tools.select_trt_branch_sets(glt_full, ["Active Shallow Crust"])
-
-# slt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
-# glt_highest_entry_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
-
-# full_slt = logic_tree_tools.CustomLogicTreeSet(
-#     slt = copy.deepcopy(slt_full),
-#     glt = copy.deepcopy(glt_highest_entry_list[0].glt),
-#     slt_note = 'full > ',
-#     glt_note = glt_highest_entry_list[0].glt_note)
-#
-# full_glt = logic_tree_tools.CustomLogicTreeSet(
-#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-#     glt = copy.deepcopy(glt_full),
-#     slt_note = slt_highest_entry_list[0].slt_note,
-#     glt_note = 'full > ')
-#
-# trt_select_input_entry = logic_tree_tools.CustomLogicTreeSet(
-#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-#     glt = copy.deepcopy(glt_full),
-#     slt_note = slt_highest_entry_list[0].slt_note,
-#     glt_note = 'full > ')
-
-# full_full_input_entry = logic_tree_tools.CustomLogicTreeSet(
-#     slt = copy.deepcopy(slt_full),
-#     glt = copy.deepcopy(glt_full),
-#     slt_note = "full > ",
-#     glt_note = 'full > ')
-
-# highest_weighted_input_entry = logic_tree_tools.CustomLogicTreeSet(
-#     slt = copy.deepcopy(slt_highest_entry_list[0].slt),
-#     glt = copy.deepcopy(glt_highest_entry_list[0].glt),
-#     slt_note = slt_highest_entry_list[0].slt_note,
-#     glt_note = glt_highest_entry_list[0].glt_note)
-
-
-
 full_lt_set = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_full),
     glt = copy.deepcopy(glt_full),
     slt_note = "full > ",
     glt_note = 'full > ')
 
-
-# logic_tree_list = [full_slt, full_glt, full_full_input_entry]
-
-
-## For getting all ground motion models
-
-
-# available_trts = ["Active Shallow Crust", "Subduction Interface", "Subduction Intraslab"]
-# which_interfaces = ["both", "HIK", "PUY"]
-
-# trt_combinations_to_process = [["Active Shallow Crust"]]
-# which_interfaces = ["both"]
-## trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
-
-
-
-
-# test1 = get_logic_tree_sets_for_tectonic_selection(trt_combinations_to_process, which_interfaces, initial_logic_tree_set = trt_select_input_entry)
-#
-# test2 = get_logic_tree_sets_for_tectonic_selection(
-#     [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-#     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
-
-# test3 = get_logic_tree_sets_for_tectonic_selection(
-#     [["Active Shallow Crust"]],
-#     which_interfaces, initial_logic_tree_set = trt_select_input_entry)
-
 # logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
 #     initial_logic_tree_set = full_lt_set,
-#     #trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-#     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"]],
-#     #which_interfaces = ["both"])
-#     which_interfaces = ["HIK_and_PUY"])
+#     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
+#     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
 
 logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
     initial_logic_tree_set = full_lt_set,
-    #trt_combinations_to_process = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-    tectonic_region_type_sets=[["Active Shallow Crust"]],
-    #which_interfaces = ["both"])
-    which_interfaces = ["HIK_and_PUY"])
+    tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+    which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
 
-#logic_tree_set_list = logic_tree_tools.make_logic_tree_sets_for_srm_models(slt_full, glt_full,2)
-
-
-print()
-
-## end code for getting all ground motion models
-
-#logic_tree_list = [full_full_input_entry]
-
-######################################################################
-
-#logic_tree_list = [full_full_input_entry]
-
-#lt_entry_for_trts = logic_tree_tools.get_trt_set(trt_select_input_entry, trts = ["Active Shallow Crust", "Subduction Interface"], which_interface="HIK")
-
-#highest = logic_tree_tools.reduce_to_highest_weighted_branch(glt_full)
-
-#nth_highest_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,list(range(1,6)))
-
-# slt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,1)
-# glt_highest_weighted_branch_list = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(glt_full,1)
-#
-# slt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(slt_full, 1)
-# glt_single_branch_set_list = logic_tree_tools.combinations_of_n_branch_sets(glt_full, 1)
-#
-# slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_full, slt_note = "slt full")]
-# glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_full, glt_note = "glt full")]
-
-# slt_list = [logic_tree_tools.CustomLogicTreeSet(slt = slt_crust, slt_note = "slt crust")]
-# glt_list = [logic_tree_tools.CustomLogicTreeSet(glt = glt_crust, glt_note = "glt crust")]
-
-# print(len(glt_single_branch_set_list))
-#
-# for i in range(len(glt_single_branch_set_list)):
-#
-#     print(f"{len(glt_single_branch_set_list[i].glt.branch_sets)} branch sets")
-#
-#     print(f"{glt_single_branch_set_list[i].glt.branch_sets[0].short_name}")
-#
-#     print(f"has {len(glt_single_branch_set_list[i].glt.branch_sets[0].branches)} branches")
-#
-#
-#
-# print()
-
-#logic_tree_list = combine_logic_tree_combinations(slt_highest_weighted_branch_list, glt_single_branch_set_list)
-#logic_tree_list = combine_logic_tree_combinations(slt_highest_weighted_branch_list, glt_highest_weighted_branch_list)
-
-#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_list)
-#logic_tree_list = combine_logic_tree_combinations(slt_entry_for_trts, glt_entry_for_trts)
-
-#logic_tree_list = [lt_entry_for_trts]
-
-
-
-#logic_tree_list = combine_logic_tree_combinations(slt_single_branch_set_list, glt_list)
-#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
-
-#logic_tree_list = combine_logic_tree_combinations(slt_list, glt_single_branch_set_list)
-
-## Trying the first 5 highest weighted branches from the SRM to see if the selected branch makes any difference
-
-# slt_combinations = logic_tree_tools.get_custom_logic_tree_entry_for_nth_highest_branch(slt_full,list(range(1,6)))
-#
-# glt_combinations = [
-#     logic_tree_tools.CustomLogicTreeSet(
-#         glt = glt_full,
-#         glt_note = f"GMCM full")
-# ]
-#
-# logic_tree_list = combine_logic_tree_combinations(slt_combinations, glt_combinations)
-
-### End
-
-logic_tree_tools.print_info(logic_tree_set_list)
+logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_set_list)
 
 run_notes_df = pd.DataFrame()
 for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
