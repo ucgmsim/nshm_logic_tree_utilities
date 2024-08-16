@@ -265,16 +265,16 @@ full_lt_set = logic_tree_tools.CustomLogicTreeSet(
     slt_note = "full > ",
     glt_note = 'full > ')
 
-# logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
-#     initial_logic_tree_set = full_lt_set,
-#     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
-#     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
-
-
-logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
+logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
     initial_logic_tree_set = full_lt_set,
-    tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+    tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
+
+
+# logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
+#     initial_logic_tree_set = full_lt_set,
+#     tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+#     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
 
 logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_set_list)
