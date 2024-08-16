@@ -213,7 +213,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto20")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto22")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
