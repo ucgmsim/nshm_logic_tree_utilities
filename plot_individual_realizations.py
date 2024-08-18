@@ -64,8 +64,8 @@ location_code_str = "-41.300~174.780"
 
 #registry = nzshm_model.branch_registry.Registry()
 
-registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-#registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+#registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
 gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
 source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -81,7 +81,7 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto17")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
@@ -105,6 +105,15 @@ for run_dir in run_dirs:
         temp_df = ds.dataset(source=location_dir, format="parquet").to_table().to_pandas()
 
         statistical_aggregation_df = pd.concat([statistical_aggregation_df, temp_df],ignore_index=True)
+
+print()
+
+needed_indices = (individual_realization_df["hazard_model_id"] == "run_0") & \
+                 (individual_realization_df["nloc_001"] == location_code_str)
+
+print()
+
+individual_realization_df = individual_realization_df[needed_indices]
 
 source_ids = []
 gmm_ids = []
@@ -134,15 +143,33 @@ for idx, row in individual_realization_df[individual_realization_df["nloc_001"] 
 
 source_ids = np.array(source_ids)
 
+hazard_rate_array = np.zeros((len(individual_realization_df),44))
+
+for realization_index in range(len(individual_realization_df)):
+    hazard_rate_array[realization_index,:] = individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+
+hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+
+for realization_index in range(len(individual_realization_df)):
+
+    plt.loglog(nshm_im_levels,hazard_prob_of_exceedance[realization_index,:])
+
+plt.show()
+
+print()
+
+
+
+
 
 
 print()
 
-assert np.all(source_ids == source_ids[0]), ("Currently only supports realizations from single source\n"
-                                             "(tectonic region type). Please create realizations using a single\n"
-                                             "source type by using the logic tree manipulation tools, or manually\n"
-                                             "delete runs to ensure that only one source type (tectonic region type)\n"
-                                             "is present in the data.")
+# assert np.all(source_ids == source_ids[0]), ("Currently only supports realizations from single source\n"
+#                                              "(tectonic region type). Please create realizations using a single\n"
+#                                              "source type by using the logic tree manipulation tools, or manually\n"
+#                                              "delete runs to ensure that only one source type (tectonic region type)\n"
+#                                              "is present in the data.")
 
 
 gmm_id_groups = []
@@ -182,6 +209,7 @@ for key in id_to_weight_dict.keys():
 for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == location_code_str].iterrows():
 
     hazard_rate = row["branches_hazard_rates"]
+    print()
 
     contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
     contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")

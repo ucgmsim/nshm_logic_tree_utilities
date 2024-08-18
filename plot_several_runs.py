@@ -353,6 +353,14 @@ def plot_gmm_dispersion_ranges():
     dispersion_range_dict = get_interpolated_gmms()
     filter_strs = ["CRU", "HIK_and_PUY", "SLAB"]
 
+    linestyle_lookup_dict = {"CRU":"--",
+                             "HIK_and_PUY":"-.",
+                             "SLAB":":"}
+
+    color_lookup_dict = {"AKL":"blue",
+                         "WLG":"orange",
+                         "CHC":"red"}
+
     plt.figure()
 
     num_mean_points = 1000
@@ -362,10 +370,31 @@ def plot_gmm_dispersion_ranges():
 
             for filter_str in filter_strs:
 
-                plt.semilogx(mm, dispersion_range_dict[location][filter_str], label=f"{location} {filter_str}")
+                print(filter_str)
+
+                if filter_str == "HIK_and_PUY":
+
+                    plt.semilogy(dispersion_range_dict[location][filter_str],
+                    mm,
+                    label=f"{location} INTER",
+                    linestyle=linestyle_lookup_dict[filter_str],
+                    color=color_lookup_dict[location])
+
+                else:
+
+                    plt.semilogy(dispersion_range_dict[location][filter_str],
+                    mm,
+                    label=f"{location} {filter_str}",
+                    linestyle=linestyle_lookup_dict[filter_str],
+                    color=color_lookup_dict[location])
 
     plt.legend()
-    plt.show()
+    plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+    plt.xlabel(r'Range in dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+    plt.grid(linestyle='--')
+    plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_range_plot.png", dpi=500)
+
+    #plt.show()
     print()
 
 
@@ -396,6 +425,8 @@ def plot_gmm_dispersion_ranges():
 # get_interpolated_gmms()
 
 plot_gmm_dispersion_ranges()
+
+print()
 
 ## A good plotting function for plotting
 ## all ground motion models with
