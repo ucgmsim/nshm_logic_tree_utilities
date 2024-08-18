@@ -6,6 +6,9 @@ import pyarrow.dataset as ds
 import natsort
 import copy
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.ticker import LogLocator
+from matplotlib.ticker import LogLocator, FormatStrFormatter
+
 
 from toshi_hazard_post import aggregation_calc
 import toshi_hazard_post.calculators as calculators
@@ -62,10 +65,16 @@ nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
 location_code_str = "-41.300~174.780"
 
+locations_nloc_dict = {"AKL":"-36.870~174.770",
+                       "WLG":"-41.300~174.780",
+                       "CHC":"-43.530~172.630"}
+
+realization_index_to_linestyle = {0:"-", 1:"--", 2:"-."}
+
 #registry = nzshm_model.branch_registry.Registry()
 
-#registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+#registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
 gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
 source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -81,7 +90,8 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
+#base_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto20")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
@@ -108,53 +118,124 @@ for run_dir in run_dirs:
 
 print()
 
-needed_indices = (individual_realization_df["hazard_model_id"] == "run_0") & \
-                 (individual_realization_df["nloc_001"] == location_code_str)
 
-print()
-
-individual_realization_df = individual_realization_df[needed_indices]
 
 source_ids = []
 gmm_ids = []
 
 print()
 
+poe_list = []
 
-### Get all realization ids (consisting of source and gmm ids) for a single location
-for idx, row in individual_realization_df[individual_realization_df["nloc_001"] == location_code_str].iterrows():
+run_name = "run_3"
+#fig, axs = plt.subplots(2, 3)
+fig, axs = plt.subplots(2, 3,figsize=(12, 8))
+for loc_plot_index, loc_name in enumerate(locations_nloc_dict.keys()):
 
-    contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
-    contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
+    print(f"doing {loc_name}")
 
-    for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
+    needed_indices = (individual_realization_df["hazard_model_id"] == run_name) & \
+                     (individual_realization_df["nloc_001"] == locations_nloc_dict[loc_name])
 
-        source_id = contributing_branches_hash_id[0:12]
-        gmm_id = contributing_branches_hash_id[12:24]
+    print()
 
-        gmm_reg_idx = gmm_registry_df["hash_digest"] == gmm_id
-        gmm_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
+    filtered_individual_realization_df = individual_realization_df[needed_indices]
 
-        source_reg_idx = source_registry_df["hash_digest"] == source_id
-        source_id = source_registry_df[source_reg_idx]["extra"].values[0]
+    # if loc_name == "WLG":
+    #     print()
 
-        source_ids.append(source_id)
-        gmm_ids.append(gmm_id)
 
-source_ids = np.array(source_ids)
+    ### Get all realization ids (consisting of source and gmm ids) for a single location
+    for idx, row in filtered_individual_realization_df.iterrows():
 
-hazard_rate_array = np.zeros((len(individual_realization_df),44))
+        contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
+        contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
 
-for realization_index in range(len(individual_realization_df)):
-    hazard_rate_array[realization_index,:] = individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+        for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
 
-hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+            source_id = contributing_branches_hash_id[0:12]
+            gmm_id = contributing_branches_hash_id[12:24]
 
-for realization_index in range(len(individual_realization_df)):
+            gmm_reg_idx = gmm_registry_df["hash_digest"] == gmm_id
+            gmm_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
 
-    plt.loglog(nshm_im_levels,hazard_prob_of_exceedance[realization_index,:])
+            source_reg_idx = source_registry_df["hash_digest"] == source_id
+            source_id = source_registry_df[source_reg_idx]["extra"].values[0]
 
-plt.show()
+            source_ids.append(source_id)
+            gmm_ids.append(gmm_id)
+
+    #source_ids = np.array(source_ids)
+    print()
+
+    hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+
+    for realization_index in range(len(filtered_individual_realization_df)):
+        hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+
+    hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+
+    ln_resid = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0,:])
+
+    #linear_fractional_residual = hazard_prob_of_exceedance/hazard_prob_of_exceedance[0,:]
+
+    #fig, axs = plt.subplots(3, 1, figsize=(8, 12))
+    #fig, axs = plt.subplots(3, 1)
+    #fig, axs = plt.subplots(3, 1, figsize=(8, 12))
+
+    poe_list.append(hazard_prob_of_exceedance)
+
+    needed_poe_indices = hazard_prob_of_exceedance[0,:] > 1e-6
+
+
+
+    for realization_index in range(len(filtered_individual_realization_df)):
+
+        if run_name == "run_0":
+            label = source_ids[realization_index].split(",")[0].strip("[")
+        if run_name == "run_1":
+            label = source_ids[realization_index].split(",")[1].strip()
+        if run_name == "run_2":
+            label = source_ids[realization_index].split(",")[2].strip() + ", " + source_ids[realization_index].split(",")[3].strip()
+
+        if run_name == "run_3":
+            label = source_ids[realization_index].split(",")[-1].strip(" ]")
+
+
+            print()
+
+        axs[0,loc_plot_index].set_title(loc_name)
+        axs[0,loc_plot_index].loglog(nshm_im_levels[needed_poe_indices],
+                                     hazard_prob_of_exceedance[realization_index, needed_poe_indices],
+                                     label=label, linestyle = realization_index_to_linestyle[realization_index])
+        axs[0, loc_plot_index].legend(loc="lower left",prop={'size': 8})
+        axs[0,loc_plot_index].set_ylabel("APoE")
+        axs[0,loc_plot_index].set_xlabel("PGA (g)")
+        #axs[0,loc_plot_index].xaxis.set_major_locator(LogLocator(base=10.0, subs='auto', numticks=5))
+        # Set the number of ticks on the logarithmic x-axis
+        #axs[0,loc_plot_index].xaxis.set_major_locator(LogLocator(base=10.0, subs='auto', numticks=3))
+
+        # Customize the tick labels
+        axs[0,loc_plot_index].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+        axs[1,loc_plot_index].semilogx(nshm_im_levels[needed_poe_indices],
+                                       ln_resid[realization_index, needed_poe_indices], label=label,
+                                       linestyle = realization_index_to_linestyle[realization_index])
+        axs[1, loc_plot_index].set_ylabel(r"$\ln(\mathrm{APoE}_{1}) - \ln(\mathrm{APoE}_{0})$")
+        axs[1,loc_plot_index].set_xlabel("PGA (g)")
+
+
+
+
+
+    #plt.show()
+plt.tight_layout()
+plt.savefig(f"/home/arr65/data/nshm/output_plots/{run_name}_source_realization_residuals.png",dpi=500)
+
+print()
+
+
+#plt.show()
 
 print()
 

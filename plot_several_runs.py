@@ -171,9 +171,9 @@ def remove_duplicates_in_x(x, y):
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
 
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
 
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
 
 df = load_all_runs_in_rungroup(auto_dir)
 
@@ -421,12 +421,6 @@ def plot_gmm_dispersion_ranges():
     #
     # print()
 
-
-# get_interpolated_gmms()
-
-plot_gmm_dispersion_ranges()
-
-print()
 
 ## A good plotting function for plotting
 ## all ground motion models with
@@ -745,7 +739,11 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
     pdf.close()
 
 
-#do_srm_model_plots_with_seperate_location_subplots("PGA")
+# get_interpolated_gmms()
+
+#plot_gmm_dispersion_ranges()
+
+do_srm_model_plots_with_seperate_location_subplots("PGA")
 
 
 
