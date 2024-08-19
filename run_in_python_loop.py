@@ -213,7 +213,7 @@ logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 delete_exisiting_output = False
 
 input_file_dir = Path("custom_input_files")
-output_dir = Path("/home/arr65/data/nshm/auto_output/auto22")
+output_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
 
 if delete_exisiting_output:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -259,16 +259,30 @@ def print_branch_set_total_weight(logic_tree):
         total_weight = 0.0
 
 
+
+
 full_lt_set = logic_tree_tools.CustomLogicTreeSet(
     slt = copy.deepcopy(slt_full),
     glt = copy.deepcopy(glt_full),
     slt_note = "full > ",
     glt_note = 'full > ')
 
-logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
-    initial_logic_tree_set = full_lt_set,
-    tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
-    which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
+logic_tree_set_list = [full_lt_set,
+                       logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
+                           full_lt_set,
+                           slt_nth_highest=1,
+                           glt_nth_highest=None),
+                       logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
+                           full_lt_set,
+                           slt_nth_highest=None,
+                           glt_nth_highest=1),
+                       ]
+
+
+# logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
+#     initial_logic_tree_set = full_lt_set,
+#     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
+#     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
 
 # logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(

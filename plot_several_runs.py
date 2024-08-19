@@ -10,6 +10,7 @@ import natsort
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt, ticker as mticker
 
+
 nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
 
@@ -171,9 +172,11 @@ def remove_duplicates_in_x(x, y):
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
 
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
+
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
 
 df = load_all_runs_in_rungroup(auto_dir)
 
@@ -210,7 +213,7 @@ run_list_label_tuple_list = []
 
 ##################################################################################################
 ##################################################################################################
-
+### Used function
 def get_alphabetical_run_list():
 
     # ### For sorting the runs by the model name and run number for tectonic type plots
@@ -240,6 +243,8 @@ def get_alphabetical_run_list():
 
     return [x[0] for x in sorted_run_list_label_tuple_list]
 
+
+### Used function
 def interpolate_ground_motion_models(df, location, im):
 
     mean_list = []
@@ -321,6 +326,7 @@ def interpolate_ground_motion_models(df, location, im):
 
     return mm, interp_disp_array
 
+### Used function
 def get_interpolated_gmms():
 
     locations = ["AKL", "WLG", "CHC"]
@@ -348,6 +354,7 @@ def get_interpolated_gmms():
 
     return dispersion_range_dict
 
+### Used function
 def plot_gmm_dispersion_ranges():
 
     dispersion_range_dict = get_interpolated_gmms()
@@ -743,7 +750,7 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
 #plot_gmm_dispersion_ranges()
 
-do_srm_model_plots_with_seperate_location_subplots("PGA")
+#do_srm_model_plots_with_seperate_location_subplots("PGA")
 
 
 
@@ -762,7 +769,7 @@ print()
 #do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
 #trt_loc_subplot_all_locs()
 
-print()
+#print()
 
 #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
@@ -785,13 +792,22 @@ print()
 
 def do_plots(over_plot_all=False):
 
+    color_lookup_dict = {"AKL":"blue","WLG":"orange","CHC":"red"}
+    linestyle_lookup_dict = {"run_0":"-", "run_1":"--", "run_2":":"}
+
+    label_lookup_dict = {"run_0":"full SRM and full GMCM",
+                         "run_1":"single highest weighted SRM branch and full GMCM",
+                         "run_2":"full SRM & single highest weighted GMCM branch"}
+
+
+
     for im in ims:
         num_hazard_curves_on_plot = 0
 
         if not over_plot_all:
             plt.close("all")
 
-        plt.rc('axes', prop_cycle=custom_cycler_slt_nth_branch)
+        #plt.rc('axes', prop_cycle=custom_cycler_slt_nth_branch)
         for location in locations:
 
             nloc_001_str = locations_nloc_dict[location]
@@ -812,9 +828,16 @@ def do_plots(over_plot_all=False):
                           (df["hazard_model_id"] == run) &
                           (df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]}, "
-                              f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
-                plt.semilogy(std_ln, mean, label=plot_label)
+                # plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]}, "
+                #               f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
+
+                plot_label = f"{location} {label_lookup_dict[run]}"
+
+                print()
+
+
+
+                plt.semilogy(std_ln, mean, color=color_lookup_dict[location],linestyle=linestyle_lookup_dict[run], label=plot_label)
                 print(f"plotting: {im} {location} {run}")
                 num_hazard_curves_on_plot += 1
 
@@ -831,16 +854,17 @@ def do_plots(over_plot_all=False):
 
         if not over_plot_all:
 
-            plt.title(f'Fixed: IM={im}, Vs30 = 400 m/s')
-            plt.legend(loc="lower left", prop={'size': 6})
-            pdf_all_ims.savefig()
+            #plt.title(f'Fixed: IM={im}, Vs30 = 400 m/s')
+            plt.legend(prop={'size': 5})
+            plt.savefig(plot_output_dir / f"{auto_dir.name}_{im}.png", dpi=500)
+            #pdf_all_ims.savefig()
 
 
     if over_plot_all:
         plt.title(f'All IMs, fixed Vs30 = 400 m/s')
-        pdf_all_ims.savefig()
+        #pdf_all_ims.savefig()
 
-
+do_plots(over_plot_all=False)
 
 
 def do_plots_with_seperate_location_subplots(over_plot_all=False):
