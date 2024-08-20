@@ -174,9 +174,9 @@ def remove_duplicates_in_x(x, y):
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
 
-#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
+auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
 
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
+#auto_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
 
 df = load_all_runs_in_rungroup(auto_dir)
 
@@ -429,28 +429,10 @@ def plot_gmm_dispersion_ranges():
     # print()
 
 
-## A good plotting function for plotting
-## all ground motion models with
-## subplots for different tectonic region types
-
-## calls the below function do_plots_with_seperate_tectonic_region_type
-def trt_loc_subplot_all_locs():
-    run_list = get_alphabetical_run_list()
-
-    pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion_seperate_trt.pdf")
-
-    for location in ["AKL", "WLG", "CHC"]:
-        plt.figure()  # Start with a new figure for each location
-        fig = do_plots_with_seperate_tectonic_region_type(run_list, location, "PGA")
-        pdf_all_ims.savefig(fig)
-        plt.close(fig)  # Close the figure to avoid carrying over the legend
-
-    pdf_all_ims.close()
-
-
+## A good plotting function. Use autorun21 for these plots
 ## Plots the ground motion models with subplots for different tectonic region types
 ## for a given location
-def do_plots_with_seperate_tectonic_region_type(run_list, location, im):
+def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
 
     plt.close("all")
 
@@ -550,7 +532,8 @@ def do_plots_with_seperate_tectonic_region_type(run_list, location, im):
 
     fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
 
-    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{location}_{im}.png",dpi=400)
+    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{location}_{im}.png",dpi=500)
+
 
     return fig
 
@@ -754,22 +737,16 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
 
 
-print()
-
-
-
 
 ### use autorun15 for these plots
 #make_cov_plots()#
 
 #print()
 
-### use autorun13 for these plots
-# do_plots_with_seperate_tectonic_region_type_per_location("AKL", "PGA")
-#do_plots_with_seperate_tectonic_region_type_per_location("WLG", "PGA")
-#trt_loc_subplot_all_locs()
-
-#print()
+### use autorun21 for these plots
+run_list_sorted = get_alphabetical_run_list()
+for location in ["AKL", "WLG", "CHC"]:
+    do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
 
 #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
@@ -863,8 +840,6 @@ def do_plots(over_plot_all=False):
     if over_plot_all:
         plt.title(f'All IMs, fixed Vs30 = 400 m/s')
         #pdf_all_ims.savefig()
-
-do_plots(over_plot_all=False)
 
 
 def do_plots_with_seperate_location_subplots(over_plot_all=False):
