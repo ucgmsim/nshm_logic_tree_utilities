@@ -207,6 +207,10 @@ locations_nloc_dict = {"AKL":"-36.870~174.770",
                        "WLG":"-41.300~174.780",
                        "CHC":"-43.530~172.630"}
 
+location_to_full_location = {"AKL": "Auckland",
+                             "WLG": "Wellington",
+                             "CHC": "Christchurch"}
+
 run_list = natsort.natsorted((df["hazard_model_id"].unique()))
 
 run_list_label_tuple_list = []
@@ -434,16 +438,51 @@ def plot_gmm_dispersion_ranges():
 ## for a given location
 def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
 
+    glt_model_to_plot_label = {"AbrahamsonEtAl2014":"Abrahamson et al. (2014)",
+                               "Atkinson2022Crust":"Atkinson (2022)",
+                               "BooreEtAl2014":"Boore et al. (2014)",
+                               "Bradley2013":"Bradley (2013)",
+                               "CampbellBozorgnia2014":"Campbell & Bozorgnia (2014)",
+                               "ChiouYoungs2014":"Chiou & Youngs (2014)",
+                               "Stafford2022":"Stafford 2022",
+                               "Atkinson2022SInter":"Atkinson (2022)",
+                               "NZNSHM2022_AbrahamsonGulerce2020SInter":"Abrahamson & Gulerce (2020)",
+                               "NZNSHM2022_KuehnEtAl2020SInter":"Kuehn et al. (2020)",
+                               "NZNSHM2022_ParkerEtAl2020SInter":"Parker et al. (2020)",
+                               "Atkinson2022SSlab":"Atkinson (2022)",
+                               "NZNSHM2022_AbrahamsonGulerce2020SSlab":"Abrahamson & Gulerce (2020)",
+                               "NZNSHM2022_KuehnEtAl2020SSlab":"Kuehn et al. (2020)",
+                               "NZNSHM2022_ParkerEtAl2020SSlab":"Parker et al. (2020)"}
+
+
+    glt_model_color = {"AbrahamsonEtAl2014":"#8c564b",
+                               "Atkinson2022Crust":"#1f77b4",
+                               "BooreEtAl2014":"#bcbd22",
+                               "Bradley2013":"#7f7f7f",
+                               "CampbellBozorgnia2014":"#17becf",
+                               "ChiouYoungs2014":"#e377c2",
+                               "Stafford2022":"#ff7f0e",
+                               "Atkinson2022SInter":"#1f77b4",
+                               "NZNSHM2022_AbrahamsonGulerce2020SInter":"orange",
+                               "NZNSHM2022_KuehnEtAl2020SInter":"green",
+                               "NZNSHM2022_ParkerEtAl2020SInter":"red",
+                               "Atkinson2022SSlab":"#1f77b4",
+                               "NZNSHM2022_AbrahamsonGulerce2020SSlab":"orange",
+                               "NZNSHM2022_KuehnEtAl2020SSlab":"green",
+                               "NZNSHM2022_ParkerEtAl2020SSlab":"red"}
+
+
+
     plt.close("all")
 
-    fig, axes = plt.subplots(1, 3)
-    plt.subplots_adjust(wspace=0.0)
+    fig, axes = plt.subplots(1, 3, figsize=(8,4))
 
-    have_plotted_im_labels = np.zeros(3,dtype=bool)
+    have_plotted_im_labels = np.zeros(3, dtype=bool)
 
     mean_list = []
     std_ln_list = []
     non_zero_run_list = []
+
     for run in run_list:
 
         nloc_001_str = locations_nloc_dict[location]
@@ -484,7 +523,8 @@ def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
             subplot_idx = 2
 
         #plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
-        plot_label_short = f"{glt_model} (w = {glt_model_weight:.3f})"
+        #plot_label_short = f"{glt_model} (w = {glt_model_weight:.3f})"
+
 
         # if plot_label_short != "INTER HIK":
         #     continue
@@ -502,37 +542,55 @@ def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
         if "SLAB" in trts_from_note:
             linestyle = ":"
 
-        plot_label = plot_label_short
+        #plot_label = plot_label_short
 
-        axes[subplot_idx].semilogy(std_ln, mean, label=plot_label,
-                                    linestyle=linestyle)
+        print(glt_model)
+
+        axes[subplot_idx].semilogy(std_ln, mean, label=glt_model_to_plot_label[glt_model],
+                                    linestyle=linestyle, color=glt_model_color[glt_model])
 
         axes[subplot_idx].set_ylim(1e-5,0.6)
-        #axes[subplot_idx].set_ylim(bottom=1e-5)
         axes[subplot_idx].set_xlim(-0.01, 0.7)
 
-        axes[0].set_title("Active Shallow Crust",fontsize=11)
-        axes[1].set_title("Subduction Interface",fontsize=11)
-        axes[2].set_title("Subduction Intraslab",fontsize=11)
+        axes[0].set_title("active shallow crust",fontsize=11)
+        axes[1].set_title(f"{location_to_full_location[location]}\nsubduction interface",fontsize=11)
+        axes[2].set_title("subduction intraslab",fontsize=11)
+
+        axes[subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
 
         if subplot_idx == 0:
             axes[subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
 
+
         if subplot_idx == 1:
             axes[subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
             axes[subplot_idx].set_yticklabels([])
+            #axes[subplot_idx].set_yticks([])
         if subplot_idx == 2:
             axes[subplot_idx].set_yticklabels([])
+            #axes[subplot_idx].set_yticks([])
 
-        axes[subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+
 
         #if subplot_idx == 0:
-        axes[subplot_idx].legend(loc="lower left", prop={'size': 3},
-                                      handlelength=5)
+        axes[subplot_idx].legend(
+                         loc="lower left",
+                         prop={'size': 6},
+                         framealpha=0.4,
+                         handlelength=2.2,
+                         handletextpad=0.2)
+                         #edgecolor='grey')
+                         #bbox_to_anchor=(1, 1))
+        #legend.get_frame().set_linestyle(':')
 
-    fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
 
-    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{location}_{im}.png",dpi=500)
+
+    #fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
+    #fig.suptitle(f'{location_to_full_location[location]}',horizontalalignment='center')
+    plt.subplots_adjust(wspace=0.0,left=0.1,right=0.99,top=0.9)
+    #plt.tight_layout()
+
+    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{location}_{im}.png",dpi=1000)
 
 
     return fig
@@ -645,6 +703,15 @@ def make_cov_plots(over_plot_all=False):
 ## A good plotting function
 def do_srm_model_plots_with_seperate_location_subplots(im):
 
+    trt_short_to_long = {"CRU":"crust",
+                         "INTER":"subduction interface\n"}
+
+    model_name_short_to_long = {"deformation_model":"deformation model\n(geologic or geodetic)",
+                                "time_dependence":"time dependence\n(time-dependent or time-independent)",
+                                "MFD":"magnitude frequency distribution",
+                                "moment_rate_scaling":"moment rate scaling"}
+
+
     #filtered_df = run_notes_df[~run_notes_df["slt_note"].str.contains("INTER_only")]
 
     ## Filter out the slab as well with just "only"
@@ -652,16 +719,11 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
     run_list = [f"run_{x}" for x in filtered_df["run_counter"].values]
 
-    print()
-
-    fig, axes = plt.subplots(1, 3)
-    plt.subplots_adjust(wspace=0.0)
+    fig, axes = plt.subplots(1, 3, figsize=(8,4))
 
     linestyle_lookup_dict = {"CRU":"-", "INTER":"--"}
 
     for location_idx, location in enumerate(locations):
-
-        plt.close("all")
 
         for run in run_list:
 
@@ -695,18 +757,13 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
             model_name = slt_note.split(">")[-2].strip(" ")
 
-
-            print()
-
-            note = f"{tectonic_region_type} {model_name}"
-
-
+            note = f"{trt_short_to_long[tectonic_region_type]} {model_name_short_to_long[model_name]}"
 
             axes[location_idx].semilogy(std_ln, mean, label=note, linestyle = linestyle_lookup_dict[tectonic_region_type])
 
             axes[location_idx].set_ylim(1e-6,0.6)
             axes[location_idx].set_xlim(-0.01, 0.37)
-            axes[location_idx].set_title(location)
+            axes[location_idx].set_title(location_to_full_location[location])
 
             if location_idx == 0:
                 axes[location_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
@@ -719,14 +776,20 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
         axes[location_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
 
-        axes[location_idx].legend(loc="lower left", prop={'size': 3},
-                                      handlelength=5)
+        axes[location_idx].legend(loc="lower left",
+                                  prop={'size': 6},
+                                  framealpha=0.6,
+                                  handlelength=2.2,
+                                  handletextpad=0.2)
 
-    fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
+    #fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
 
-    pdf = PdfPages(plot_output_dir / f"{auto_dir.name}_source_mean_vs_dispersion.pdf")
-    pdf.savefig(fig)
-    pdf.close()
+    plt.subplots_adjust(wspace=0.0,left=0.1,right=0.99,top=0.94)
+    plt.savefig(plot_output_dir / f"{auto_dir.name}_source_mean_vs_dispersion.png",dpi=1000)
+
+    # pdf = PdfPages(plot_output_dir / f"{auto_dir.name}_source_mean_vs_dispersion.pdf")
+    # pdf.savefig(fig)
+    # pdf.close()
 
 
 # get_interpolated_gmms()
