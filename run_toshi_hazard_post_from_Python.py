@@ -3,16 +3,22 @@ import shutil
 import time
 from pathlib import Path
 
-from toshi_hazard_post.aggregation import run_aggregation, AggregationArgs
-
+from toshi_hazard_post.aggregation import (
+    AggregationArgs,
+    run_aggregation,
+)
 
 import logic_tree_tools
 
 
 def run_with_modified_logic_trees(
-    args:AggregationArgs, output_dir:Path, run_counter: int, custom_logic_tree_set: logic_tree_tools.CustomLogicTreeSet, locations:list[str], output_staging_dir:Path
+    args: AggregationArgs,
+    output_dir: Path,
+    run_counter: int,
+    custom_logic_tree_set: logic_tree_tools.CustomLogicTreeSet,
+    locations: list[str],
+    output_staging_dir: Path,
 ):
-
     """
     Runs toshi_hazard_post with modified logic trees.
 
