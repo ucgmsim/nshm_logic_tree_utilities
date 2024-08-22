@@ -1,15 +1,37 @@
 import copy
 import shutil
 import time
+from pathlib import Path
 
-from toshi_hazard_post.aggregation import run_aggregation
+from toshi_hazard_post.aggregation import run_aggregation, AggregationArgs
+
 
 import logic_tree_tools
 
 
 def run_with_modified_logic_trees(
-    args, output_dir, run_counter, custom_logic_tree_set, locations, output_staging_dir
+    args:AggregationArgs, output_dir:Path, run_counter: int, custom_logic_tree_set: logic_tree_tools.CustomLogicTreeSet, locations:list[str], output_staging_dir:Path
 ):
+
+    """
+    Runs toshi_hazard_post with modified logic trees.
+
+    Parameters
+    ----------
+    args : AggregationArgs
+        Contains the arguments for toshi_hazard_post to run.
+    output_dir : Path
+        The directory where the output files will be saved.
+    run_counter : int
+        The number of the run.
+    custom_logic_tree_set : logic_tree_tools.CustomLogicTreeSet
+        The logic tree set to run toshi_hazard_post with.
+    locations : list[str]
+        The locations to run toshi_hazard_post for.
+    output_staging_dir : Path
+        The output directory used internally by toshi_hazard_post. After toshi_hazard_post has finished,
+        these files are moved to the output_dir.
+    """
 
     run_start_time = time.time()
 
