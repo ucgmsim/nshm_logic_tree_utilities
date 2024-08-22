@@ -436,7 +436,9 @@ def plot_gmm_dispersion_ranges():
 ## A good plotting function. Use autorun21 for these plots
 ## Plots the ground motion models with subplots for different tectonic region types
 ## for a given location
-def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
+def do_big_gmcm_subplot(run_list, locations, im):
+
+    run_list_sorted = get_alphabetical_run_list()
 
     glt_model_to_plot_label = {"AbrahamsonEtAl2014":"Abrahamson et al. (2014)",
                                "Atkinson2022Crust":"Atkinson (2022)",
@@ -475,122 +477,140 @@ def do_gmcm_plots_with_seperate_tectonic_region_type(run_list, location, im):
 
     plt.close("all")
 
-    fig, axes = plt.subplots(1, 3, figsize=(8,4))
-
-    have_plotted_im_labels = np.zeros(3, dtype=bool)
-
-    mean_list = []
-    std_ln_list = []
-    non_zero_run_list = []
-
-    for run in run_list:
-
-        nloc_001_str = locations_nloc_dict[location]
-
-        run_counter = int(run.split("_")[-1])
-
-        mean = df[(df["agg"] == "mean") &
-                  (df["vs30"] == vs30) &
-                  (df["imt"] == im) &
-                  (df["hazard_model_id"] == run) &
-                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-        mean_max = np.max(mean)
-        print(f'run {run} max mean: {mean_max}')
-
-        std_ln = df[(df["agg"] == "std_ln") &
-                  (df["vs30"] == vs30) &
-                  (df["imt"] == im) &
-                  (df["hazard_model_id"] == run) &
-                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-        mean_list.append(mean)
-        std_ln_list.append(std_ln)
-        non_zero_run_list.append(run)
-        slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
-        glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
-
-        trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-        glt_model_from_note = glt_note.split(">")[-2].strip(" []")
-        glt_model = glt_model_from_note.split("*")[0]
-        glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
-
-        if "CRU" in trts_from_note:
-            subplot_idx = 0
-        if "INTER" in trts_from_note:
-            subplot_idx = 1
-        if "SLAB" in trts_from_note:
-            subplot_idx = 2
-
-        #plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
-        #plot_label_short = f"{glt_model} (w = {glt_model_weight:.3f})"
+    #fig, axes = plt.subplots(3, 3, )
+    fig, axes = plt.subplots(3, 3,figsize=(6,9))
 
 
-        # if plot_label_short != "INTER HIK":
-        #     continue
+    # for location in ["AKL", "WLG", "CHC"]:
+    #     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
 
-        if "only" in trts_from_note:
-            ## only plot the inteface both
-            continue
+    for location_row_idx, location in enumerate(locations):
 
-        print()
+        mean_list = []
+        std_ln_list = []
+        non_zero_run_list = []
 
-        if "CRU" in trts_from_note:
-            linestyle = '--'
-        if "INTER" in trts_from_note:
-            linestyle = "-."
-        if "SLAB" in trts_from_note:
-            linestyle = ":"
+        for run in run_list:
 
-        #plot_label = plot_label_short
+            nloc_001_str = locations_nloc_dict[location]
 
-        print(glt_model)
+            run_counter = int(run.split("_")[-1])
 
-        axes[subplot_idx].semilogy(std_ln, mean, label=glt_model_to_plot_label[glt_model],
-                                    linestyle=linestyle, color=glt_model_color[glt_model])
+            mean = df[(df["agg"] == "mean") &
+                      (df["vs30"] == vs30) &
+                      (df["imt"] == im) &
+                      (df["hazard_model_id"] == run) &
+                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-        axes[subplot_idx].set_ylim(1e-5,0.6)
-        axes[subplot_idx].set_xlim(-0.01, 0.7)
+            mean_max = np.max(mean)
+            print(f'run {run} max mean: {mean_max}')
 
-        axes[0].set_title("active shallow crust",fontsize=11)
-        axes[1].set_title(f"{location_to_full_location[location]}\nsubduction interface",fontsize=11)
-        axes[2].set_title("subduction intraslab",fontsize=11)
+            std_ln = df[(df["agg"] == "std_ln") &
+                      (df["vs30"] == vs30) &
+                      (df["imt"] == im) &
+                      (df["hazard_model_id"] == run) &
+                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-        axes[subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+            mean_list.append(mean)
+            std_ln_list.append(std_ln)
+            non_zero_run_list.append(run)
+            slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+            glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
 
-        if subplot_idx == 0:
-            axes[subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+            trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+            glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+            glt_model = glt_model_from_note.split("*")[0]
+            glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+
+            if "CRU" in trts_from_note:
+                subplot_idx = 0
+            if "INTER" in trts_from_note:
+                subplot_idx = 1
+            if "SLAB" in trts_from_note:
+                subplot_idx = 2
+
+            #plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+            #plot_label_short = f"{glt_model} (w = {glt_model_weight:.3f})"
 
 
-        if subplot_idx == 1:
-            axes[subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
-            axes[subplot_idx].set_yticklabels([])
-            #axes[subplot_idx].set_yticks([])
-        if subplot_idx == 2:
-            axes[subplot_idx].set_yticklabels([])
-            #axes[subplot_idx].set_yticks([])
+            # if plot_label_short != "INTER HIK":
+            #     continue
+
+            if "only" in trts_from_note:
+                ## only plot the inteface both
+                continue
+
+            print()
+
+            if "CRU" in trts_from_note:
+                linestyle = '--'
+            if "INTER" in trts_from_note:
+                linestyle = "-."
+            if "SLAB" in trts_from_note:
+                linestyle = ":"
+
+            #plot_label = plot_label_short
+
+            print(glt_model)
+
+            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=glt_model_to_plot_label[glt_model],
+                                        linestyle=linestyle, color=glt_model_color[glt_model])
+
+            axes[location_row_idx, subplot_idx].text(
+                x=0.68,
+                y=0.2,
+                s=location_to_full_location[location],
+                horizontalalignment="right",
+                bbox=dict(facecolor='white', alpha=0.4, edgecolor='none',pad=0)
+            )
+
+            axes[location_row_idx, subplot_idx].set_ylim(1e-5,0.6)
+            axes[location_row_idx, subplot_idx].set_xlim(-0.01, 0.7)
+            axes[location_row_idx, subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+
+            if subplot_idx == 0:
+                axes[0,0].set_title("Active shallow crust", fontsize=11)
+                #axes[0,1].set_title(f"{location_to_full_location[location]}\nsubduction interface", fontsize=11)
+                axes[0, 1].set_title("Subduction interface", fontsize=11)
+                axes[0,2].set_title("Subduction intraslab", fontsize=11)
+
+                if location_row_idx == 1:
+                    axes[location_row_idx, subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
 
 
+            if subplot_idx == 1:
+                if location_row_idx == 2:
+                    axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                axes[location_row_idx, subplot_idx].set_yticklabels([])
+                #axes[subplot_idx].set_yticks([])
+            if subplot_idx == 2:
+                axes[location_row_idx, subplot_idx].set_yticklabels([])
+                #axes[subplot_idx].set_yticks([])
 
-        #if subplot_idx == 0:
-        axes[subplot_idx].legend(
-                         loc="lower left",
-                         prop={'size': 6},
-                         framealpha=0.4,
-                         handlelength=2.2,
-                         handletextpad=0.2)
-                         #edgecolor='grey')
-                         #bbox_to_anchor=(1, 1))
-        #legend.get_frame().set_linestyle(':')
+            if (location_row_idx == 0) or (location_row_idx == 1):
+                # axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                axes[location_row_idx, subplot_idx].set_xticklabels([])
+
+            #if subplot_idx == 0:
+            axes[location_row_idx, subplot_idx].legend(
+                             loc="lower left",
+                             prop={'size': 6},
+                             framealpha=0.4,
+                             handlelength=2.2,
+                             handletextpad=0.2)
+                             #edgecolor='grey')
+                             #bbox_to_anchor=(1, 1))
+            #legend.get_frame().set_linestyle(':')
+
 
 
 
     #fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
     #fig.suptitle(f'{location_to_full_location[location]}',horizontalalignment='center')
-    plt.subplots_adjust(wspace=0.0,left=0.1,right=0.99,top=0.9)
+    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
     #plt.tight_layout()
 
-    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{location}_{im}.png",dpi=1000)
+    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{im}_all_locations.png",dpi=500)
 
 
     return fig
@@ -807,9 +827,11 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 #print()
 
 ### use autorun21 for these plots
-run_list_sorted = get_alphabetical_run_list()
-for location in ["AKL", "WLG", "CHC"]:
-    do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
+# run_list_sorted = get_alphabetical_run_list()
+# for location in ["AKL", "WLG", "CHC"]:
+#     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
+
+do_big_gmcm_subplot(run_list, ["WLG", "CHC","AKL"], "PGA")
 
 #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 

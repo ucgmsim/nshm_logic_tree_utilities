@@ -1,0 +1,12 @@
+delete_existing_output : True
+input_directory : "custom_input_files"
+output_directory : "/home/arr65/data/nshm/auto_output/auto24"
+
+env_file_name : ".env_home"
+initial_input_file_name : "simple_input.toml"
+
+#locations : ["AKL","WLG","CHC"]
+locations : ["WLG"]
+
+output_individual_realizations : False
+run_notes_file_name : "run_notes.csv"
