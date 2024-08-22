@@ -10,12 +10,7 @@ import natsort
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt, ticker as mticker
 
-
 nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
-
-
-# named_color_list = list(matplotlib.colors.cnames.keys())
-# named_color_list = named_color_list[::5]
 
 five_colors = ['b', 'g', 'r', 'c', 'm']
 
@@ -153,6 +148,7 @@ def remove_duplicates_in_x(x, y):
     return filtered_x, filtered_y
 
 
+
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto1")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto2")
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto3")
@@ -174,74 +170,69 @@ def remove_duplicates_in_x(x, y):
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto20")   ## For making the main SRM dispersion plots
 
-auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
+# auto_dir = Path("/home/arr65/data/nshm/auto_output/auto21")  ## For making the main GMCM dispersion plots
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
 
-df = load_all_runs_in_rungroup(auto_dir)
-
-plot_output_dir = Path("/home/arr65/data/nshm/output_plots")
-
-#location = "WLG"
-vs30 = 400
-#im = "PGA"
-
-print()
-
-run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
+# df = load_all_runs_in_rungroup(auto_dir)
 
 
 
-#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}.pdf")
-#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion.pdf")
-#pdf_all_ims = PdfPages(plot_output_dir / f"{auto_dir.name}_mean_vs_dispersion_seperate_trt.pdf")
-
-#ims = ["PGA", "SA(0.1)", "SA(0.5)", "SA(1.0)", "SA(3.0)", "SA(10.0)"]
-ims = ["PGA"]
+# vs30 = 400
+#
+#
+# ims = ["PGA"]
 
 
-locations = ["AKL","WLG","CHC"]
+# locations = ["AKL","WLG","CHC"]
 #locations = ["WLG"]
 
-locations_nloc_dict = {"AKL":"-36.870~174.770",
-                       "WLG":"-41.300~174.780",
-                       "CHC":"-43.530~172.630"}
+# locations_nloc_dict = {"AKL":"-36.870~174.770",
+#                        "WLG":"-41.300~174.780",
+#                        "CHC":"-43.530~172.630"}
+#
+# location_to_full_location = {"AKL": "Auckland",
+#                              "WLG": "Wellington",
+#                              "CHC": "Christchurch"}
 
-location_to_full_location = {"AKL": "Auckland",
-                             "WLG": "Wellington",
-                             "CHC": "Christchurch"}
 
-run_list = natsort.natsorted((df["hazard_model_id"].unique()))
 
 run_list_label_tuple_list = []
 
 ##################################################################################################
 ##################################################################################################
 ### Used function
-def get_alphabetical_run_list():
+def get_runs_sorted_by_model_name(rungroup_num,
+                                  results_dir: Path = Path("/home/arr65/data/nshm/auto_output")):
 
-    # ### For sorting the runs by the model name and run number for tectonic type plots
-    #
-    # # Get the model name and run_number pairs
-    for run_index, run_name in enumerate(run_list):
+    """
+    Sort the runs in a rungroup by the model name that was isolated in that run.
+    """
 
-        for location in ['WLG']:
+    print()
 
-            run_counter = int(run_name.split("_")[-1])
+    run_notes_df = pd.read_csv(results_dir / f"auto{rungroup_num}/run_notes.csv")
 
-            slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
-            glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
+    run_nums = run_notes_df["run_counter"]
 
-            trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-            glt_model_from_note = glt_note.split(">")[-2].strip(" []")
-            glt_model = glt_model_from_note.split("*")[0]
-            glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+    print()
 
-            plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+    for run_counter in run_nums:
 
-            run_list_label_tuple_list.append((run_name, plot_label_short))
+        slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+        glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
 
-            print()
+        print()
+
+        trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+        glt_model_from_note = glt_note.split(">")[-2].strip(" []")
+        glt_model = glt_model_from_note.split("*")[0]
+        glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+
+        plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+
+        ## Get tuples of (run_number, corresponding model name)
+        run_list_label_tuple_list.append((run_counter, plot_label_short))
 
     sorted_run_list_label_tuple_list = natsort.natsorted(run_list_label_tuple_list, key=lambda x: x[1])
 
@@ -436,9 +427,21 @@ def plot_gmm_dispersion_ranges():
 ## A good plotting function. Use autorun21 for these plots
 ## Plots the ground motion models with subplots for different tectonic region types
 ## for a given location
-def do_big_gmcm_subplot(run_list, locations, im):
+def do_big_gmcm_subplot(run_num: int, plot_output_dir : Path = Path("/home/arr65/data/nshm/output_plots")):
 
-    run_list_sorted = get_alphabetical_run_list()
+    locations = ["AKL", "WLG", "CHC"]
+
+    auto_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{run_num}")
+
+    data_df = load_all_runs_in_rungroup(auto_dir)
+
+    run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
+
+    run_list = natsort.natsorted((data_df["hazard_model_id"].unique()))
+
+    run_list_sorted = get_runs_sorted_by_model_name(21)
+
+    print()
 
     glt_model_to_plot_label = {"AbrahamsonEtAl2014":"Abrahamson et al. (2014)",
                                "Atkinson2022Crust":"Atkinson (2022)",
@@ -446,7 +449,7 @@ def do_big_gmcm_subplot(run_list, locations, im):
                                "Bradley2013":"Bradley (2013)",
                                "CampbellBozorgnia2014":"Campbell & Bozorgnia (2014)",
                                "ChiouYoungs2014":"Chiou & Youngs (2014)",
-                               "Stafford2022":"Stafford 2022",
+                               "Stafford2022":"Stafford (2022)",
                                "Atkinson2022SInter":"Atkinson (2022)",
                                "NZNSHM2022_AbrahamsonGulerce2020SInter":"Abrahamson & Gulerce (2020)",
                                "NZNSHM2022_KuehnEtAl2020SInter":"Kuehn et al. (2020)",
@@ -455,7 +458,6 @@ def do_big_gmcm_subplot(run_list, locations, im):
                                "NZNSHM2022_AbrahamsonGulerce2020SSlab":"Abrahamson & Gulerce (2020)",
                                "NZNSHM2022_KuehnEtAl2020SSlab":"Kuehn et al. (2020)",
                                "NZNSHM2022_ParkerEtAl2020SSlab":"Parker et al. (2020)"}
-
 
     glt_model_color = {"AbrahamsonEtAl2014":"#8c564b",
                                "Atkinson2022Crust":"#1f77b4",
@@ -473,16 +475,8 @@ def do_big_gmcm_subplot(run_list, locations, im):
                                "NZNSHM2022_KuehnEtAl2020SSlab":"green",
                                "NZNSHM2022_ParkerEtAl2020SSlab":"red"}
 
-
-
     plt.close("all")
-
-    #fig, axes = plt.subplots(3, 3, )
     fig, axes = plt.subplots(3, 3,figsize=(6,9))
-
-
-    # for location in ["AKL", "WLG", "CHC"]:
-    #     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
 
     for location_row_idx, location in enumerate(locations):
 
@@ -490,7 +484,7 @@ def do_big_gmcm_subplot(run_list, locations, im):
         std_ln_list = []
         non_zero_run_list = []
 
-        for run in run_list:
+        for run in run_list_sorted:
 
             nloc_001_str = locations_nloc_dict[location]
 
@@ -520,7 +514,6 @@ def do_big_gmcm_subplot(run_list, locations, im):
             trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
             glt_model_from_note = glt_note.split(">")[-2].strip(" []")
             glt_model = glt_model_from_note.split("*")[0]
-            glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
 
             if "CRU" in trts_from_note:
                 subplot_idx = 0
@@ -529,29 +522,12 @@ def do_big_gmcm_subplot(run_list, locations, im):
             if "SLAB" in trts_from_note:
                 subplot_idx = 2
 
-            #plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
-            #plot_label_short = f"{glt_model} (w = {glt_model_weight:.3f})"
-
-
-            # if plot_label_short != "INTER HIK":
-            #     continue
-
-            if "only" in trts_from_note:
-                ## only plot the inteface both
-                continue
-
-            print()
-
             if "CRU" in trts_from_note:
                 linestyle = '--'
             if "INTER" in trts_from_note:
                 linestyle = "-."
             if "SLAB" in trts_from_note:
                 linestyle = ":"
-
-            #plot_label = plot_label_short
-
-            print(glt_model)
 
             axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=glt_model_to_plot_label[glt_model],
                                         linestyle=linestyle, color=glt_model_color[glt_model])
@@ -566,7 +542,11 @@ def do_big_gmcm_subplot(run_list, locations, im):
 
             axes[location_row_idx, subplot_idx].set_ylim(1e-5,0.6)
             axes[location_row_idx, subplot_idx].set_xlim(-0.01, 0.7)
-            axes[location_row_idx, subplot_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+            axes[location_row_idx, subplot_idx].grid(which='major',
+                                                     linestyle='--',
+                                                     linewidth='0.5',
+                                                     color='black',
+                                                     alpha=0.5)
 
             if subplot_idx == 0:
                 axes[0,0].set_title("Active shallow crust", fontsize=11)
@@ -582,36 +562,21 @@ def do_big_gmcm_subplot(run_list, locations, im):
                 if location_row_idx == 2:
                     axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
                 axes[location_row_idx, subplot_idx].set_yticklabels([])
-                #axes[subplot_idx].set_yticks([])
+
             if subplot_idx == 2:
                 axes[location_row_idx, subplot_idx].set_yticklabels([])
-                #axes[subplot_idx].set_yticks([])
 
             if (location_row_idx == 0) or (location_row_idx == 1):
-                # axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
                 axes[location_row_idx, subplot_idx].set_xticklabels([])
 
-            #if subplot_idx == 0:
             axes[location_row_idx, subplot_idx].legend(
                              loc="lower left",
                              prop={'size': 6},
                              framealpha=0.4,
                              handlelength=2.2,
                              handletextpad=0.2)
-                             #edgecolor='grey')
-                             #bbox_to_anchor=(1, 1))
-            #legend.get_frame().set_linestyle(':')
-
-
-
-
-    #fig.suptitle(f'{location}, IM={im}, Vs30 = 400 m/s')
-    #fig.suptitle(f'{location_to_full_location[location]}',horizontalalignment='center')
     plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
-    #plt.tight_layout()
-
-    plt.savefig(f"/home/arr65/data/nshm/output_plots/gmm_{auto_dir.name}_{im}_all_locations.png",dpi=500)
-
+    plt.savefig(output_dir / "gmm_{auto_dir.name}_{im}_all_locations.png",dpi=500)
 
     return fig
 
@@ -811,43 +776,6 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
     # pdf.savefig(fig)
     # pdf.close()
 
-
-# get_interpolated_gmms()
-
-#plot_gmm_dispersion_ranges()
-
-#do_srm_model_plots_with_seperate_location_subplots("PGA")
-
-
-
-
-### use autorun15 for these plots
-#make_cov_plots()#
-
-#print()
-
-### use autorun21 for these plots
-# run_list_sorted = get_alphabetical_run_list()
-# for location in ["AKL", "WLG", "CHC"]:
-#     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
-
-do_big_gmcm_subplot(run_list, ["WLG", "CHC","AKL"], "PGA")
-
-#range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
-
-# plt.figure()
-# plt.semilogx(mm, range_dispersions, 'r--')
-# plt.show()
-
-#do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
-
-#print()
-#do_plots(over_plot_all=True)
-#do_plots(over_plot_all=False)
-
-#do_plots_with_seperate_location_subplots(over_plot_all=True)
-#do_plots_with_seperate_location_subplots(over_plot_all=False)
-
 ######################################
 ##############################
 ### Old plotting functions
@@ -1033,3 +961,42 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
         fig.suptitle(f'All IMs, Vs30 = 400 m/s')
         pdf_all_ims.savefig(fig)
 
+
+
+if __name__ == "__main__":
+
+    # get_interpolated_gmms()
+
+    #plot_gmm_dispersion_ranges()
+
+    #do_srm_model_plots_with_seperate_location_subplots("PGA")
+
+
+
+
+    ### use autorun15 for these plots
+    #make_cov_plots()#
+
+    #print()
+
+    ### use autorun21 for these plots
+    # run_list_sorted = get_alphabetical_run_list()
+    # for location in ["AKL", "WLG", "CHC"]:
+    #     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
+
+    do_big_gmcm_subplot(21)
+
+    #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
+
+    # plt.figure()
+    # plt.semilogx(mm, range_dispersions, 'r--')
+    # plt.show()
+
+    #do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
+
+    #print()
+    #do_plots(over_plot_all=True)
+    #do_plots(over_plot_all=False)
+
+    #do_plots_with_seperate_location_subplots(over_plot_all=True)
+    #do_plots_with_seperate_location_subplots(over_plot_all=False)
