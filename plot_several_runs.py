@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
@@ -67,7 +69,16 @@ def load_locations_from_run(output_dir: Path, locations: list[str]) -> pd.DataFr
 
     return results_df
 
-def load_all_runs_in_rungroup(output_dir: Path) -> pd.DataFrame:
+@dataclass
+class RunResults():
+
+    data_df :  pd.DataFrame()
+    run_notes_df : pd.DataFrame()
+
+
+
+
+def load_all_runs_in_rungroup(output_dir: Path) -> RunResults:
 
     results_df = pd.DataFrame()
 
@@ -78,7 +89,8 @@ def load_all_runs_in_rungroup(output_dir: Path) -> pd.DataFrame:
                             load_locations_from_run(run_dir, ["AKL","WLG","CHC"])],
                            ignore_index=True))
 
-    return results_df
+    return RunResults(data_df=results_df, run_notes_df=pd.read_csv(output_dir / "run_notes.csv"))
+
 
 
 
@@ -424,12 +436,15 @@ def plot_gmm_dispersion_ranges():
     # print()
 
 
+
+
 ## A good plotting function. Use autorun21 for these plots
 ## Plots the ground motion models with subplots for different tectonic region types
 ## for a given location
-def do_big_gmcm_subplot(run_num: int, plot_output_dir : Path = Path("/home/arr65/data/nshm/output_plots")):
+def do_big_gmcm_subplot(run_num: int,
+                        locations : list[str] = ["AKL", "WLG", "CHC"],
+                        plot_output_dir : Path = Path("/home/arr65/data/nshm/output_plots")):
 
-    locations = ["AKL", "WLG", "CHC"]
 
     auto_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{run_num}")
 
@@ -437,9 +452,7 @@ def do_big_gmcm_subplot(run_num: int, plot_output_dir : Path = Path("/home/arr65
 
     run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
 
-    run_list = natsort.natsorted((data_df["hazard_model_id"].unique()))
-
-    run_list_sorted = get_runs_sorted_by_model_name(21)
+    run_list_sorted = get_runs_sorted_by_model_name(run_num)
 
     print()
 
