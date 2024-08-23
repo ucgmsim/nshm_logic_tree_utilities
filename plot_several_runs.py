@@ -12,6 +12,8 @@ import natsort
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt, ticker as mticker
 
+import toml
+
 nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
 five_colors = ['b', 'g', 'r', 'c', 'm']
@@ -70,15 +72,14 @@ def load_locations_from_run(output_dir: Path, locations: list[str]) -> pd.DataFr
     return results_df
 
 @dataclass
-class RunResults():
+class LoadedRunResults():
 
     data_df :  pd.DataFrame()
     run_notes_df : pd.DataFrame()
 
 
-
-
-def load_all_runs_in_rungroup(output_dir: Path) -> RunResults:
+def load_toshi_hazard_post_agg_stats_in_rungroup(output_dir: Path,
+                                                 locations:list[str]=["AKL","WLG","CHC"]) -> LoadedRunResults:
 
     results_df = pd.DataFrame()
 
@@ -86,10 +87,10 @@ def load_all_runs_in_rungroup(output_dir: Path) -> RunResults:
         if run_dir.is_dir():
             results_df = (pd.concat
                           ([results_df,
-                            load_locations_from_run(run_dir, ["AKL","WLG","CHC"])],
+                            load_locations_from_run(run_dir,locations)],
                            ignore_index=True))
 
-    return RunResults(data_df=results_df, run_notes_df=pd.read_csv(output_dir / "run_notes.csv"))
+    return LoadedRunResults(data_df=results_df, run_notes_df=pd.read_csv(output_dir / "run_notes.csv"))
 
 
 
@@ -117,13 +118,13 @@ def load_location_from_run(output_dir: Path, location: str) -> pd.DataFrame:
 
     return results_df
 
-def insert_ln_std(df):
+def insert_ln_std(data_df):
 
     # Initialize an empty DataFrame to hold the new rows
     new_rows = []
 
     # Iterate over the DataFrame
-    for index, row in df.iterrows():
+    for index, row in data_df.iterrows():
         # Append the current row to the list of new rows
         new_rows.append(row)
 
@@ -186,7 +187,7 @@ def remove_duplicates_in_x(x, y):
 
 #auto_dir = Path("/home/arr65/data/nshm/auto_output/auto23")
 
-# df = load_all_runs_in_rungroup(auto_dir)
+# data_df = load_toshi_hazard_post_agg_stats_in_rungroup(auto_dir)
 
 
 
@@ -199,21 +200,28 @@ def remove_duplicates_in_x(x, y):
 # locations = ["AKL","WLG","CHC"]
 #locations = ["WLG"]
 
-# locations_nloc_dict = {"AKL":"-36.870~174.770",
-#                        "WLG":"-41.300~174.780",
-#                        "CHC":"-43.530~172.630"}
+
+# linestyle_dict = {
+#     "CRU": "--",
+#     "INTER": "-.",
+#     "SLAB": ":"
+# }
+
+
 #
+
+
 # location_to_full_location = {"AKL": "Auckland",
 #                              "WLG": "Wellington",
 #                              "CHC": "Christchurch"}
 
 
 
-run_list_label_tuple_list = []
-
 ##################################################################################################
 ##################################################################################################
 ### Used function
+
+
 def get_runs_sorted_by_model_name(rungroup_num,
                                   results_dir: Path = Path("/home/arr65/data/nshm/auto_output")):
 
@@ -221,63 +229,62 @@ def get_runs_sorted_by_model_name(rungroup_num,
     Sort the runs in a rungroup by the model name that was isolated in that run.
     """
 
-    print()
+    run_list_label_tuple_list = []
 
     run_notes_df = pd.read_csv(results_dir / f"auto{rungroup_num}/run_notes.csv")
 
     run_nums = run_notes_df["run_counter"]
 
-    print()
 
     for run_counter in run_nums:
 
         slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
         glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
 
-        print()
-
         trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-        glt_model_from_note = glt_note.split(">")[-2].strip(" []")
-        glt_model = glt_model_from_note.split("*")[0]
-        glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+        glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
+        glt_model = glt_model_and_weight_str.split("*")[0]
 
-        plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
+        if "NZNSHM2022_" in glt_model:
+            glt_model = glt_model.split("NZNSHM2022_")[1]
 
         ## Get tuples of (run_number, corresponding model name)
-        run_list_label_tuple_list.append((run_counter, plot_label_short))
+        run_list_label_tuple_list.append((run_counter, f"{trts_from_note}_{glt_model}"))
 
     sorted_run_list_label_tuple_list = natsort.natsorted(run_list_label_tuple_list, key=lambda x: x[1])
+
+    print()
 
     return [x[0] for x in sorted_run_list_label_tuple_list]
 
 
 ### Used function
-def interpolate_ground_motion_models(df, location, im):
+def interpolate_ground_motion_models(data_df, location, im):
 
     mean_list = []
     std_ln_list = []
     non_zero_run_list = []
 
-    for run in natsort.natsorted(df["hazard_model_id"].unique()):
+    for run in natsort.natsorted(data_df["hazard_model_id"].unique()):
 
         nloc_001_str = locations_nloc_dict[location]
 
         run_counter = int(run.split("_")[-1])
 
-        mean = df[(df["agg"] == "mean") &
-                  (df["vs30"] == vs30) &
-                  (df["imt"] == im) &
-                  (df["hazard_model_id"] == run) &
-                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        mean = data_df[(data_df["agg"] == "mean") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
         mean_max = np.max(mean)
         print(f'run {run} max mean: {mean_max}')
 
-        std_ln = df[(df["agg"] == "std_ln") &
-                  (df["vs30"] == vs30) &
-                  (df["imt"] == im) &
-                  (df["hazard_model_id"] == run) &
-                  (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        std_ln = data_df[(data_df["agg"] == "std_ln") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
         mean_list.append(mean)
         std_ln_list.append(std_ln)
@@ -351,7 +358,7 @@ def get_interpolated_gmms():
 
             run_list = [f"run_{x}" for x in filtered_run_notes_df["run_counter"].values]
 
-            filtered_data_df = df[df["hazard_model_id"].isin(run_list)]
+            filtered_data_df = data_df[data_df["hazard_model_id"].isin(run_list)]
 
             for location in locations:
 
@@ -424,7 +431,7 @@ def plot_gmm_dispersion_ranges():
     #
     # run_list = [f"run_{x}" for x in filtered_run_notes_df["run_counter"].values]
     #
-    # filtered_data_df = df[df["hazard_model_id"].isin(run_list)]
+    # filtered_data_df = data_df[data_df["hazard_model_id"].isin(run_list)]
     #
     # print()
     #
@@ -443,80 +450,55 @@ def plot_gmm_dispersion_ranges():
 ## for a given location
 def do_big_gmcm_subplot(run_num: int,
                         locations : list[str] = ["AKL", "WLG", "CHC"],
+                        vs30 = 400,
+                        im = "PGA",
                         plot_output_dir : Path = Path("/home/arr65/data/nshm/output_plots")):
 
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    tectonic_type_to_linestyle = toml.load('resources/tectonic_region_type_to_linestyle.toml')
+    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
+    model_to_plot_label = toml.load('resources/gmcm_name_plot_format.toml')
+    glt_model_color = toml.load('resources/gmcm_plot_colors.toml')
 
     auto_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{run_num}")
 
-    data_df = load_all_runs_in_rungroup(auto_dir)
+    loaded_run_results = load_toshi_hazard_post_agg_stats_in_rungroup(auto_dir)
+    data_df = loaded_run_results.data_df
+    run_notes_df = loaded_run_results.run_notes_df
 
-    run_notes_df = pd.read_csv(auto_dir / "run_notes.csv")
-
-    run_list_sorted = get_runs_sorted_by_model_name(run_num)
+    run_list_sorted_crust = get_runs_sorted_by_model_name(run_num)
 
     print()
-
-    glt_model_to_plot_label = {"AbrahamsonEtAl2014":"Abrahamson et al. (2014)",
-                               "Atkinson2022Crust":"Atkinson (2022)",
-                               "BooreEtAl2014":"Boore et al. (2014)",
-                               "Bradley2013":"Bradley (2013)",
-                               "CampbellBozorgnia2014":"Campbell & Bozorgnia (2014)",
-                               "ChiouYoungs2014":"Chiou & Youngs (2014)",
-                               "Stafford2022":"Stafford (2022)",
-                               "Atkinson2022SInter":"Atkinson (2022)",
-                               "NZNSHM2022_AbrahamsonGulerce2020SInter":"Abrahamson & Gulerce (2020)",
-                               "NZNSHM2022_KuehnEtAl2020SInter":"Kuehn et al. (2020)",
-                               "NZNSHM2022_ParkerEtAl2020SInter":"Parker et al. (2020)",
-                               "Atkinson2022SSlab":"Atkinson (2022)",
-                               "NZNSHM2022_AbrahamsonGulerce2020SSlab":"Abrahamson & Gulerce (2020)",
-                               "NZNSHM2022_KuehnEtAl2020SSlab":"Kuehn et al. (2020)",
-                               "NZNSHM2022_ParkerEtAl2020SSlab":"Parker et al. (2020)"}
-
-    glt_model_color = {"AbrahamsonEtAl2014":"#8c564b",
-                               "Atkinson2022Crust":"#1f77b4",
-                               "BooreEtAl2014":"#bcbd22",
-                               "Bradley2013":"#7f7f7f",
-                               "CampbellBozorgnia2014":"#17becf",
-                               "ChiouYoungs2014":"#e377c2",
-                               "Stafford2022":"#ff7f0e",
-                               "Atkinson2022SInter":"#1f77b4",
-                               "NZNSHM2022_AbrahamsonGulerce2020SInter":"orange",
-                               "NZNSHM2022_KuehnEtAl2020SInter":"green",
-                               "NZNSHM2022_ParkerEtAl2020SInter":"red",
-                               "Atkinson2022SSlab":"#1f77b4",
-                               "NZNSHM2022_AbrahamsonGulerce2020SSlab":"orange",
-                               "NZNSHM2022_KuehnEtAl2020SSlab":"green",
-                               "NZNSHM2022_ParkerEtAl2020SSlab":"red"}
 
     plt.close("all")
     fig, axes = plt.subplots(3, 3,figsize=(6,9))
 
     for location_row_idx, location in enumerate(locations):
 
+        nloc_001_str = locations_nloc_dict[location]
+
         mean_list = []
         std_ln_list = []
         non_zero_run_list = []
 
-        for run in run_list_sorted:
+        for run_counter in run_list_sorted:
 
-            nloc_001_str = locations_nloc_dict[location]
+            run = f"run_{run_counter}"
 
-            run_counter = int(run.split("_")[-1])
-
-            mean = df[(df["agg"] == "mean") &
-                      (df["vs30"] == vs30) &
-                      (df["imt"] == im) &
-                      (df["hazard_model_id"] == run) &
-                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            mean = data_df[(data_df["agg"] == "mean") &
+                      (data_df["vs30"] == vs30) &
+                      (data_df["imt"] == im) &
+                      (data_df["hazard_model_id"] == run) &
+                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
             mean_max = np.max(mean)
             print(f'run {run} max mean: {mean_max}')
 
-            std_ln = df[(df["agg"] == "std_ln") &
-                      (df["vs30"] == vs30) &
-                      (df["imt"] == im) &
-                      (df["hazard_model_id"] == run) &
-                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            std_ln = data_df[(data_df["agg"] == "std_ln") &
+                      (data_df["vs30"] == vs30) &
+                      (data_df["imt"] == im) &
+                      (data_df["hazard_model_id"] == run) &
+                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
             mean_list.append(mean)
             std_ln_list.append(std_ln)
@@ -525,8 +507,15 @@ def do_big_gmcm_subplot(run_num: int,
             glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
 
             trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-            glt_model_from_note = glt_note.split(">")[-2].strip(" []")
-            glt_model = glt_model_from_note.split("*")[0]
+            glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
+            glt_model = glt_model_and_weight_str.split("*")[0]
+
+            linestyle = tectonic_type_to_linestyle[trts_from_note]
+
+            if trts_from_note == "INTER_only_HIK":
+                continue
+            if trts_from_note == "INTER_only_PUY":
+                continue
 
             if "CRU" in trts_from_note:
                 subplot_idx = 0
@@ -535,14 +524,7 @@ def do_big_gmcm_subplot(run_num: int,
             if "SLAB" in trts_from_note:
                 subplot_idx = 2
 
-            if "CRU" in trts_from_note:
-                linestyle = '--'
-            if "INTER" in trts_from_note:
-                linestyle = "-."
-            if "SLAB" in trts_from_note:
-                linestyle = ":"
-
-            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=glt_model_to_plot_label[glt_model],
+            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=model_to_plot_label[glt_model],
                                         linestyle=linestyle, color=glt_model_color[glt_model])
 
             axes[location_row_idx, subplot_idx].text(
@@ -570,7 +552,6 @@ def do_big_gmcm_subplot(run_num: int,
                 if location_row_idx == 1:
                     axes[location_row_idx, subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
 
-
             if subplot_idx == 1:
                 if location_row_idx == 2:
                     axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
@@ -588,10 +569,292 @@ def do_big_gmcm_subplot(run_num: int,
                              framealpha=0.4,
                              handlelength=2.2,
                              handletextpad=0.2)
+
     plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
-    plt.savefig(output_dir / "gmm_{auto_dir.name}_{im}_all_locations.png",dpi=500)
+    plt.savefig(plot_output_dir / f"gmm_{auto_dir.name}_{im}_all_locations.png",dpi=500)
 
     return fig
+
+
+def do_plot_for_poster():
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    tectonic_type_to_linestyle = toml.load('resources/tectonic_region_type_to_linestyle.toml')
+    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
+    model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
+    print()
+    glt_model_color = toml.load('resources/model_plot_colors.toml')
+
+    autoruns = [20, 21]
+
+    autorun_num_to_data = {}
+    for autorun in autoruns:
+        auto_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{autorun}")
+        loaded_run_results = load_toshi_hazard_post_agg_stats_in_rungroup(auto_dir)
+        autorun_num_to_data[autorun] = loaded_run_results
+
+    data_lookup_dict = {"0,0":autorun_num_to_data[21],
+                 "0,1":autorun_num_to_data[21],
+                 "1,0":autorun_num_to_data[21],
+                 "1,1":autorun_num_to_data[21],
+                 "2,0":autorun_num_to_data[20],
+                 "2,1":autorun_num_to_data[20]}
+
+    sorted_gmm_run_nums = get_runs_sorted_by_model_name(21)
+
+    print()
+
+    ## top left subplot
+
+    ## test = data_lookup_dict[21].run_notes_df
+
+    needed_runs_dict = {}
+
+    for row_index in range(3):
+        for column_index in range(2):
+
+            if row_index == 0:
+                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU")]["run_counter"]
+            if row_index == 1:
+                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["run_counter"]
+            if row_index == 2:
+                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["run_counter"]
+
+
+    ####################################################
+
+    title_font_size = 12
+
+    plt.close("all")
+    fig, axes = plt.subplots(3, 2, figsize=(6, 9))
+
+    for row_index in range(3):
+
+        for column_index in range(2):
+
+            axes[row_index, column_index].set_prop_cycle(None)
+
+            if column_index == 0:
+                plot_location = "WLG"
+                if row_index == 0:
+                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
+            if column_index == 1:
+                plot_location = "CHC"
+                if row_index == 0:
+                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
+
+            if row_index != 2:
+                sorted_run_nums = sorted_gmm_run_nums
+            if row_index == 2:
+                sorted_run_nums = needed_runs_dict[f"{row_index},{column_index}"]
+
+            for sorted_run_num in sorted_run_nums:
+
+                if sorted_run_num in needed_runs_dict[f"{row_index},{column_index}"]:
+
+                    run = f"run_{sorted_run_num}"
+
+                    if row_index in [0,1]:
+                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["glt_note"].values[0]
+                        short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
+                        plot_label = model_to_plot_label[short_note]
+                        print()
+                    if row_index == 2:
+                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["slt_note"].values[0]
+                        short_note = run_note.split(">")[1].split(":")[-1].strip(" []") + "_" +\
+                                     run_note.split(">")[2].strip()
+                        #print(short_note)
+                        plot_label = model_to_plot_label[short_note]
+                        #plot_label = short_note
+                    print(short_note)
+
+                    run_notes_df = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df
+
+                    print()
+
+                    mean = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "mean") &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+
+                    std_ln = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "std_ln") &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+                    print()
+                    if "CRU" in run_note:
+                        plot_linestyle = '--'
+                    if "INTER" in run_note:
+                        plot_linestyle = '--'
+                    if "SLAB" in run_note:
+                        plot_linestyle = '-.'
+
+                    axes[row_index, column_index].semilogy(std_ln, mean, label=plot_label,
+                                                       color=glt_model_color[short_note],
+                                                           linestyle=plot_linestyle)
+
+                    axes[row_index, column_index].grid(which='major',
+                                                             linestyle='--',
+                                                             linewidth='0.5',
+                                                             color='black',
+                                                             alpha=0.5)
+
+                    axes[row_index, column_index].set_ylim(1e-5, 0.7)
+                    axes[row_index, column_index].set_xlim(-0.01, 0.7)
+
+                    axes[row_index, column_index].legend(
+                             loc="lower left",
+                             prop={'size': 6},
+                             framealpha=0.4,
+                             handlelength=2.2,
+                             handletextpad=0.2)
+
+                    if row_index in [0,1]:
+                        axes[row_index, column_index].set_xticklabels([])
+                    if column_index == 1:
+                        axes[row_index, column_index].set_yticklabels([])
+
+                    if (row_index == 1) & (column_index == 0):
+                        axes[row_index, column_index].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
+
+    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.16, right=0.99, bottom=0.06, top=0.97)
+    #fig.text(0.5, 0.04, 'Shared X-axis Label', ha='center', va='center')
+
+    # Get the position of the bottom left subplot
+
+
+    # Add the x-axis label, anchoring the middle of the text to the right edge of the bottom left subplot
+    fig.text(axes[2, 0].get_position().x1, axes[2, 0].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+
+    row_titles_x0 = 0.03
+    fig.text(row_titles_x0, axes[0, 0].get_position().y0,'Ground Motion Characterization Models', ha='center', va='center',rotation=90, fontsize=title_font_size)
+
+    fig.text(row_titles_x0, (axes[2, 0].get_position().y0 + axes[2, 0].get_position().y1)/2.0,
+             'Seismicity Rate Models',
+             ha='center', va='center', rotation=90, fontsize=title_font_size)
+
+    #plt.show()
+    plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_poster_plot.png", dpi=500)
+    print()
+
+
+
+
+
+    print()
+
+
+
+
+
+
+
+
+    for location_row_idx, location in enumerate(locations):
+
+        nloc_001_str = locations_nloc_dict[location]
+
+        mean_list = []
+        std_ln_list = []
+        non_zero_run_list = []
+
+        for run_counter in run_list_sorted:
+
+            run = f"run_{run_counter}"
+
+            mean = data_df[(data_df["agg"] == "mean") &
+                           (data_df["vs30"] == vs30) &
+                           (data_df["imt"] == im) &
+                           (data_df["hazard_model_id"] == run) &
+                           (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+            mean_max = np.max(mean)
+            print(f'run {run} max mean: {mean_max}')
+
+            std_ln = data_df[(data_df["agg"] == "std_ln") &
+                             (data_df["vs30"] == vs30) &
+                             (data_df["imt"] == im) &
+                             (data_df["hazard_model_id"] == run) &
+                             (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+            mean_list.append(mean)
+            std_ln_list.append(std_ln)
+            non_zero_run_list.append(run)
+            slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
+            glt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["glt_note"].values[0]}"
+
+            trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+            glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
+            glt_model = glt_model_and_weight_str.split("*")[0]
+
+            linestyle = tectonic_type_to_linestyle[trts_from_note]
+
+            if trts_from_note == "INTER_only_HIK":
+                continue
+            if trts_from_note == "INTER_only_PUY":
+                continue
+
+            if "CRU" in trts_from_note:
+                subplot_idx = 0
+            if "INTER" in trts_from_note:
+                subplot_idx = 1
+            if "SLAB" in trts_from_note:
+                subplot_idx = 2
+
+            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=model_to_plot_label[glt_model],
+                                                         linestyle=linestyle, color=glt_model_color[glt_model])
+
+            axes[location_row_idx, subplot_idx].text(
+                x=0.68,
+                y=0.2,
+                s=location_to_full_location[location],
+                horizontalalignment="right",
+                bbox=dict(facecolor='white', alpha=0.4, edgecolor='none', pad=0)
+            )
+
+            axes[location_row_idx, subplot_idx].set_ylim(1e-5, 0.6)
+            axes[location_row_idx, subplot_idx].set_xlim(-0.01, 0.7)
+            axes[location_row_idx, subplot_idx].grid(which='major',
+                                                     linestyle='--',
+                                                     linewidth='0.5',
+                                                     color='black',
+                                                     alpha=0.5)
+
+            if subplot_idx == 0:
+                axes[0, 0].set_title("Active shallow crust", fontsize=11)
+                # axes[0,1].set_title(f"{location_to_full_location[location]}\nsubduction interface", fontsize=11)
+                axes[0, 1].set_title("Subduction interface", fontsize=11)
+                axes[0, 2].set_title("Subduction intraslab", fontsize=11)
+
+                if location_row_idx == 1:
+                    axes[location_row_idx, subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+
+            if subplot_idx == 1:
+                if location_row_idx == 2:
+                    axes[location_row_idx, subplot_idx].set_xlabel(
+                        r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                axes[location_row_idx, subplot_idx].set_yticklabels([])
+
+            if subplot_idx == 2:
+                axes[location_row_idx, subplot_idx].set_yticklabels([])
+
+            if (location_row_idx == 0) or (location_row_idx == 1):
+                axes[location_row_idx, subplot_idx].set_xticklabels([])
+
+            axes[location_row_idx, subplot_idx].legend(
+                loc="lower left",
+                prop={'size': 6},
+                framealpha=0.4,
+                handlelength=2.2,
+                handletextpad=0.2)
+
+    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
+    plt.savefig(plot_output_dir / f"gmm_{auto_dir.name}_{im}_all_locations.png", dpi=500)
+
+    return fig
+
+
 
 ## A good plotting function
 def make_cov_plots(over_plot_all=False):
@@ -614,29 +877,29 @@ def make_cov_plots(over_plot_all=False):
 
                 run_counter = int(run.split("_")[-1])
 
-                mean = df[(df["agg"] == "mean") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                mean = data_df[(data_df["agg"] == "mean") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                cov = df[(df["agg"] == "cov") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                cov = data_df[(data_df["agg"] == "cov") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                # std_ln = df[(df["agg"] == "std_ln") &
-                #           (df["vs30"] == vs30) &
-                #           (df["imt"] == im) &
-                #           (df["hazard_model_id"] == run) &
-                #           (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                # std_ln = data_df[(data_df["agg"] == "std_ln") &
+                #           (data_df["vs30"] == vs30) &
+                #           (data_df["imt"] == im) &
+                #           (data_df["hazard_model_id"] == run) &
+                #           (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                std = df[(df["agg"] == "std") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                std = data_df[(data_df["agg"] == "std") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
                 mean_list.append(mean)
                 std_list.append(std)
@@ -729,17 +992,17 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
             run_counter = int(run.split("_")[-1])
 
-            mean = df[(df["agg"] == "mean") &
-                      (df["vs30"] == vs30) &
-                      (df["imt"] == im) &
-                      (df["hazard_model_id"] == run) &
-                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            mean = data_df[(data_df["agg"] == "mean") &
+                      (data_df["vs30"] == vs30) &
+                      (data_df["imt"] == im) &
+                      (data_df["hazard_model_id"] == run) &
+                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-            std_ln = df[(df["agg"] == "std_ln") &
-                      (df["vs30"] == vs30) &
-                      (df["imt"] == im) &
-                      (df["hazard_model_id"] == run) &
-                      (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            std_ln = data_df[(data_df["agg"] == "std_ln") &
+                      (data_df["vs30"] == vs30) &
+                      (data_df["imt"] == im) &
+                      (data_df["hazard_model_id"] == run) &
+                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
             needed_idx = mean > 1e-8
             mean = mean[needed_idx]
@@ -819,17 +1082,17 @@ def do_plots(over_plot_all=False):
 
                 run_counter = int(run.split("_")[-1])
 
-                mean = df[(df["agg"] == "mean") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                mean = data_df[(data_df["agg"] == "mean") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                std_ln = df[(df["agg"] == "std_ln") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                std_ln = data_df[(data_df["agg"] == "std_ln") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
                 # plot_label = (f"{location} {run_notes_df[run_notes_df["run_counter"]==run_counter]["slt_note"].values[0]}, "
                 #               f"{run_notes_df[run_notes_df["run_counter"]==run_counter]['glt_note'].values[0]}")
@@ -893,30 +1156,30 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
 
                 run_counter = int(run.split("_")[-1])
 
-                mean = df[(df["agg"] == "mean") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                mean = data_df[(data_df["agg"] == "mean") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                std_ln = df[(df["agg"] == "std_ln") &
-                          (df["vs30"] == vs30) &
-                          (df["imt"] == im) &
-                          (df["hazard_model_id"] == run) &
-                          (df["nloc_001"] == nloc_001_str)]["values"].values[0]
+                std_ln = data_df[(data_df["agg"] == "std_ln") &
+                          (data_df["vs30"] == vs30) &
+                          (data_df["imt"] == im) &
+                          (data_df["hazard_model_id"] == run) &
+                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
                 slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
                 glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
 
                 trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-                glt_model_from_note = glt_note.split(">")[-2].strip(" []")
-                glt_model = glt_model_from_note.split("*")[0]
-                glt_model_weight = 1/float(glt_model_from_note.split("*")[1])
+                glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
+                glt_model = glt_model_and_weight_str.split("*")[0]
+                glt_model_weight = 1/float(glt_model_and_weight_str.split("*")[1])
 
 
                 #plot_label_short = plot_label.split(">")[-2].strip().split(":")[-1].strip("[]")
 
-                #plot_label_short = f"{trts_from_note} {glt_model_from_note}"
+                #plot_label_short = f"{trts_from_note} {glt_model_and_weight_str}"
 
                 plot_label_short = f"{trts_from_note} {glt_model} (w = {glt_model_weight:.3f})"
 
@@ -997,7 +1260,9 @@ if __name__ == "__main__":
     # for location in ["AKL", "WLG", "CHC"]:
     #     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
 
-    do_big_gmcm_subplot(21)
+    #do_big_gmcm_subplot(21)
+
+    do_plot_for_poster()
 
     #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
