@@ -6,11 +6,14 @@ import numpy as np
 from pathlib import Path
 import pandas as pd
 import scipy
+import pyarrow.dataset as ds
 
 from cycler import cycler
 import natsort
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt, ticker as mticker
+import toshi_hazard_post.calculators as calculators
+
 
 import toml
 
@@ -738,124 +741,6 @@ def do_plot_for_poster():
     plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_poster_plot.png", dpi=500)
     print()
 
-
-
-
-
-    print()
-
-
-
-
-
-
-
-
-    for location_row_idx, location in enumerate(locations):
-
-        nloc_001_str = locations_nloc_dict[location]
-
-        mean_list = []
-        std_ln_list = []
-        non_zero_run_list = []
-
-        for run_counter in run_list_sorted:
-
-            run = f"run_{run_counter}"
-
-            mean = data_df[(data_df["agg"] == "mean") &
-                           (data_df["vs30"] == vs30) &
-                           (data_df["imt"] == im) &
-                           (data_df["hazard_model_id"] == run) &
-                           (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-            mean_max = np.max(mean)
-            print(f'run {run} max mean: {mean_max}')
-
-            std_ln = data_df[(data_df["agg"] == "std_ln") &
-                             (data_df["vs30"] == vs30) &
-                             (data_df["imt"] == im) &
-                             (data_df["hazard_model_id"] == run) &
-                             (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-            mean_list.append(mean)
-            std_ln_list.append(std_ln)
-            non_zero_run_list.append(run)
-            slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
-            glt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["glt_note"].values[0]}"
-
-            trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-            glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
-            glt_model = glt_model_and_weight_str.split("*")[0]
-
-            linestyle = tectonic_type_to_linestyle[trts_from_note]
-
-            if trts_from_note == "INTER_only_HIK":
-                continue
-            if trts_from_note == "INTER_only_PUY":
-                continue
-
-            if "CRU" in trts_from_note:
-                subplot_idx = 0
-            if "INTER" in trts_from_note:
-                subplot_idx = 1
-            if "SLAB" in trts_from_note:
-                subplot_idx = 2
-
-            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=model_to_plot_label[glt_model],
-                                                         linestyle=linestyle, color=glt_model_color[glt_model])
-
-            axes[location_row_idx, subplot_idx].text(
-                x=0.68,
-                y=0.2,
-                s=location_to_full_location[location],
-                horizontalalignment="right",
-                bbox=dict(facecolor='white', alpha=0.4, edgecolor='none', pad=0)
-            )
-
-            axes[location_row_idx, subplot_idx].set_ylim(1e-5, 0.6)
-            axes[location_row_idx, subplot_idx].set_xlim(-0.01, 0.7)
-            axes[location_row_idx, subplot_idx].grid(which='major',
-                                                     linestyle='--',
-                                                     linewidth='0.5',
-                                                     color='black',
-                                                     alpha=0.5)
-
-            if subplot_idx == 0:
-                axes[0, 0].set_title("Active shallow crust", fontsize=11)
-                # axes[0,1].set_title(f"{location_to_full_location[location]}\nsubduction interface", fontsize=11)
-                axes[0, 1].set_title("Subduction interface", fontsize=11)
-                axes[0, 2].set_title("Subduction intraslab", fontsize=11)
-
-                if location_row_idx == 1:
-                    axes[location_row_idx, subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
-
-            if subplot_idx == 1:
-                if location_row_idx == 2:
-                    axes[location_row_idx, subplot_idx].set_xlabel(
-                        r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
-                axes[location_row_idx, subplot_idx].set_yticklabels([])
-
-            if subplot_idx == 2:
-                axes[location_row_idx, subplot_idx].set_yticklabels([])
-
-            if (location_row_idx == 0) or (location_row_idx == 1):
-                axes[location_row_idx, subplot_idx].set_xticklabels([])
-
-            axes[location_row_idx, subplot_idx].legend(
-                loc="lower left",
-                prop={'size': 6},
-                framealpha=0.4,
-                handlelength=2.2,
-                handletextpad=0.2)
-
-    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
-    plt.savefig(plot_output_dir / f"gmm_{auto_dir.name}_{im}_all_locations.png", dpi=500)
-
-    return fig
-
-
-
 ## A good plotting function
 def make_cov_plots(over_plot_all=False):
 
@@ -1237,6 +1122,287 @@ def do_plots_with_seperate_location_subplots(over_plot_all=False):
         fig.suptitle(f'All IMs, Vs30 = 400 m/s')
         pdf_all_ims.savefig(fig)
 
+def remove_special_characters(s):
+    chars_to_remove = ["'", "[", "]", '"']
+
+    translation_table = str.maketrans('', '', ''.join(chars_to_remove))
+    return s.translate(translation_table)
+
+@dataclass
+class RealizationName():
+    """
+    Class to store the names of the seismicity rate model and ground motion
+    characterization model used in a realization.
+    """
+    seismicity_rate_model_id: str
+    ground_motion_characterization_models_id: str
+    
+
+def lookup_realization_name_from_hash(individual_realization_df):
+
+    """
+
+    Looks up the models used in the realization based on the branch hash ids.
+
+    Parameters
+    ----------
+    individual_realization_df : pd.DataFrame
+        Dataframe containing the individual realizations
+        (produced by the modified version of toshi_hazard_post with output_individual_realizations == True)
+
+    Returns
+    -------
+    realization_names : List[RealizationName]
+        List of RealizationName objects containing the seismicity rate model and ground motion characterization model ids
+
+    """
+
+    #registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+    registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+    gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
+    source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
+
+    seismicity_rate_model_ids = []
+    ground_motion_characterization_models_ids = []
+
+    ### Get all realization ids (consisting of source and gmm ids) for a single location
+    for idx, row in individual_realization_df.iterrows():
+
+        contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
+        contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
+
+        for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
+
+            seismicity_rate_model_id = contributing_branches_hash_id[0:12]
+            ground_motion_characterization_models_id = contributing_branches_hash_id[12:24]
+
+            gmm_reg_idx = gmm_registry_df["hash_digest"] == ground_motion_characterization_models_id
+            ground_motion_characterization_models_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
+
+            source_reg_idx = source_registry_df["hash_digest"] == seismicity_rate_model_id
+            seismicity_rate_model_id = source_registry_df[source_reg_idx]["extra"].values[0]
+
+            seismicity_rate_model_ids.append(seismicity_rate_model_id)
+            ground_motion_characterization_models_ids.append(ground_motion_characterization_models_id)
+            
+    realization_names = [RealizationName(seismicity_rate_model_id, ground_motion_characterization_models_id) for seismicity_rate_model_id, ground_motion_characterization_models_id in zip(seismicity_rate_model_ids, ground_motion_characterization_models_ids)]
+
+    return realization_names
+
+def load_individual_realizations(rungroup_num, run_num):
+
+    realizations_path = Path(f"/home/arr65/data/nshm/auto_output/auto{rungroup_num}/run_{run_num}/individual_realizations")
+
+    return ds.dataset(source=realizations_path, format="parquet").to_table().to_pandas()
+
+
+import re
+
+
+def scientific_to_latex(number):
+    """
+    Convert a scientific notation number to LaTeX formatted string.
+
+    Parameters:
+    number (float or str): The number in scientific notation.
+
+    Returns:
+    str: The LaTeX formatted string.
+    """
+    # Convert the number to string if it is not already
+    number_str = str(number)
+
+    # Use regular expression to find the scientific notation parts
+    match = re.match(r"([+-]?\d*\.?\d*)e([+-]?\d+)", number_str)
+    if match:
+        base, exponent = match.groups()
+        return f"${base} \\times 10^{{{int(exponent)}}}$"
+    else:
+        return number_str
+
+
+def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
+                                     vs30=400, im="PGA"):
+
+
+    run_name = f"run_{run_num}"
+
+    plot_label_lookup = {"Stafford2022(mu_branch=Upper)":"Upper branch of Stafford 2022",
+                        "Stafford2022(mu_branch=Central)":"Central branch of Stafford 2022",
+                        "Stafford2022(mu_branch=Lower)":"Lower branch of Stafford 2022"}
+
+
+    locations_nloc_dict = {"AKL": "-36.870~174.770",
+                           "WLG": "-41.300~174.780",
+                           "CHC": "-43.530~172.630"}
+
+    plot_colors = ["tab:blue", "tab:orange", "tab:green"]
+    plot_linestyles = [":", "-", "--"]
+
+    individual_realization_df = load_individual_realizations(rungroup_num, run_num)
+
+    individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == run_name) & \
+                     (individual_realization_df["nloc_001"] == locations_nloc_dict[loc_name])
+
+    filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+
+    realization_names = lookup_realization_name_from_hash(filtered_individual_realization_df)
+
+    hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+
+    for realization_index in range(len(filtered_individual_realization_df)):
+        hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+
+    hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+
+    
+    run_results = load_toshi_hazard_post_agg_stats_in_rungroup(Path("/home/arr65/data/nshm/auto_output/auto21"))
+
+    agg_stats_df = run_results.data_df
+
+    run_name = f"run_{run_num}"
+
+    mean = agg_stats_df[(agg_stats_df["agg"] == "mean") &
+                   (agg_stats_df["vs30"] == vs30) &
+                   (agg_stats_df["imt"] == im) &
+                   (agg_stats_df["hazard_model_id"] == run_name) &
+                   (agg_stats_df["nloc_001"] == locations_nloc_dict[loc_name])]["values"].values[0]
+
+
+    std_ln = agg_stats_df[(agg_stats_df["agg"] == "std_ln") &
+                     (agg_stats_df["vs30"] == vs30) &
+                     (agg_stats_df["imt"] == im) &
+                     (agg_stats_df["hazard_model_id"] == run_name) &
+                     (agg_stats_df["nloc_001"] == locations_nloc_dict[loc_name])]["values"].values[0]
+
+    plot_ylims = (1e-5,1)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    for realization_index in range(len(hazard_prob_of_exceedance)):
+        gmcm_name = realization_names[realization_index].ground_motion_characterization_models_id
+
+        print(gmcm_name)
+
+
+        axes[0].loglog(nshm_im_levels, hazard_prob_of_exceedance[realization_index],
+                       label=plot_label_lookup[gmcm_name],
+                       marker="o",
+                       color=plot_colors[realization_index],
+                       linestyle=plot_linestyles[realization_index])
+
+
+    axes[0].legend(loc="lower left",
+                              #prop={'size': 6},
+                  framealpha=0.6,
+                  handlelength=2.2,
+                  handletextpad=0.2)
+
+    # Customize the second subplot
+    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:red")
+
+    for ax_index in range(len(axes)):
+        axes[ax_index].grid(which='major',
+                     linestyle='--',
+                     linewidth='0.5',
+                     color='black',
+                     alpha=0.5)
+
+        axes[ax_index].set_ylim(plot_ylims)
+    axes[0].set_xlim(9e-5,5)
+    axes[1].set_xlim(-0.01, 0.68)
+
+
+
+    ### The annotations for explanation
+    annotation_ims = [1e-2, 1e-1, 1e0]
+    annotation_labels = ["A", "B", "C"]
+
+    for annotation_im in annotation_ims:
+
+        im_index = np.where(nshm_im_levels == annotation_im)[0][0]
+
+        print(f"im index = {im_index}, im value = {annotation_im}, mean = {mean[im_index]:.1e}")
+
+        ### Draw vertical lines at IM values
+        axes[0].hlines(y=mean[im_index], xmin=nshm_im_levels[0]/10, xmax=annotation_im, color="black", linestyle="--")
+        axes[0].vlines(x=annotation_im, ymin=plot_ylims[0], ymax=mean[im_index], color="black", linestyle="--")
+        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:red", linestyle="--")
+
+        ### Draw the arrows
+        axes[0].plot(annotation_im, plot_ylims[1]-0.4,
+                     marker=r'$\uparrow$',
+                     markersize=20,
+                     color="tab:red")
+
+        ### Write the standard deviation value
+        axes[0].text(annotation_im,
+                     plot_ylims[1]+0.5,
+                     f"{std_ln[im_index]:.2f}",
+                     ha='center',
+                     va='center',
+                     color="tab:red")
+
+        ### Plot labels (A), (B), (C)
+        axes[0].text(annotation_im,
+                     plot_ylims[1]+2.0,
+                     f"{annotation_labels[annotation_ims.index(annotation_im)]}) {annotation_im:.1e},",
+                     ha='center',
+                     va='center',
+                     color="tab:red")
+
+        ### Draw the horizontal lines at the mean values
+        axes[1].hlines(y=mean[im_index],
+                       xmin=-0.01,
+                       xmax=std_ln[im_index],
+                       color="black", linestyle="--")
+
+        ### Draw the vertical lines at the standard deviation values
+        axes[1].vlines(x=std_ln[im_index],
+                       ymin=plot_ylims[0],
+                       ymax=plot_ylims[1],
+                       color="tab:red", linestyle="--")
+
+        ### Plot labels (A), (B), (C)
+        axes[1].text(std_ln[im_index],
+                     plot_ylims[1]+0.5,
+                     f"({annotation_labels[annotation_ims.index(annotation_im)]})",
+                     ha='center',
+                     va='center',
+                     color="tab:red")
+
+    axes[0].set_xlabel(r'Peak ground acceleration (g)')
+    axes[0].set_ylabel(r'Annual hazard probability, $\mu_{P(PGA=pga)}$')
+
+    axes[1].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
+    axes[1].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
+
+
+    axes[0].text(1e-3,
+                 6,
+                 "Dispersion in hazard probability at",
+                 ha='left',
+                 va='center',
+                 color="tab:red")
+
+
+    axes[0].text(1e-3,
+                 plot_ylims[1]+2.0,
+                 "PGA = ",
+                 ha='left',
+                 va='center',
+                 color="tab:red")
+
+    axes[0].text(1.55e-4,
+                 plot_ylims[1]+0.5,
+                 r"$\sigma_{\ln P(PGA=pga)} = $",
+                 ha='left',
+                 va='center',
+                 color="tab:red")
+
+    plt.subplots_adjust(bottom=0.1, top=0.7,left=0.07, right=0.99)
+
+    plt.savefig("/home/arr65/data/nshm/output_plots/explanation_plot.png", dpi=500)
+    print()
 
 
 if __name__ == "__main__":
@@ -1262,7 +1428,14 @@ if __name__ == "__main__":
 
     #do_big_gmcm_subplot(21)
 
-    do_plot_for_poster()
+    #do_plot_for_poster()
+
+    # Example usage
+    latex_str = scientific_to_latex(1e-1)
+    print(latex_str)  # Output: $1 \times 10^{-1}$
+    print()
+
+    #make_explanation_plot_for_poster(21,3)
 
     #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
