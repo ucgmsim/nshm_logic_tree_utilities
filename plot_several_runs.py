@@ -668,11 +668,8 @@ def do_plot_for_poster():
                         #print(short_note)
                         plot_label = model_to_plot_label[short_note]
                         #plot_label = short_note
-                    print(short_note)
 
                     run_notes_df = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df
-
-                    print()
 
                     mean = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "mean") &
                                                  (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
@@ -685,13 +682,19 @@ def do_plot_for_poster():
                                                  (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
                                                  (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
                                                  (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
-                    print()
-                    if "CRU" in run_note:
-                        plot_linestyle = '--'
-                    if "INTER" in run_note:
-                        plot_linestyle = '--'
-                    if "SLAB" in run_note:
-                        plot_linestyle = '-.'
+                    if row_index != 2:
+                        if "CRU" in run_note:
+                            plot_linestyle = '--'
+                        if "INTER" in run_note:
+                            plot_linestyle = '--'
+                        if "SLAB" in run_note:
+                            plot_linestyle = '-.'
+
+                    elif row_index == 2:
+                        if "CRU" in run_note:
+                            plot_linestyle = '--'
+                        if "INTER" in run_note:
+                            plot_linestyle = '-.'
 
                     axes[row_index, column_index].semilogy(std_ln, mean, label=plot_label,
                                                        color=glt_model_color[short_note],
@@ -701,7 +704,7 @@ def do_plot_for_poster():
                                                              linestyle='--',
                                                              linewidth='0.5',
                                                              color='black',
-                                                             alpha=0.5)
+                                                             alpha=0.6)
 
                     axes[row_index, column_index].set_ylim(1e-5, 0.7)
                     axes[row_index, column_index].set_xlim(-0.01, 0.7)
@@ -722,10 +725,6 @@ def do_plot_for_poster():
                         axes[row_index, column_index].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
 
     plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.16, right=0.99, bottom=0.06, top=0.97)
-    #fig.text(0.5, 0.04, 'Shared X-axis Label', ha='center', va='center')
-
-    # Get the position of the bottom left subplot
-
 
     # Add the x-axis label, anchoring the middle of the text to the right edge of the bottom left subplot
     fig.text(axes[2, 0].get_position().x1, axes[2, 0].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
@@ -1157,8 +1156,8 @@ def lookup_realization_name_from_hash(individual_realization_df):
 
     """
 
-    #registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-    registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+    registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+    #registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
     gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
     source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -1196,31 +1195,6 @@ def load_individual_realizations(rungroup_num, run_num):
     return ds.dataset(source=realizations_path, format="parquet").to_table().to_pandas()
 
 
-import re
-
-
-def scientific_to_latex(number):
-    """
-    Convert a scientific notation number to LaTeX formatted string.
-
-    Parameters:
-    number (float or str): The number in scientific notation.
-
-    Returns:
-    str: The LaTeX formatted string.
-    """
-    # Convert the number to string if it is not already
-    number_str = str(number)
-
-    # Use regular expression to find the scientific notation parts
-    match = re.match(r"([+-]?\d*\.?\d*)e([+-]?\d+)", number_str)
-    if match:
-        base, exponent = match.groups()
-        return f"${base} \\times 10^{{{int(exponent)}}}$"
-    else:
-        return number_str
-
-
 def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                                      vs30=400, im="PGA"):
 
@@ -1231,12 +1205,9 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                         "Stafford2022(mu_branch=Central)":"Central branch of Stafford 2022",
                         "Stafford2022(mu_branch=Lower)":"Lower branch of Stafford 2022"}
 
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
 
-    locations_nloc_dict = {"AKL": "-36.870~174.770",
-                           "WLG": "-41.300~174.780",
-                           "CHC": "-43.530~172.630"}
-
-    plot_colors = ["tab:blue", "tab:orange", "tab:green"]
+    plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
 
     individual_realization_df = load_individual_realizations(rungroup_num, run_num)
@@ -1276,7 +1247,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      (agg_stats_df["nloc_001"] == locations_nloc_dict[loc_name])]["values"].values[0]
 
     plot_ylims = (1e-5,1)
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
 
     for realization_index in range(len(hazard_prob_of_exceedance)):
         gmcm_name = realization_names[realization_index].ground_motion_characterization_models_id
@@ -1291,14 +1262,19 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                        linestyle=plot_linestyles[realization_index])
 
 
-    axes[0].legend(loc="lower left",
-                              #prop={'size': 6},
-                  framealpha=0.6,
-                  handlelength=2.2,
-                  handletextpad=0.2)
+    # axes[0].legend(loc="lower left",
+    #                           #prop={'size': 6},
+    #               framealpha=0.6,
+    #               handlelength=2.2,
+    #               handletextpad=0.2)
+
+
 
     # Customize the second subplot
-    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:red")
+    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:blue", label="Stafford (2022)")
+
+    axes[0].legend(loc="lower left")
+    axes[1].legend(loc="lower left")
 
     for ax_index in range(len(axes)):
         axes[ax_index].grid(which='major',
@@ -1311,10 +1287,9 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
     axes[0].set_xlim(9e-5,5)
     axes[1].set_xlim(-0.01, 0.68)
 
-
-
     ### The annotations for explanation
     annotation_ims = [1e-2, 1e-1, 1e0]
+    manually_matched_latex_strings = [r"10$^{-2}$", r"10$^{-1}$", r"10$^{0}$"]
     annotation_labels = ["A", "B", "C"]
 
     for annotation_im in annotation_ims:
@@ -1326,13 +1301,13 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
         ### Draw vertical lines at IM values
         axes[0].hlines(y=mean[im_index], xmin=nshm_im_levels[0]/10, xmax=annotation_im, color="black", linestyle="--")
         axes[0].vlines(x=annotation_im, ymin=plot_ylims[0], ymax=mean[im_index], color="black", linestyle="--")
-        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:red", linestyle="--")
+        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:blue", linestyle="--")
 
         ### Draw the arrows
-        axes[0].plot(annotation_im, plot_ylims[1]-0.4,
+        axes[0].plot(annotation_im, plot_ylims[1]-0.45,
                      marker=r'$\uparrow$',
                      markersize=20,
-                     color="tab:red")
+                     color="tab:blue")
 
         ### Write the standard deviation value
         axes[0].text(annotation_im,
@@ -1340,15 +1315,15 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"{std_ln[im_index]:.2f}",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="tab:blue")
 
         ### Plot labels (A), (B), (C)
         axes[0].text(annotation_im,
                      plot_ylims[1]+2.0,
-                     f"{annotation_labels[annotation_ims.index(annotation_im)]}) {annotation_im:.1e},",
+                     f"{manually_matched_latex_strings[annotation_ims.index(annotation_im)]}",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="tab:blue")
 
         ### Draw the horizontal lines at the mean values
         axes[1].hlines(y=mean[im_index],
@@ -1360,7 +1335,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
         axes[1].vlines(x=std_ln[im_index],
                        ymin=plot_ylims[0],
                        ymax=plot_ylims[1],
-                       color="tab:red", linestyle="--")
+                       color="black", linestyle="--")
 
         ### Plot labels (A), (B), (C)
         axes[1].text(std_ln[im_index],
@@ -1368,7 +1343,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"({annotation_labels[annotation_ims.index(annotation_im)]})",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="tab:blue")
 
     axes[0].set_xlabel(r'Peak ground acceleration (g)')
     axes[0].set_ylabel(r'Annual hazard probability, $\mu_{P(PGA=pga)}$')
@@ -1377,29 +1352,58 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
     axes[1].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
 
 
-    axes[0].text(1e-3,
-                 6,
-                 "Dispersion in hazard probability at",
+    axes[0].text(1.25e-4,
+                 12,
+                 "Dispersion in hazard probability",
                  ha='left',
                  va='center',
-                 color="tab:red")
+                 color="tab:blue")
 
+    text_row_2_height = plot_ylims[1]+5.0
 
-    axes[0].text(1e-3,
+    axes[0].text(6e-3,
+                 text_row_2_height,
+                 "Reference point:",
+                 ha='right',
+                 va='center',
+                 color="tab:blue")
+
+    axes[0].text(annotation_ims[0],
+                 text_row_2_height,
+                 "(A)",
+                 ha='center',
+                 va='center',
+                 color="tab:blue")
+
+    axes[0].text(annotation_ims[1],
+                 text_row_2_height,
+                 "(B)",
+                 ha='center',
+                 va='center',
+                 color="tab:blue")
+
+    axes[0].text(annotation_ims[2],
+                 text_row_2_height,
+                 "(C)",
+                 ha='center',
+                 va='center',
+                 color="tab:blue")
+
+    axes[0].text(8e-3,
                  plot_ylims[1]+2.0,
-                 "PGA = ",
-                 ha='left',
+                 "PGA =  ",
+                 ha='right',
                  va='center',
-                 color="tab:red")
+                 color="tab:blue")
 
-    axes[0].text(1.55e-4,
+    axes[0].text(5.8e-3,
                  plot_ylims[1]+0.5,
                  r"$\sigma_{\ln P(PGA=pga)} = $",
-                 ha='left',
+                 ha='right',
                  va='center',
-                 color="tab:red")
+                 color="tab:blue")
 
-    plt.subplots_adjust(bottom=0.1, top=0.7,left=0.07, right=0.99)
+    plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
 
     plt.savefig("/home/arr65/data/nshm/output_plots/explanation_plot.png", dpi=500)
     print()
@@ -1430,12 +1434,10 @@ if __name__ == "__main__":
 
     #do_plot_for_poster()
 
-    # Example usage
-    latex_str = scientific_to_latex(1e-1)
-    print(latex_str)  # Output: $1 \times 10^{-1}$
-    print()
 
-    #make_explanation_plot_for_poster(21,3)
+    make_explanation_plot_for_poster(21,3)
+
+    print()
 
     #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
