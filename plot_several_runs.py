@@ -44,6 +44,67 @@ colors = [
     '#fdbf6f'   # Light Orange
 ]
 
+@dataclass
+class MarginFractions:
+    """
+    A dataclass to store margin fractions for a plot.
+
+    Attributes:
+    left (float): Fraction of the figure width for the left margin.
+    right (float): Fraction of the figure width for the right margin.
+    bottom (float): Fraction of the figure height for the bottom margin.
+    top (float): Fraction of the figure height for the top margin.
+    """
+    left: float
+    right: float
+    bottom: float
+    top: float
+
+
+def convert_edge_margin_in_pixels_to_fraction(fig: matplotlib.figure.Figure,
+                                              left_margin_pixels: int,
+                                              right_margin_pixels: int,
+                                              bottom_margin_pixels: int,
+                                              top_margin_pixels: int) -> MarginFractions:
+    """
+    Convert edge margins from pixels to fractions of the figure dimensions.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        The figure object to get dimensions from.
+    left_margin_pixels : int
+        The left margin in pixels.
+    right_margin_pixels : int
+        The right margin in pixels.
+    bottom_margin_pixels : int
+        The bottom margin in pixels.
+    top_margin_pixels : int
+        The top margin in pixels.
+
+    Returns
+    -------
+    MarginFractions
+        A dataclass containing the margins as fractions of the figure dimensions.
+    """
+
+    # Get the figure height and width in inches and convert it to pixels
+    fig_width_inch = fig.get_figwidth()
+    fig_height_inch = fig.get_figheight()
+
+    dpi = fig.get_dpi()
+
+    fig_width_px = fig_width_inch * dpi
+    fig_height_px = fig_height_inch * dpi
+
+    left_margin_fraction = left_margin_pixels / fig_width_px
+    right_margin_fraction = 1.0 - right_margin_pixels / fig_width_px
+    bottom_margin_fraction = bottom_margin_pixels / fig_height_px
+    top_margin_fraction = 1.0 - top_margin_pixels / fig_height_px
+
+    return MarginFractions(left_margin_fraction, right_margin_fraction, bottom_margin_fraction, top_margin_fraction)
+
+
 
 custom_cycler = (cycler(color=colors) *
                   cycler(linestyle=['-', '--', ':', '-.']))
@@ -79,6 +140,7 @@ class LoadedRunResults():
 
     data_df :  pd.DataFrame()
     run_notes_df : pd.DataFrame()
+
 
 
 def load_toshi_hazard_post_agg_stats_in_rungroup(output_dir: Path,
@@ -578,16 +640,31 @@ def do_big_gmcm_subplot(run_num: int,
 
     return fig
 
+def make_figure_srm_and_gmcm_model_dispersions(locations=["WLG", "CHC","AKL"],
+                                               srm_models_group_run_num=20,
+                                               gmcm_models_group_run_num=21,
+                                               vs30=400, im="PGA"):
 
-def do_plot_for_poster():
+    """
+    Makes a figure containing subplots of mean prediction on the vertical axis and the dispersion in
+    predictions on the horizontal axis, following Bradley (2009).  All subplots are for a given vs30 value and
+    intensity measure (im). Each column of subplots is for a different location so the figure will have a number of
+    columns equal to the length of the locations list.  The figure will always have 3 rows of subplots.  The top row
+    shows the crustal ground motion characterization models (GMCMs), the middle row shows the interface and intraslab
+    GMCMs, and the bottom row shows the seismicity rate model (SRM) components.
+
+
+
+    """
+
+    num_plot_cols = len(locations)
+
     locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    tectonic_type_to_linestyle = toml.load('resources/tectonic_region_type_to_linestyle.toml')
     location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
     model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
-    print()
     glt_model_color = toml.load('resources/model_plot_colors.toml')
 
-    autoruns = [20, 21]
+    autoruns = [srm_models_group_run_num, gmcm_models_group_run_num]
 
     autorun_num_to_data = {}
     for autorun in autoruns:
@@ -595,32 +672,24 @@ def do_plot_for_poster():
         loaded_run_results = load_toshi_hazard_post_agg_stats_in_rungroup(auto_dir)
         autorun_num_to_data[autorun] = loaded_run_results
 
-    data_lookup_dict = {"0,0":autorun_num_to_data[21],
-                 "0,1":autorun_num_to_data[21],
-                 "1,0":autorun_num_to_data[21],
-                 "1,1":autorun_num_to_data[21],
-                 "2,0":autorun_num_to_data[20],
-                 "2,1":autorun_num_to_data[20]}
+    ## relate plot row to data
+    data_lookup_dict = {0:autorun_num_to_data[gmcm_models_group_run_num],
+                        1:autorun_num_to_data[gmcm_models_group_run_num],
+                        2:srm_models_group_run_num[20]}
 
+    ## Get a list of
     sorted_gmm_run_nums = get_runs_sorted_by_model_name(21)
-
-    print()
-
-    ## top left subplot
-
-    ## test = data_lookup_dict[21].run_notes_df
 
     needed_runs_dict = {}
 
+    ## Relate the
     for row_index in range(3):
-        for column_index in range(2):
-
-            if row_index == 0:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU")]["run_counter"]
-            if row_index == 1:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["run_counter"]
-            if row_index == 2:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["run_counter"]
+        if row_index == 0:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("CRU")]["run_counter"]
+        if row_index == 1:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["run_counter"]
+        if row_index == 2:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["run_counter"]
 
 
     ####################################################
@@ -628,70 +697,67 @@ def do_plot_for_poster():
     title_font_size = 12
 
     plt.close("all")
-    fig, axes = plt.subplots(3, 2, figsize=(6, 9))
+    #fig, axes = plt.subplots(3, num_plot_cols, figsize=(6, 9))
+    fig, axes = plt.subplots(3, num_plot_cols, figsize=(3*num_plot_cols, 9))
 
     for row_index in range(3):
 
-        for column_index in range(2):
+        for column_index in range(num_plot_cols):
 
             axes[row_index, column_index].set_prop_cycle(None)
 
-            if column_index == 0:
-                plot_location = "WLG"
-                if row_index == 0:
-                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
-            if column_index == 1:
-                plot_location = "CHC"
-                if row_index == 0:
-                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
+            plot_location = locations[column_index]
+            if row_index == 0:
+                axes[row_index, column_index].set_title(location_to_full_location[plot_location],
+                                                        fontsize=title_font_size)
 
             if row_index != 2:
                 sorted_run_nums = sorted_gmm_run_nums
             if row_index == 2:
-                sorted_run_nums = needed_runs_dict[f"{row_index},{column_index}"]
+                sorted_run_nums = needed_runs_dict[row_index]
 
             for sorted_run_num in sorted_run_nums:
 
-                if sorted_run_num in needed_runs_dict[f"{row_index},{column_index}"]:
+                if sorted_run_num in needed_runs_dict[row_index]:
 
                     run = f"run_{sorted_run_num}"
 
                     if row_index in [0,1]:
-                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["glt_note"].values[0]
+                        run_note = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["run_counter"] == sorted_run_num]["glt_note"].values[0]
                         short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
                         plot_label = model_to_plot_label[short_note]
-                        print()
+
                     if row_index == 2:
-                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["slt_note"].values[0]
+                        run_note = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["run_counter"] == sorted_run_num]["slt_note"].values[0]
                         short_note = run_note.split(">")[1].split(":")[-1].strip(" []") + "_" +\
                                      run_note.split(">")[2].strip()
-                        #print(short_note)
+
                         plot_label = model_to_plot_label[short_note]
-                        #plot_label = short_note
-                    print(short_note)
 
-                    run_notes_df = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df
+                    mean = data_lookup_dict[row_index].data_df[(data_lookup_dict[row_index].data_df["agg"] == "mean") &
+                                                 (data_lookup_dict[row_index].data_df["vs30"] == vs30) &
+                                                 (data_lookup_dict[row_index].data_df["imt"] == im) &
+                                                 (data_lookup_dict[row_index].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[row_index].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
 
-                    print()
+                    std_ln = data_lookup_dict[row_index].data_df[(data_lookup_dict[row_index].data_df["agg"] == "std_ln") &
+                                                 (data_lookup_dict[row_index].data_df["vs30"] == vs30) &
+                                                 (data_lookup_dict[row_index].data_df["imt"] == im) &
+                                                 (data_lookup_dict[row_index].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[row_index].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+                    if row_index != 2:
+                        if "CRU" in run_note:
+                            plot_linestyle = '--'
+                        if "INTER" in run_note:
+                            plot_linestyle = '--'
+                        if "SLAB" in run_note:
+                            plot_linestyle = '-.'
 
-                    mean = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "mean") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
-
-                    std_ln = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "std_ln") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
-                    print()
-                    if "CRU" in run_note:
-                        plot_linestyle = '--'
-                    if "INTER" in run_note:
-                        plot_linestyle = '--'
-                    if "SLAB" in run_note:
-                        plot_linestyle = '-.'
+                    elif row_index == 2:
+                        if "CRU" in run_note:
+                            plot_linestyle = '--'
+                        if "INTER" in run_note:
+                            plot_linestyle = '-.'
 
                     axes[row_index, column_index].semilogy(std_ln, mean, label=plot_label,
                                                        color=glt_model_color[short_note],
@@ -701,7 +767,7 @@ def do_plot_for_poster():
                                                              linestyle='--',
                                                              linewidth='0.5',
                                                              color='black',
-                                                             alpha=0.5)
+                                                             alpha=0.6)
 
                     axes[row_index, column_index].set_ylim(1e-5, 0.7)
                     axes[row_index, column_index].set_xlim(-0.01, 0.7)
@@ -715,136 +781,132 @@ def do_plot_for_poster():
 
                     if row_index in [0,1]:
                         axes[row_index, column_index].set_xticklabels([])
-                    if column_index == 1:
+                    if column_index > 0:
                         axes[row_index, column_index].set_yticklabels([])
 
                     if (row_index == 1) & (column_index == 0):
                         axes[row_index, column_index].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
 
-    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.16, right=0.99, bottom=0.06, top=0.97)
-    #fig.text(0.5, 0.04, 'Shared X-axis Label', ha='center', va='center')
+    ### Adjust the figure margins before using the figure axes positions to place text
+    fig_margins = convert_edge_margin_in_pixels_to_fraction(fig,
+                                                            100,
+                                                            5,
+                                                            45,
+                                                            30)
 
-    # Get the position of the bottom left subplot
+    plt.subplots_adjust(left=fig_margins.left,
+                        right = fig_margins.right,
+                        bottom = fig_margins.bottom,
+                        top = fig_margins.top,
+                        wspace=0.0,
+                        hspace=0.0)
 
+    ### Center the x-axis label differently depending on whether there are an odd or even number of columns
+    if num_plot_cols % 2 != 0: # odd number of columns
+        middle_col_index = int(np.floor(num_plot_cols/2))
+        axes[2, middle_col_index].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
+    if num_plot_cols % 2 == 0: # even number of columns
+        # anchoring the middle of the x-axis label text to the right edge of the column calculated here
+        anchor_col_index = int(num_plot_cols - num_plot_cols/2 - 1)
+        #fig.text(axes[2, anchor_col_index].get_position().x1, axes[2, anchor_col_index].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+        fig.text(axes[2, anchor_col_index].get_position().x1, 0.01,
+             r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
 
-    # Add the x-axis label, anchoring the middle of the text to the right edge of the bottom left subplot
-    fig.text(axes[2, 0].get_position().x1, axes[2, 0].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
-
-    row_titles_x0 = 0.03
+    row_titles_x0 = 0.02
     fig.text(row_titles_x0, axes[0, 0].get_position().y0,'Ground Motion Characterization Models', ha='center', va='center',rotation=90, fontsize=title_font_size)
 
     fig.text(row_titles_x0, (axes[2, 0].get_position().y0 + axes[2, 0].get_position().y1)/2.0,
              'Seismicity Rate Models',
              ha='center', va='center', rotation=90, fontsize=title_font_size)
 
+
     #plt.show()
-    plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_poster_plot.png", dpi=500)
+    plt.savefig(f"/home/arr65/data/nshm/output_plots/{"_".join(locations)}_dispersion_poster_plot.png", dpi=500)
     print()
 
+
+
 ## A good plotting function
-def make_cov_plots(over_plot_all=False):
+def make_cov_plots(rungroup_num = 15, location="WLG", im="PGA", vs30=400):
 
-    for im in ims:
+    rungroup_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{rungroup_num}")
 
-        locations = ["WLG"]
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
 
-        for location in locations:
+    nloc_001_str = locations_nloc_dict[location]
 
-            nloc_001_str = locations_nloc_dict[location]
+    mean_list = []
+    cov_list = []
 
-            mean_list = []
-            std_list = []
-            cov_list = []
+    run_results = load_toshi_hazard_post_agg_stats_in_rungroup(rungroup_dir)
 
-            for run_idx, run in enumerate(run_list):
+    data_df = run_results.data_df
+    run_notes_df = run_results.run_notes_df
 
-                print()
+    run_list = [f"run_{x}" for x in run_notes_df["run_counter"].values]
+    for run_idx, run in enumerate(run_list):
 
-                run_counter = int(run.split("_")[-1])
+        mean = data_df[(data_df["agg"] == "mean") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                mean = data_df[(data_df["agg"] == "mean") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        cov = data_df[(data_df["agg"] == "cov") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                cov = data_df[(data_df["agg"] == "cov") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        mean_list.append(mean)
+        cov_list.append(cov)
 
-                # std_ln = data_df[(data_df["agg"] == "std_ln") &
-                #           (data_df["vs30"] == vs30) &
-                #           (data_df["imt"] == im) &
-                #           (data_df["hazard_model_id"] == run) &
-                #           (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+    plt.rcParams.update({'font.size': 12})
 
-                std = data_df[(data_df["agg"] == "std") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+    lw = 5
 
-                mean_list.append(mean)
-                std_list.append(std)
-                cov_list.append(cov)
-                #std_list.append(std_ln)
+    #plt.figure(figsize=(5.12,4.62))
+    plt.figure(figsize=(7.3, 4.62))
+    plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
+    plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
+    plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
+    plt.legend(handlelength=4)
+    #plt.title(f"{location} {im}")
+    #plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
+    plt.ylabel("Modelling uncertainty\n(coefficient of variation of model predictions)")
+    plt.xlabel('Peak ground acceleration (g)')
+    plt.xlim(1e-2,5)
+    plt.ylim(0.05,0.8)
 
-            #source_unc_plus_gmcm_unc = np.sqrt(np.array(std_list)**2 + np.array(cov_list)**2)
-            source_std_plus_gmcm_std = np.array(std_list[0]) + np.array(std_list[1])
+    plt.grid(which='major',
+           linestyle='--',
+           linewidth='0.5',
+           color='black',
+           alpha=0.6)
 
-            cov_sum = np.array(cov_list[0]) + np.array(cov_list[1])
-            cov_sum2 = np.sqrt(np.array(cov_list[0])**2 + np.array(cov_list[1])**2)
-
-            mean_sum = np.array(mean_list[0]) + np.array(mean_list[1])
-            mean_sum2 = np.sqrt(np.array(mean_list[0])**2 + np.array(mean_list[1])**2)
-
-            std_sum = np.array(std_list[0]) + np.array(std_list[1])
-            std_sum2 = np.sqrt(np.array(std_list[0])**2 + np.array(std_list[1])**2)
-
-            plt.rcParams.update({'font.size': 12})
-
-            lw = 5
-
-            plt.figure(figsize=(5.12,4.62))
-            plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
-            plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
-            plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
-            plt.legend(handlelength=4)
-            #plt.title(f"{location} {im}")
-            #plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
-            plt.ylabel("modelling uncertainty\n(coefficient of variation of model predictions)")
-            plt.xlabel('peak ground acceleration (g)')
-            plt.xlim(1e-2,5)
-            plt.ylim(0.05,0.8)
-            #plt.title("Wellington assuming Vs30 = 400 m/s")
-
-            # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
-            # plt.semilogx(nshm_im_levels, cov_sum2, linestyle='-.', label='sum2')
-
-            #plt.show()
-            plt.tight_layout()
-            plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=500)
+    #plt.tight_layout()
+    plt.subplots_adjust(left=0.11, right=0.99, bottom=0.12, top=0.97 )
+    plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=500)
+    print()
 
 
 
 
 
-            #
-            # plt.close()
-            #
-            # plt.figure()
-            # plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
-            # plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
-            # plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
-            # plt.legend()
-            # #plt.title(f"{location} {im}")
-            # #plt.title("Wellington assuming Vs30 = 400 m/s")
-            # plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
-            # plt.xlabel('peak ground acceleration (g)')
-            # plt.tight_layout()
-            # plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
+#
+# plt.close()
+#
+# plt.figure()
+# plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
+# plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
+# plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
+# plt.legend()
+# #plt.title(f"{location} {im}")
+# #plt.title("Wellington assuming Vs30 = 400 m/s")
+# plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
+# plt.xlabel('peak ground acceleration (g)')
+# plt.tight_layout()
+# plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
 
 ## A good plotting function
 def do_srm_model_plots_with_seperate_location_subplots(im):
@@ -1142,7 +1204,7 @@ def lookup_realization_name_from_hash(individual_realization_df):
 
     """
 
-    Looks up the models used in the realization based on the branch hash ids.
+    Looks up the models used in the realization based on the branch hash ids in the output parquet file.
 
     Parameters
     ----------
@@ -1157,8 +1219,8 @@ def lookup_realization_name_from_hash(individual_realization_df):
 
     """
 
-    #registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-    registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
+    registry_dir = Path("/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+    #registry_dir = Path("/home/arr65/src/gns/nzshm-model/resources")
     gmm_registry_df = pd.read_csv(registry_dir / 'gmm_branches.csv')
     source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
@@ -1196,31 +1258,6 @@ def load_individual_realizations(rungroup_num, run_num):
     return ds.dataset(source=realizations_path, format="parquet").to_table().to_pandas()
 
 
-import re
-
-
-def scientific_to_latex(number):
-    """
-    Convert a scientific notation number to LaTeX formatted string.
-
-    Parameters:
-    number (float or str): The number in scientific notation.
-
-    Returns:
-    str: The LaTeX formatted string.
-    """
-    # Convert the number to string if it is not already
-    number_str = str(number)
-
-    # Use regular expression to find the scientific notation parts
-    match = re.match(r"([+-]?\d*\.?\d*)e([+-]?\d+)", number_str)
-    if match:
-        base, exponent = match.groups()
-        return f"${base} \\times 10^{{{int(exponent)}}}$"
-    else:
-        return number_str
-
-
 def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                                      vs30=400, im="PGA"):
 
@@ -1231,12 +1268,9 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                         "Stafford2022(mu_branch=Central)":"Central branch of Stafford 2022",
                         "Stafford2022(mu_branch=Lower)":"Lower branch of Stafford 2022"}
 
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
 
-    locations_nloc_dict = {"AKL": "-36.870~174.770",
-                           "WLG": "-41.300~174.780",
-                           "CHC": "-43.530~172.630"}
-
-    plot_colors = ["tab:blue", "tab:orange", "tab:green"]
+    plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
 
     individual_realization_df = load_individual_realizations(rungroup_num, run_num)
@@ -1276,7 +1310,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      (agg_stats_df["nloc_001"] == locations_nloc_dict[loc_name])]["values"].values[0]
 
     plot_ylims = (1e-5,1)
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
 
     for realization_index in range(len(hazard_prob_of_exceedance)):
         gmcm_name = realization_names[realization_index].ground_motion_characterization_models_id
@@ -1291,14 +1325,19 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                        linestyle=plot_linestyles[realization_index])
 
 
-    axes[0].legend(loc="lower left",
-                              #prop={'size': 6},
-                  framealpha=0.6,
-                  handlelength=2.2,
-                  handletextpad=0.2)
+    # axes[0].legend(loc="lower left",
+    #                           #prop={'size': 6},
+    #               framealpha=0.6,
+    #               handlelength=2.2,
+    #               handletextpad=0.2)
+
+
 
     # Customize the second subplot
-    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:red")
+    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:blue", label="Stafford (2022)")
+
+    axes[0].legend(loc="lower left")
+    axes[1].legend(loc="lower left")
 
     for ax_index in range(len(axes)):
         axes[ax_index].grid(which='major',
@@ -1311,10 +1350,9 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
     axes[0].set_xlim(9e-5,5)
     axes[1].set_xlim(-0.01, 0.68)
 
-
-
     ### The annotations for explanation
     annotation_ims = [1e-2, 1e-1, 1e0]
+    manually_matched_latex_strings = [r"10$^{-2}$", r"10$^{-1}$", r"10$^{0}$"]
     annotation_labels = ["A", "B", "C"]
 
     for annotation_im in annotation_ims:
@@ -1326,13 +1364,13 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
         ### Draw vertical lines at IM values
         axes[0].hlines(y=mean[im_index], xmin=nshm_im_levels[0]/10, xmax=annotation_im, color="black", linestyle="--")
         axes[0].vlines(x=annotation_im, ymin=plot_ylims[0], ymax=mean[im_index], color="black", linestyle="--")
-        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:red", linestyle="--")
+        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:blue", linestyle="--")
 
         ### Draw the arrows
-        axes[0].plot(annotation_im, plot_ylims[1]-0.4,
+        axes[0].plot(annotation_im, plot_ylims[1]-0.45,
                      marker=r'$\uparrow$',
                      markersize=20,
-                     color="tab:red")
+                     color="tab:blue")
 
         ### Write the standard deviation value
         axes[0].text(annotation_im,
@@ -1340,15 +1378,15 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"{std_ln[im_index]:.2f}",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="black")
 
         ### Plot labels (A), (B), (C)
         axes[0].text(annotation_im,
                      plot_ylims[1]+2.0,
-                     f"{annotation_labels[annotation_ims.index(annotation_im)]}) {annotation_im:.1e},",
+                     f"{manually_matched_latex_strings[annotation_ims.index(annotation_im)]}",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="black")
 
         ### Draw the horizontal lines at the mean values
         axes[1].hlines(y=mean[im_index],
@@ -1360,7 +1398,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
         axes[1].vlines(x=std_ln[im_index],
                        ymin=plot_ylims[0],
                        ymax=plot_ylims[1],
-                       color="tab:red", linestyle="--")
+                       color="black", linestyle="--")
 
         ### Plot labels (A), (B), (C)
         axes[1].text(std_ln[im_index],
@@ -1368,7 +1406,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"({annotation_labels[annotation_ims.index(annotation_im)]})",
                      ha='center',
                      va='center',
-                     color="tab:red")
+                     color="black")
 
     axes[0].set_xlabel(r'Peak ground acceleration (g)')
     axes[0].set_ylabel(r'Annual hazard probability, $\mu_{P(PGA=pga)}$')
@@ -1377,29 +1415,58 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
     axes[1].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
 
 
-    axes[0].text(1e-3,
-                 6,
-                 "Dispersion in hazard probability at",
+    axes[0].text(1.25e-4,
+                 12,
+                 "Dispersion in hazard probability",
                  ha='left',
                  va='center',
-                 color="tab:red")
+                 color="black")
 
+    text_row_2_height = plot_ylims[1]+5.0
 
-    axes[0].text(1e-3,
+    axes[0].text(6e-3,
+                 text_row_2_height,
+                 "Reference point:",
+                 ha='right',
+                 va='center',
+                 color="black")
+
+    axes[0].text(annotation_ims[0],
+                 text_row_2_height,
+                 "(A)",
+                 ha='center',
+                 va='center',
+                 color="black")
+
+    axes[0].text(annotation_ims[1],
+                 text_row_2_height,
+                 "(B)",
+                 ha='center',
+                 va='center',
+                 color="black")
+
+    axes[0].text(annotation_ims[2],
+                 text_row_2_height,
+                 "(C)",
+                 ha='center',
+                 va='center',
+                 color="black")
+
+    axes[0].text(8e-3,
                  plot_ylims[1]+2.0,
-                 "PGA = ",
-                 ha='left',
+                 "PGA =  ",
+                 ha='right',
                  va='center',
-                 color="tab:red")
+                 color="black")
 
-    axes[0].text(1.55e-4,
+    axes[0].text(5.8e-3,
                  plot_ylims[1]+0.5,
                  r"$\sigma_{\ln P(PGA=pga)} = $",
-                 ha='left',
+                 ha='right',
                  va='center',
-                 color="tab:red")
+                 color="black")
 
-    plt.subplots_adjust(bottom=0.1, top=0.7,left=0.07, right=0.99)
+    plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
 
     plt.savefig("/home/arr65/data/nshm/output_plots/explanation_plot.png", dpi=500)
     print()
@@ -1430,12 +1497,13 @@ if __name__ == "__main__":
 
     #do_plot_for_poster()
 
-    # Example usage
-    latex_str = scientific_to_latex(1e-1)
-    print(latex_str)  # Output: $1 \times 10^{-1}$
-    print()
+    #plot_srm_and_gmcm_model_dispersions(["WLG", "CHC"])
+    plot_srm_and_gmcm_model_dispersions(["WLG","CHC","AKL"])
+
 
     #make_explanation_plot_for_poster(21,3)
+
+    print()
 
     #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
