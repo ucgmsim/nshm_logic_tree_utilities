@@ -18,7 +18,7 @@ config = cfg.Config()
 
 start_time = time.time()
 
-## copying logging from scripts/cli.py
+## copying logging from toshi_hazard_post scripts/cli.py
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logging.getLogger("toshi_hazard_post").setLevel(logging.INFO)
 logging.getLogger("toshi_hazard_post.aggregation_calc").setLevel(logging.DEBUG)

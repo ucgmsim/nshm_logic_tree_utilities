@@ -44,6 +44,67 @@ colors = [
     '#fdbf6f'   # Light Orange
 ]
 
+@dataclass
+class MarginFractions:
+    """
+    A dataclass to store margin fractions for a plot.
+
+    Attributes:
+    left (float): Fraction of the figure width for the left margin.
+    right (float): Fraction of the figure width for the right margin.
+    bottom (float): Fraction of the figure height for the bottom margin.
+    top (float): Fraction of the figure height for the top margin.
+    """
+    left: float
+    right: float
+    bottom: float
+    top: float
+
+
+def convert_edge_margin_in_pixels_to_fraction(fig: matplotlib.figure.Figure,
+                                              left_margin_pixels: int,
+                                              right_margin_pixels: int,
+                                              bottom_margin_pixels: int,
+                                              top_margin_pixels: int) -> MarginFractions:
+    """
+    Convert edge margins from pixels to fractions of the figure dimensions.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        The figure object to get dimensions from.
+    left_margin_pixels : int
+        The left margin in pixels.
+    right_margin_pixels : int
+        The right margin in pixels.
+    bottom_margin_pixels : int
+        The bottom margin in pixels.
+    top_margin_pixels : int
+        The top margin in pixels.
+
+    Returns
+    -------
+    MarginFractions
+        A dataclass containing the margins as fractions of the figure dimensions.
+    """
+
+    # Get the figure height and width in inches and convert it to pixels
+    fig_width_inch = fig.get_figwidth()
+    fig_height_inch = fig.get_figheight()
+
+    dpi = fig.get_dpi()
+
+    fig_width_px = fig_width_inch * dpi
+    fig_height_px = fig_height_inch * dpi
+
+    left_margin_fraction = left_margin_pixels / fig_width_px
+    right_margin_fraction = 1.0 - right_margin_pixels / fig_width_px
+    bottom_margin_fraction = bottom_margin_pixels / fig_height_px
+    top_margin_fraction = 1.0 - top_margin_pixels / fig_height_px
+
+    return MarginFractions(left_margin_fraction, right_margin_fraction, bottom_margin_fraction, top_margin_fraction)
+
+
 
 custom_cycler = (cycler(color=colors) *
                   cycler(linestyle=['-', '--', ':', '-.']))
@@ -79,6 +140,7 @@ class LoadedRunResults():
 
     data_df :  pd.DataFrame()
     run_notes_df : pd.DataFrame()
+
 
 
 def load_toshi_hazard_post_agg_stats_in_rungroup(output_dir: Path,
@@ -578,16 +640,31 @@ def do_big_gmcm_subplot(run_num: int,
 
     return fig
 
+def make_figure_srm_and_gmcm_model_dispersions(locations=["WLG", "CHC","AKL"],
+                                               srm_models_group_run_num=20,
+                                               gmcm_models_group_run_num=21,
+                                               vs30=400, im="PGA"):
 
-def do_plot_for_poster():
+    """
+    Makes a figure containing subplots of mean prediction on the vertical axis and the dispersion in
+    predictions on the horizontal axis, following Bradley (2009).  All subplots are for a given vs30 value and
+    intensity measure (im). Each column of subplots is for a different location so the figure will have a number of
+    columns equal to the length of the locations list.  The figure will always have 3 rows of subplots.  The top row
+    shows the crustal ground motion characterization models (GMCMs), the middle row shows the interface and intraslab
+    GMCMs, and the bottom row shows the seismicity rate model (SRM) components.
+
+
+
+    """
+
+    num_plot_cols = len(locations)
+
     locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    tectonic_type_to_linestyle = toml.load('resources/tectonic_region_type_to_linestyle.toml')
     location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
     model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
-    print()
     glt_model_color = toml.load('resources/model_plot_colors.toml')
 
-    autoruns = [20, 21]
+    autoruns = [srm_models_group_run_num, gmcm_models_group_run_num]
 
     autorun_num_to_data = {}
     for autorun in autoruns:
@@ -595,32 +672,24 @@ def do_plot_for_poster():
         loaded_run_results = load_toshi_hazard_post_agg_stats_in_rungroup(auto_dir)
         autorun_num_to_data[autorun] = loaded_run_results
 
-    data_lookup_dict = {"0,0":autorun_num_to_data[21],
-                 "0,1":autorun_num_to_data[21],
-                 "1,0":autorun_num_to_data[21],
-                 "1,1":autorun_num_to_data[21],
-                 "2,0":autorun_num_to_data[20],
-                 "2,1":autorun_num_to_data[20]}
+    ## relate plot row to data
+    data_lookup_dict = {0:autorun_num_to_data[gmcm_models_group_run_num],
+                        1:autorun_num_to_data[gmcm_models_group_run_num],
+                        2:srm_models_group_run_num[20]}
 
+    ## Get a list of
     sorted_gmm_run_nums = get_runs_sorted_by_model_name(21)
-
-    print()
-
-    ## top left subplot
-
-    ## test = data_lookup_dict[21].run_notes_df
 
     needed_runs_dict = {}
 
+    ## Relate the
     for row_index in range(3):
-        for column_index in range(2):
-
-            if row_index == 0:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU")]["run_counter"]
-            if row_index == 1:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["run_counter"]
-            if row_index == 2:
-                needed_runs_dict[f"{row_index},{column_index}"] = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["run_counter"]
+        if row_index == 0:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("CRU")]["run_counter"]
+        if row_index == 1:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["run_counter"]
+        if row_index == 2:
+            needed_runs_dict[row_index] = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["run_counter"]
 
 
     ####################################################
@@ -628,60 +697,54 @@ def do_plot_for_poster():
     title_font_size = 12
 
     plt.close("all")
-    fig, axes = plt.subplots(3, 2, figsize=(6, 9))
+    #fig, axes = plt.subplots(3, num_plot_cols, figsize=(6, 9))
+    fig, axes = plt.subplots(3, num_plot_cols, figsize=(3*num_plot_cols, 9))
 
     for row_index in range(3):
 
-        for column_index in range(2):
+        for column_index in range(num_plot_cols):
 
             axes[row_index, column_index].set_prop_cycle(None)
 
-            if column_index == 0:
-                plot_location = "WLG"
-                if row_index == 0:
-                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
-            if column_index == 1:
-                plot_location = "CHC"
-                if row_index == 0:
-                    axes[row_index, column_index].set_title(location_to_full_location[plot_location], fontsize=title_font_size)
+            plot_location = locations[column_index]
+            if row_index == 0:
+                axes[row_index, column_index].set_title(location_to_full_location[plot_location],
+                                                        fontsize=title_font_size)
 
             if row_index != 2:
                 sorted_run_nums = sorted_gmm_run_nums
             if row_index == 2:
-                sorted_run_nums = needed_runs_dict[f"{row_index},{column_index}"]
+                sorted_run_nums = needed_runs_dict[row_index]
 
             for sorted_run_num in sorted_run_nums:
 
-                if sorted_run_num in needed_runs_dict[f"{row_index},{column_index}"]:
+                if sorted_run_num in needed_runs_dict[row_index]:
 
                     run = f"run_{sorted_run_num}"
 
                     if row_index in [0,1]:
-                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["glt_note"].values[0]
+                        run_note = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["run_counter"] == sorted_run_num]["glt_note"].values[0]
                         short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
                         plot_label = model_to_plot_label[short_note]
-                        print()
+
                     if row_index == 2:
-                        run_note = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df[data_lookup_dict[f"{row_index},{column_index}"].run_notes_df["run_counter"] == sorted_run_num]["slt_note"].values[0]
+                        run_note = data_lookup_dict[row_index].run_notes_df[data_lookup_dict[row_index].run_notes_df["run_counter"] == sorted_run_num]["slt_note"].values[0]
                         short_note = run_note.split(">")[1].split(":")[-1].strip(" []") + "_" +\
                                      run_note.split(">")[2].strip()
-                        #print(short_note)
+
                         plot_label = model_to_plot_label[short_note]
-                        #plot_label = short_note
 
-                    run_notes_df = data_lookup_dict[f"{row_index},{column_index}"].run_notes_df
+                    mean = data_lookup_dict[row_index].data_df[(data_lookup_dict[row_index].data_df["agg"] == "mean") &
+                                                 (data_lookup_dict[row_index].data_df["vs30"] == vs30) &
+                                                 (data_lookup_dict[row_index].data_df["imt"] == im) &
+                                                 (data_lookup_dict[row_index].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[row_index].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
 
-                    mean = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "mean") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
-
-                    std_ln = data_lookup_dict[f"{row_index},{column_index}"].data_df[(data_lookup_dict[f"{row_index},{column_index}"].data_df["agg"] == "std_ln") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["vs30"] == 400) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["imt"] == "PGA") &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["hazard_model_id"] == run) &
-                                                 (data_lookup_dict[f"{row_index},{column_index}"].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+                    std_ln = data_lookup_dict[row_index].data_df[(data_lookup_dict[row_index].data_df["agg"] == "std_ln") &
+                                                 (data_lookup_dict[row_index].data_df["vs30"] == vs30) &
+                                                 (data_lookup_dict[row_index].data_df["imt"] == im) &
+                                                 (data_lookup_dict[row_index].data_df["hazard_model_id"] == run) &
+                                                 (data_lookup_dict[row_index].data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
                     if row_index != 2:
                         if "CRU" in run_note:
                             plot_linestyle = '--'
@@ -718,27 +781,50 @@ def do_plot_for_poster():
 
                     if row_index in [0,1]:
                         axes[row_index, column_index].set_xticklabels([])
-                    if column_index == 1:
+                    if column_index > 0:
                         axes[row_index, column_index].set_yticklabels([])
 
                     if (row_index == 1) & (column_index == 0):
                         axes[row_index, column_index].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
 
-    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.16, right=0.99, bottom=0.06, top=0.97)
+    ### Adjust the figure margins before using the figure axes positions to place text
+    fig_margins = convert_edge_margin_in_pixels_to_fraction(fig,
+                                                            100,
+                                                            5,
+                                                            45,
+                                                            30)
 
-    # Add the x-axis label, anchoring the middle of the text to the right edge of the bottom left subplot
-    fig.text(axes[2, 0].get_position().x1, axes[2, 0].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+    plt.subplots_adjust(left=fig_margins.left,
+                        right = fig_margins.right,
+                        bottom = fig_margins.bottom,
+                        top = fig_margins.top,
+                        wspace=0.0,
+                        hspace=0.0)
 
-    row_titles_x0 = 0.03
+    ### Center the x-axis label differently depending on whether there are an odd or even number of columns
+    if num_plot_cols % 2 != 0: # odd number of columns
+        middle_col_index = int(np.floor(num_plot_cols/2))
+        axes[2, middle_col_index].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
+    if num_plot_cols % 2 == 0: # even number of columns
+        # anchoring the middle of the x-axis label text to the right edge of the column calculated here
+        anchor_col_index = int(num_plot_cols - num_plot_cols/2 - 1)
+        #fig.text(axes[2, anchor_col_index].get_position().x1, axes[2, anchor_col_index].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+        fig.text(axes[2, anchor_col_index].get_position().x1, 0.01,
+             r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+
+    row_titles_x0 = 0.02
     fig.text(row_titles_x0, axes[0, 0].get_position().y0,'Ground Motion Characterization Models', ha='center', va='center',rotation=90, fontsize=title_font_size)
 
     fig.text(row_titles_x0, (axes[2, 0].get_position().y0 + axes[2, 0].get_position().y1)/2.0,
              'Seismicity Rate Models',
              ha='center', va='center', rotation=90, fontsize=title_font_size)
 
+
     #plt.show()
-    plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_poster_plot.png", dpi=500)
+    plt.savefig(f"/home/arr65/data/nshm/output_plots/{"_".join(locations)}_dispersion_poster_plot.png", dpi=500)
     print()
+
+
 
 ## A good plotting function
 def make_cov_plots(rungroup_num = 15, location="WLG", im="PGA", vs30=400):
@@ -1118,7 +1204,7 @@ def lookup_realization_name_from_hash(individual_realization_df):
 
     """
 
-    Looks up the models used in the realization based on the branch hash ids.
+    Looks up the models used in the realization based on the branch hash ids in the output parquet file.
 
     Parameters
     ----------
@@ -1411,8 +1497,11 @@ if __name__ == "__main__":
 
     #do_plot_for_poster()
 
+    #plot_srm_and_gmcm_model_dispersions(["WLG", "CHC"])
+    plot_srm_and_gmcm_model_dispersions(["WLG","CHC","AKL"])
 
-    make_explanation_plot_for_poster(21,3)
+
+    #make_explanation_plot_for_poster(21,3)
 
     print()
 
