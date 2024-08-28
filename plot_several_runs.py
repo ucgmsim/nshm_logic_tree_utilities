@@ -741,109 +741,86 @@ def do_plot_for_poster():
     print()
 
 ## A good plotting function
-def make_cov_plots(over_plot_all=False):
+def make_cov_plots(rungroup_num = 15, location="WLG", im="PGA", vs30=400):
 
-    for im in ims:
+    rungroup_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{rungroup_num}")
 
-        locations = ["WLG"]
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
 
-        for location in locations:
+    nloc_001_str = locations_nloc_dict[location]
 
-            nloc_001_str = locations_nloc_dict[location]
+    mean_list = []
+    cov_list = []
 
-            mean_list = []
-            std_list = []
-            cov_list = []
+    run_results = load_toshi_hazard_post_agg_stats_in_rungroup(rungroup_dir)
 
-            for run_idx, run in enumerate(run_list):
+    data_df = run_results.data_df
+    run_notes_df = run_results.run_notes_df
 
-                print()
+    run_list = [f"run_{x}" for x in run_notes_df["run_counter"].values]
+    for run_idx, run in enumerate(run_list):
 
-                run_counter = int(run.split("_")[-1])
+        mean = data_df[(data_df["agg"] == "mean") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                mean = data_df[(data_df["agg"] == "mean") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        cov = data_df[(data_df["agg"] == "cov") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == run) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
-                cov = data_df[(data_df["agg"] == "cov") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        mean_list.append(mean)
+        cov_list.append(cov)
 
-                # std_ln = data_df[(data_df["agg"] == "std_ln") &
-                #           (data_df["vs30"] == vs30) &
-                #           (data_df["imt"] == im) &
-                #           (data_df["hazard_model_id"] == run) &
-                #           (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+    plt.rcParams.update({'font.size': 12})
 
-                std = data_df[(data_df["agg"] == "std") &
-                          (data_df["vs30"] == vs30) &
-                          (data_df["imt"] == im) &
-                          (data_df["hazard_model_id"] == run) &
-                          (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+    lw = 5
 
-                mean_list.append(mean)
-                std_list.append(std)
-                cov_list.append(cov)
-                #std_list.append(std_ln)
+    #plt.figure(figsize=(5.12,4.62))
+    plt.figure(figsize=(7.3, 4.62))
+    plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
+    plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
+    plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
+    plt.legend(handlelength=4)
+    #plt.title(f"{location} {im}")
+    #plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
+    plt.ylabel("Modelling uncertainty\n(coefficient of variation of model predictions)")
+    plt.xlabel('Peak ground acceleration (g)')
+    plt.xlim(1e-2,5)
+    plt.ylim(0.05,0.8)
 
-            #source_unc_plus_gmcm_unc = np.sqrt(np.array(std_list)**2 + np.array(cov_list)**2)
-            source_std_plus_gmcm_std = np.array(std_list[0]) + np.array(std_list[1])
+    plt.grid(which='major',
+           linestyle='--',
+           linewidth='0.5',
+           color='black',
+           alpha=0.6)
 
-            cov_sum = np.array(cov_list[0]) + np.array(cov_list[1])
-            cov_sum2 = np.sqrt(np.array(cov_list[0])**2 + np.array(cov_list[1])**2)
-
-            mean_sum = np.array(mean_list[0]) + np.array(mean_list[1])
-            mean_sum2 = np.sqrt(np.array(mean_list[0])**2 + np.array(mean_list[1])**2)
-
-            std_sum = np.array(std_list[0]) + np.array(std_list[1])
-            std_sum2 = np.sqrt(np.array(std_list[0])**2 + np.array(std_list[1])**2)
-
-            plt.rcParams.update({'font.size': 12})
-
-            lw = 5
-
-            plt.figure(figsize=(5.12,4.62))
-            plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=lw, label='source model')
-            plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=lw, label='ground motion model')
-            plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=lw, label='both')
-            plt.legend(handlelength=4)
-            #plt.title(f"{location} {im}")
-            #plt.ylabel("coefficient of variation (CoV) of\nannual probability of exceedance (APoE)")
-            plt.ylabel("modelling uncertainty\n(coefficient of variation of model predictions)")
-            plt.xlabel('peak ground acceleration (g)')
-            plt.xlim(1e-2,5)
-            plt.ylim(0.05,0.8)
-            #plt.title("Wellington assuming Vs30 = 400 m/s")
-
-            # plt.semilogx(nshm_im_levels, cov_sum, linestyle='-.', label='sum')
-            # plt.semilogx(nshm_im_levels, cov_sum2, linestyle='-.', label='sum2')
-
-            #plt.show()
-            plt.tight_layout()
-            plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=500)
+    #plt.tight_layout()
+    plt.subplots_adjust(left=0.11, right=0.99, bottom=0.12, top=0.97 )
+    plt.savefig("/home/arr65/data/nshm/output_plots/cov_plot.png",dpi=500)
+    print()
 
 
 
 
 
-            #
-            # plt.close()
-            #
-            # plt.figure()
-            # plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
-            # plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
-            # plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
-            # plt.legend()
-            # #plt.title(f"{location} {im}")
-            # #plt.title("Wellington assuming Vs30 = 400 m/s")
-            # plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
-            # plt.xlabel('peak ground acceleration (g)')
-            # plt.tight_layout()
-            # plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
+#
+# plt.close()
+#
+# plt.figure()
+# plt.semilogx(nshm_im_levels, std_list[2], linestyle='-', label='SRM & GMCM')
+# plt.semilogx(nshm_im_levels, std_list[0], linestyle='--', label='SRM')
+# plt.semilogx(nshm_im_levels, std_list[1], linestyle='-.', label='GMCM')
+# plt.legend()
+# #plt.title(f"{location} {im}")
+# #plt.title("Wellington assuming Vs30 = 400 m/s")
+# plt.ylabel("standard deviation of annual\nprobability of exceedance (APoE)")
+# plt.xlabel('peak ground acceleration (g)')
+# plt.tight_layout()
+# plt.savefig("/home/arr65/data/nshm/output_plots/std_plot.png",dpi=400)
 
 ## A good plotting function
 def do_srm_model_plots_with_seperate_location_subplots(im):
@@ -1315,7 +1292,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"{std_ln[im_index]:.2f}",
                      ha='center',
                      va='center',
-                     color="tab:blue")
+                     color="black")
 
         ### Plot labels (A), (B), (C)
         axes[0].text(annotation_im,
@@ -1323,7 +1300,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"{manually_matched_latex_strings[annotation_ims.index(annotation_im)]}",
                      ha='center',
                      va='center',
-                     color="tab:blue")
+                     color="black")
 
         ### Draw the horizontal lines at the mean values
         axes[1].hlines(y=mean[im_index],
@@ -1343,7 +1320,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                      f"({annotation_labels[annotation_ims.index(annotation_im)]})",
                      ha='center',
                      va='center',
-                     color="tab:blue")
+                     color="black")
 
     axes[0].set_xlabel(r'Peak ground acceleration (g)')
     axes[0].set_ylabel(r'Annual hazard probability, $\mu_{P(PGA=pga)}$')
@@ -1357,7 +1334,7 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                  "Dispersion in hazard probability",
                  ha='left',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     text_row_2_height = plot_ylims[1]+5.0
 
@@ -1366,42 +1343,42 @@ def make_explanation_plot_for_poster(rungroup_num, run_num, loc_name="WLG",
                  "Reference point:",
                  ha='right',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     axes[0].text(annotation_ims[0],
                  text_row_2_height,
                  "(A)",
                  ha='center',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     axes[0].text(annotation_ims[1],
                  text_row_2_height,
                  "(B)",
                  ha='center',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     axes[0].text(annotation_ims[2],
                  text_row_2_height,
                  "(C)",
                  ha='center',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     axes[0].text(8e-3,
                  plot_ylims[1]+2.0,
                  "PGA =  ",
                  ha='right',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     axes[0].text(5.8e-3,
                  plot_ylims[1]+0.5,
                  r"$\sigma_{\ln P(PGA=pga)} = $",
                  ha='right',
                  va='center',
-                 color="tab:blue")
+                 color="black")
 
     plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
 
