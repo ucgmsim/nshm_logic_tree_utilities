@@ -1,5 +1,5 @@
-## Settings for the run
-delete_existing_output : True
+## Optional settings for the run
+overwrite_if_output_directory_exists : True
 output_individual_realizations : False
 
 ## Input information
@@ -7,11 +7,11 @@ input_directory : "input_files"
 env_file_name : ".env_home"
 initial_input_file_name : "simple_input.toml"
 
-#locations : ["AKL","WLG","CHC"]
-locations : ["WLG"]
+locations : ["AKL","WLG","CHC"]
+#locations : ["WLG"]
 
 ## Output information
-output_directory : "/home/arr65/data/nshm/auto_output/auto24"
+output_directory : "/home/arr65/data/nshm/output/auto24"
 run_notes_file_name : "run_notes.csv"
 
 

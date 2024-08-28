@@ -14,7 +14,7 @@ import logic_tree_tools
 def run_with_modified_logic_trees(
     args: AggregationArgs,
     output_dir: Path,
-    run_counter: int,
+    logic_tree_index: int,
     custom_logic_tree_set: logic_tree_tools.CustomLogicTreeSet,
     locations: list[str],
     output_staging_dir: Path,
@@ -28,8 +28,8 @@ def run_with_modified_logic_trees(
         Contains the arguments for toshi_hazard_post to run.
     output_dir : Path
         The directory where the output files will be saved.
-    run_counter : int
-        The number of the run.
+    logic_tree_index : int
+        The index of the logic_tree_set in the input list (used for naming the output directory).
     custom_logic_tree_set : logic_tree_tools.CustomLogicTreeSet
         The logic tree set to run toshi_hazard_post with.
     locations : list[str]
@@ -51,12 +51,12 @@ def run_with_modified_logic_trees(
     logic_tree_tools.check_weight_validity(custom_logic_tree_set.glt)
 
     ### Save a copy of the logic trees for later inspection
-    modified_slt.to_json(output_staging_dir / f"slt_{run_counter}.json")
-    modified_glt.to_json(output_staging_dir / f"glt_{run_counter}.json")
+    modified_slt.to_json(output_staging_dir / f"slt_{logic_tree_index}.json")
+    modified_glt.to_json(output_staging_dir / f"glt_{logic_tree_index}.json")
 
     ### Save human-readable notes describing the changes to the logic tree
     custom_logic_tree_set.notes_to_toml(
-        output_staging_dir / f"run_{run_counter}_notes.toml"
+        output_staging_dir / f"run_{logic_tree_index}_notes.toml"
     )
 
     ### While several locations can be passed into the same toshi_hazard_post run,
@@ -64,17 +64,17 @@ def run_with_modified_logic_trees(
     ### We therefore loop over the locations and run toshi_hazard_post for each one.
 
     for location in locations:
-        print(f"doing run {run_counter} and location {location}")
+        print(f"doing run {logic_tree_index} and location {location}")
 
         args.locations = [location]
-        args.hazard_model_id = f"run_{run_counter}"
+        args.hazard_model_id = f"run_{logic_tree_index}"
 
         args.srm_logic_tree = modified_slt
         args.gmcm_logic_tree = modified_glt
 
         run_aggregation(args)
 
-    run_output_dir = output_dir / f"run_{run_counter}"
+    run_output_dir = output_dir / f"run_{logic_tree_index}"
     run_output_dir.mkdir(parents=True, exist_ok=False)
 
     ### Move the output files from the staging directory to the run output directory
@@ -83,5 +83,5 @@ def run_with_modified_logic_trees(
 
     run_end_time = time.time()
     print(
-        f"Time taken for run {run_counter}: {(run_end_time - run_start_time)/60} mins"
+        f"Time taken for run {logic_tree_index}: {(run_end_time - run_start_time)/60} mins"
     )

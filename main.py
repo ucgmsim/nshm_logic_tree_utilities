@@ -31,7 +31,7 @@ logging.getLogger("toshi_hazard_post").setLevel(logging.INFO)
 input_file_dir = Path(config.get_value("input_directory"))
 output_dir = Path(config.get_value("output_directory"))
 
-if config.get_value("delete_exisiting_output"):
+if config.get_value("overwrite_if_output_directory_exists"):
     shutil.rmtree(output_dir, ignore_errors=True)
 output_dir.mkdir(parents=True, exist_ok=False)
 
@@ -44,7 +44,7 @@ with open(input_file_dir / config.get_value("env_file_name"), "r") as file:
 ### output_staging_dir is toshi_hazard_post's output directory.
 ### After toshi_hazard_post has finished, these files are moved to the output_dir
 output_staging_dir = Path(env_lines[-1].split("=")[1].strip("\n ' \" "))
-if config.get_value("delete_existing_output"):
+if config.get_value("overwrite_if_output_directory_exists"):
     shutil.rmtree(output_staging_dir, ignore_errors=True)
     output_staging_dir.mkdir(parents=True, exist_ok=True)
 
@@ -105,21 +105,21 @@ logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_set_list)
 
 ## Write notes about the modified logic trees
 run_notes_df = pd.DataFrame()
-for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
+for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
     notes_df = custom_logic_tree_set.notes_to_pandas_df()
-    notes_df["run_counter"] = [run_counter]
+    notes_df["logic_tree_index"] = [logic_tree_index]
     run_notes_df = pd.concat([run_notes_df, notes_df], ignore_index=True)
 
-# move the "run_counter" column to the left-most position
-run_notes_df.insert(0, "run_counter", run_notes_df.pop("run_counter"))
+# move the "logic_tree_index" column to the left-most position
+run_notes_df.insert(0, "logic_tree_index", run_notes_df.pop("logic_tree_index"))
 run_notes_df.to_csv(output_dir / config.get_value("run_notes_file_name"))
 
 ## Run toshi_hazard_post with the modified logic trees
-for run_counter, custom_logic_tree_set in enumerate(logic_tree_set_list):
+for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
     run_toshi_hazard_post_from_Python.run_with_modified_logic_trees(
         args,
         output_dir,
-        run_counter,
+        logic_tree_index,
         custom_logic_tree_set,
         config.get_value("locations"),
         output_staging_dir,
