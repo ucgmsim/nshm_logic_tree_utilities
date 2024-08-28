@@ -1093,10 +1093,10 @@ if __name__ == "__main__":
     logging.getLogger('toshi_hazard_post.parallel').setLevel(logging.DEBUG)
     logging.getLogger('toshi_hazard_post').setLevel(logging.INFO)
 
-    os.environ['THP_ENV_FILE'] = str("/home/arr65/src/nshm_logic_tree_utilities/custom_input_files.env_home")
+    os.environ['THP_ENV_FILE'] = str("/home/arr65/src/nshm_logic_tree_utilities/input_files.env_home")
 
     # starting model
-    input_file = "/home/arr65/src/nshm_logic_tree_utilities/custom_input_files/simple_input.toml"
+    input_file = "/input_files/simple_input.toml"
     args = AggregationArgs(input_file)
 
     # run model

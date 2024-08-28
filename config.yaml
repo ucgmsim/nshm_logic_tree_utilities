@@ -3,7 +3,7 @@ delete_existing_output : True
 output_individual_realizations : False
 
 ## Input information
-input_directory : "custom_input_files"
+input_directory : "input_files"
 env_file_name : ".env_home"
 initial_input_file_name : "simple_input.toml"
 
