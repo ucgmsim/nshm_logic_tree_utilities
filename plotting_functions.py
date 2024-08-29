@@ -18,437 +18,26 @@ import toshi_hazard_post.calculators as calculators
 
 
 import toml
-
-## Tidied up
-@dataclass
-class MarginFractions:
-    """
-    A dataclass to store margin fractions for a plot.
-
-    Attributes:
-    left (float): Fraction of the figure width for the left margin.
-    right (float): Fraction of the figure width for the right margin.
-    bottom (float): Fraction of the figure height for the bottom margin.
-    top (float): Fraction of the figure height for the top margin.
-    """
-    left: float
-    right: float
-    bottom: float
-    top: float
-
-## Tidied up
-def convert_edge_margin_in_pixels_to_fraction(fig: matplotlib.figure.Figure,
-                                              left_margin_pixels: int,
-                                              right_margin_pixels: int,
-                                              bottom_margin_pixels: int,
-                                              top_margin_pixels: int) -> MarginFractions:
-    """
-    Convert edge margins from pixels to fractions of the figure dimensions.
-
-    Parameters
-    ----------
-    fig : matplotlib.figure.Figure
-        The figure object to get dimensions from.
-    left_margin_pixels : int
-        The left margin in pixels.
-    right_margin_pixels : int
-        The right margin in pixels.
-    bottom_margin_pixels : int
-        The bottom margin in pixels.
-    top_margin_pixels : int
-        The top margin in pixels.
-
-    Returns
-    -------
-    MarginFractions
-        A dataclass containing the margins as fractions of the figure dimensions.
-    """
-
-    # Get the figure height and width in inches and convert it to pixels
-    fig_width_inch = fig.get_figwidth()
-    fig_height_inch = fig.get_figheight()
-
-    dpi = fig.get_dpi()
-
-    fig_width_px = fig_width_inch * dpi
-    fig_height_px = fig_height_inch * dpi
-
-    left_margin_fraction = left_margin_pixels / fig_width_px
-    right_margin_fraction = 1.0 - right_margin_pixels / fig_width_px
-    bottom_margin_fraction = bottom_margin_pixels / fig_height_px
-    top_margin_fraction = 1.0 - top_margin_pixels / fig_height_px
-
-    return MarginFractions(left_margin_fraction, right_margin_fraction, bottom_margin_fraction, top_margin_fraction)
-
-## Tidied up
-@dataclass
-class LoadedResults():
-
-    """
-    A class to store loaded results.
-
-    Attributes
-    ----------
-    data_df : pd.DataFrame
-        A DataFrame containing the data.
-    run_notes_df : pd.DataFrame
-        A DataFrame containing notes about
-        the run that generated these results.
-    """
-
-    data_df :  pd.DataFrame()
-    run_notes_df : pd.DataFrame()
+import plotting_helpers
 
 
-### tidied up
-def load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_logic_tree: Union[Path, str], location: str) -> pd.DataFrame:
-
-    """
-    Load aggregate statistics results for a single location.
-
-    Parameters
-    ----------
-    results_dir_for_one_logic_tree : Union[Path, str]
-        The directory containing the results of a run of main.py for a single logic tree. This directory has a
-        name like logic_tree_index_0. This directory should contain location subdirectories.
-
-    location : str
-        The location code, which must be one of ["AKL", "WLG", "CHC"].
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame containing the results for the specified location.
-
-    Raises
-    ------
-    ValueError
-        If the location is not one of ["AKL", "WLG", "CHC"].
-    """
-
-    if isinstance(results_dir_for_one_logic_tree, str):
-        results_dir_for_one_logic_tree = Path(results_dir_for_one_logic_tree)
-
-    results_df = pd.DataFrame()
-
-    if location not in ["AKL","WLG","CHC"]:
-        raise ValueError('location must be AKL, WLG or CHC')
-
-    if location == 'CHC':
-        nloc_str = "nloc_0=-44.0~173.0"
-    if location == 'WLG':
-        nloc_str = "nloc_0=-41.0~175.0"
-    if location == 'AKL':
-        nloc_str = "nloc_0=-37.0~175.0"
-
-    results_dir = results_dir_for_one_logic_tree / nloc_str
-
-    for index, file in enumerate(results_dir.glob('*.parquet')):
-
-        results_df = pd.concat([results_df, pd.read_parquet(file)], ignore_index=True)
-
-    results_df = insert_ln_std(results_df)
-
-    return results_df
-
-### tidied up
-def load_aggregate_stats_for_one_logic_tree_several_locations(results_dir_for_one_logic_tree: Union[Path, str], locations: list[str]) -> pd.DataFrame:
-
-    """
-    Load aggregate statistics results for several locations.
-
-    Parameters
-    ----------
-    results_dir_for_one_logic_tree : Union[Path, str]
-        The directory containing the results of a run of main.py for a single logic tree. This directory has a
-        name like logic_tree_index_0. This directory should contain location subdirectories.
-
-    locations : list[str]
-        A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"].
-
-    Returns
-    -------
-    LoadedResults
-        An instance of LoadedResults containing loaded data and corresponding notes for the specified locations.
-    """
-    if isinstance(results_dir_for_one_logic_tree, str):
-        results_dir_for_one_logic_tree = Path(results_dir_for_one_logic_tree)
-
-    results_df = pd.DataFrame()
-
-    for location in locations:
-
-        results_df = (pd.concat
-                      ([results_df,
-                        load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_logic_tree, location)],
-                       ignore_index=True))
-
-    return results_df
-
-### tidied up
-def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Union[Path, str],
-                                                          locations:list[str] = ["AKL","WLG","CHC"]) -> LoadedResults:
-
-    """
-    Load aggregate statistics for all logic trees in the results_directory.
-
-    Parameters
-    ----------
-    results_directory : Union[Path, str]
-        The directory containing the results of one or more logic trees.
-        Should contain directories named like logic_tree_index_0, logic_tree_index_0 etc.
-    locations : list of str, optional
-        A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"]. Default is ["AKL", "WLG", "CHC"].
-
-    Returns
-    -------
-    LoadedResults
-        An instance of LoadedResults containing the data and run notes for all logic trees in the directory.
-    """
+### Used function
+def plot_gmm_dispersion_ranges(results_directory: Union[Path, str],
+                         plot_output_directory: Union[Path, str],
+                         locations : list[str] = ["AKL", "WLG", "CHC"],
+                         filter_strs: list[str] = ["CRU", "HIK_and_PUY", "SLAB"],
+                         vs30: int = 400,
+                         im:str = "PGA",
+                         plot_dpi=500):
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
+    if isinstance(plot_output_directory, str):
+        plot_output_directory = Path(plot_output_directory)
 
-    results_df = pd.DataFrame()
 
-    for run_dir in results_directory.iterdir():
-        if run_dir.is_dir():
-            results_df = (pd.concat
-                          ([results_df,
-                            load_aggregate_stats_for_one_logic_tree_several_locations(run_dir,locations)],
-                           ignore_index=True))
+    dispersion_range_dict = plotting_helpers.get_interpolated_gmms()
 
-    return LoadedResults(data_df=results_df, run_notes_df=pd.read_csv(results_directory / "run_notes.csv"))
-
-## Tidied up
-def insert_ln_std(data_df:pd.DataFrame) -> pd.DataFrame:
-
-    """
-    Insert the natural logarithm of the standard deviation (std_ln) into the DataFrame.
-
-    This function iterates over the rows of the input DataFrame, checks for rows where the 'agg' column is 'cov',
-    calculates the std_ln, and appends these new rows to the DataFrame.
-
-    Parameters
-    ----------
-    data_df : pd.DataFrame
-        The input DataFrame containing the data.
-
-    Returns
-    -------
-    pd.DataFrame
-        A new DataFrame with the std_ln rows added.
-    """
-
-    # Initialize an empty DataFrame to hold the new rows
-    new_rows = []
-
-    # Iterate over the DataFrame
-    for index, row in data_df.iterrows():
-        # Append the current row to the list of new rows
-        new_rows.append(row)
-
-        # Check if the 'agg' column is 'cov'
-        if row['agg'] == 'cov':
-
-            cov_arr = row.loc["values"]
-            std_ln_arr = np.sqrt(np.log(cov_arr ** 2 + 1))
-
-            # Create a new row that's a copy of the current row
-            new_row = row.copy()
-
-            # Update the 'agg' and 'values' columns of the new row
-            new_row['agg'] = 'std_ln'
-            new_row['values'] = std_ln_arr
-
-            # Append the new row to the list of new rows
-            new_rows.append(new_row)
-
-    # Create a new DataFrame from the list of new rows
-    new_df = pd.DataFrame(new_rows)
-
-    return new_df
-
-
-def remove_duplicates_in_x(x, y):
-    # Find unique values in x and their indices
-    unique_x, indices = np.unique(x, return_index=True)
-
-    # Use indices to filter both x and y
-    filtered_x = x[indices]
-    filtered_y = y[indices]
-
-    return filtered_x, filtered_y
-
-
-##################################################################################################
-##################################################################################################
-### Used function
-
-### tidied up
-def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[str]:
-    """
-    Sort the logic_tree_index_[x] names by the ground motion characterization model that
-    was isolated by that logic tree.
-
-    Parameters
-    ----------
-    results_directory : Path
-        The directory containing the run notes CSV file.
-
-    Returns
-    -------
-    list[str]
-        A list of sorted logic tree indices based on the ground motion characterization model names.
-    """
-
-    run_list_label_tuple_list = []
-
-    # Read the run notes CSV file
-    run_notes_df = pd.read_csv(results_directory / "run_notes.csv")
-
-    # Iterate over each logic tree index
-    for logic_tree_index in run_notes_df["logic_tree_index"]:
-
-        # Extract the slt_note and glt_note for the current logic tree index
-        slt_note = f"{run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
-        glt_note = f"{run_notes_df[run_notes_df["logic_tree_index"]== logic_tree_index]["glt_note"].values[0]}"
-
-        # Isolate the useful parts of the notes
-        trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-        glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
-        glt_model = glt_model_and_weight_str.split("*")[0]
-
-        # Handling special cases with the NZNSHM2022_ prefix
-        if "NZNSHM2022_" in glt_model:
-            glt_model = glt_model.split("NZNSHM2022_")[1]
-
-        # Get tuples of (logic_tree_index, corresponding model name)
-        run_list_label_tuple_list.append((logic_tree_index, f"{trts_from_note}_{glt_model}"))
-
-    # Sort the list of tuples based on the model names
-    sorted_run_list_label_tuple_list = natsort.natsorted(run_list_label_tuple_list, key=lambda x: x[1])
-
-    # Return the sorted list of logic tree indices
-    return [x[0] for x in sorted_run_list_label_tuple_list]
-
-
-
-### Used function
-def interpolate_ground_motion_models(data_df, location, im):
-
-    mean_list = []
-    std_ln_list = []
-    non_zero_run_list = []
-
-    for run in natsort.natsorted(data_df["hazard_model_id"].unique()):
-
-        nloc_001_str = locations_nloc_dict[location]
-
-        run_counter = int(run.split("_")[-1])
-
-        mean = data_df[(data_df["agg"] == "mean") &
-                  (data_df["vs30"] == vs30) &
-                  (data_df["imt"] == im) &
-                  (data_df["hazard_model_id"] == run) &
-                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-        mean_max = np.max(mean)
-        print(f'run {run} max mean: {mean_max}')
-
-        std_ln = data_df[(data_df["agg"] == "std_ln") &
-                  (data_df["vs30"] == vs30) &
-                  (data_df["imt"] == im) &
-                  (data_df["hazard_model_id"] == run) &
-                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
-
-        mean_list.append(mean)
-        std_ln_list.append(std_ln)
-        non_zero_run_list.append(run)
-
-    mean_array = np.array(mean_list)
-    std_ln_array = np.array(std_ln_list)
-
-    num_mean_points = 1000
-    mm = np.logspace(-6, -2, num_mean_points)
-
-    num_runs = len(mean_array)
-
-    interp_disp_array = np.zeros((num_runs,num_mean_points))
-
-    ## Interpolation part
-    for run_idx in range(num_runs):
-
-        std_ln_vect = std_ln_array[run_idx]
-        mean_vect = mean_array[run_idx]
-
-        min_mean_value = 1e-9
-
-        std_ln_vect2 = std_ln_vect[mean_vect > min_mean_value]
-        mean_vect2 = mean_vect[mean_vect > min_mean_value]
-
-        mean_vect3, std_ln_vect3 = remove_duplicates_in_x(mean_vect2, std_ln_vect2)
-
-        plot_interpolations = False
-
-        if len(mean_vect3) == 0:
-            interp_disp_array[run_idx, :] = np.nan
-
-        else:
-
-            mean_to_dispersion_func = scipy.interpolate.interp1d(mean_vect3, std_ln_vect3, kind='linear',bounds_error=False, fill_value=np.nan)
-            #mean_to_dispersion_func = scipy.interpolate.interp1d(mean_vect3, std_ln_vect3, kind='linear')
-            interp_disp = mean_to_dispersion_func(mm)
-            interp_disp_array[run_idx, :] = interp_disp
-
-            if plot_interpolations:
-                plt.figure()
-
-                print(f"run_idx: {run_idx}, run: {logic_tree_index_list[run_idx]}")
-
-                plt.semilogx(mean_vect, std_ln_vect, '.')
-
-                plt.semilogx(mean_vect3, std_ln_vect3, 'r.')
-                plt.semilogx(mean_array[run_idx], std_ln_array[run_idx], '.')
-                plt.semilogx(mm, interp_disp, 'r--')
-                plt.title(f"run_{run_idx} location {location}")
-                plt.show()
-
-    return mm, interp_disp_array
-
-### Used function
-def get_interpolated_gmms():
-
-    locations = ["AKL", "WLG", "CHC"]
-    filter_strs = ["CRU", "HIK_and_PUY", "SLAB"]
-    #filter_strs = ["SLAB"]
-
-    dispersion_range_dict = {}
-
-    for location in locations:
-        dispersion_range_dict[location] = {}
-
-    for filter_str in filter_strs:
-
-            filtered_run_notes_df = run_notes_df[run_notes_df["slt_note"].str.contains(filter_str)]
-
-            logic_tree_index_list = [f"run_{x}" for x in filtered_run_notes_df["run_counter"].values]
-
-            filtered_data_df = data_df[data_df["hazard_model_id"].isin(logic_tree_index_list)]
-
-            for location in locations:
-
-                mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df, location, "PGA")
-
-                dispersion_range_dict[location][filter_str] = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
-
-    return dispersion_range_dict
-
-### Used function
-def plot_gmm_dispersion_ranges():
-
-    dispersion_range_dict = get_interpolated_gmms()
-    filter_strs = ["CRU", "HIK_and_PUY", "SLAB"]
 
     linestyle_lookup_dict = {"CRU":"--",
                              "HIK_and_PUY":"-.",
@@ -489,34 +78,10 @@ def plot_gmm_dispersion_ranges():
     plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
     plt.xlabel(r'Range in dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
     plt.grid(linestyle='--')
-    plt.savefig("/home/arr65/data/nshm/output_plots/dispersion_range_plot.png", dpi=500)
+    plt.savefig(plot_output_directory / f"dispersion_ranges_from_dir_{results_directory.name}.png", dpi=plot_dpi)
 
     #plt.show()
     print()
-
-
-
-
-
-
-
-
-
-    # #filtered_df = run_notes_df[~run_notes_df["slt_note"].str.contains("only")]
-    # filtered_run_notes_df = run_notes_df[run_notes_df["slt_note"].str.contains("CRU")]
-    #
-    # logic_tree_index_list = [f"run_{x}" for x in filtered_run_notes_df["run_counter"].values]
-    #
-    # filtered_data_df = data_df[data_df["hazard_model_id"].isin(logic_tree_index_list)]
-    #
-    # print()
-    #
-    # mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df, "WLG", "PGA")
-    #
-    # plt.semilogx(mm, np.nanmean(interp_disp_array, axis=0), 'r--')
-    # plt.show()
-    #
-    # print()
 
 
 ## A good plotting function. Use autorun21 for these plots
@@ -541,14 +106,14 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
     if isinstance(plot_output_directory, str):
         plot_output_directory = Path(plot_output_directory)
 
-    loaded_run_results = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
-    data_df = loaded_run_results.data_df
-    run_notes_df = loaded_run_results.run_notes_df
+    loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
+    data_df = loaded_results.data_df
+    run_notes_df = loaded_results.run_notes_df
 
     plt.close("all")
     fig, axes = plt.subplots(3, 3,figsize=(6,9))
 
-    sorted_logic_tree_indices = sort_logic_tree_index_by_gmcm_model_name(results_directory)
+    sorted_logic_tree_indices = plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(results_directory)
 
     for location_row_idx, location in enumerate(locations):
 
@@ -673,7 +238,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
     characterization models (GMCMs), the middle row shows the interface and intraslab GMCMs,
     and the bottom row shows the seismicity rate model (SRM) components.
 
-    Note that the data that this function uses is loaded from the output of main.py so that needs to be run first.
+    Note that the data that this function uses is loaded from the output of run_toshi_hazard_post_script.py so that needs to be run first.
     """
 
     if isinstance(srm_models_data_directory, str):
@@ -691,13 +256,13 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
     glt_model_color = toml.load('resources/model_plot_colors.toml')
 
     ## relate plot row to data
-    plot_row_to_data_lookup = {0:load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
-                               1:load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
-                               2:load_aggregate_stats_for_all_logic_trees_in_directory(srm_models_data_directory)}
+    plot_row_to_data_lookup = {0:plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
+                               1:plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
+                               2:plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(srm_models_data_directory)}
 
     ## Sort the logic_tree_index_[x] names by the ground motion characterization model that
     ## was isolated by that logic tree.
-    sorted_gmm_run_nums = sort_logic_tree_index_by_gmcm_model_name(gmcm_models_data_directory)
+    sorted_gmm_run_nums = plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(gmcm_models_data_directory)
 
     ### For each row of the subplot, identify the logic_tree_indices (output directories) that will
     ### be plotted by looking at the run_notes dataframe, and identifying the rows that contain key strings
@@ -814,7 +379,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
     ### but the figure margins need to be provided in fractions of the figure dimensions.
     ### As the figure dimensions change depending on how many columns are in the figure,
     ### the figure margins need to be calculated in pixels and then converted to fractions
-    fig_margins = convert_edge_margin_in_pixels_to_fraction(fig,
+    fig_margins = plotting_helpers.convert_edge_margin_in_pixels_to_fraction(fig,
                                                             100,
                                                             5,
                                                             45,
@@ -887,12 +452,12 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     """
 
     nshm_im_levels = np.loadtxt('resources/nshm_im_levels.txt')
-    
+
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
     if isinstance(plot_output_directory, str):
         plot_output_directory = Path(plot_output_directory)
-    
+
     locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
 
     nloc_001_str = locations_nloc_dict[location]
@@ -900,7 +465,7 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     mean_list = []
     cov_list = []
 
-    resulting_hazard_curves = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
 
     data_df = resulting_hazard_curves.data_df
     run_notes_df = resulting_hazard_curves.run_notes_df
@@ -950,24 +515,61 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     plt.savefig(plot_output_directory / "coefficient_of_variation.png",dpi=plot_dpi)
     plt.close()
 
-## A good plotting function
-def do_srm_model_plots_with_seperate_location_subplots(im):
+## tidied up
+def make_figure_of_srm_model_components(results_directory: Union[Path,str],
+                                           plot_output_directory:Union[Path, str],
+                                           locations: list[str] = ["AKL", "WLG", "CHC"],
+                                           im: str="PGA",
+                                           vs30:int=400,
+                                           plot_dpi:int=500):
 
+    """
+    Make a figure of the dispersion in seismicity rate model components.
+
+    Parameters
+    ----------
+    results_directory : Union[Path, str]
+        The directory containing the data. This directory should contain subdirectories
+        named as logic_tree_index_[x] where [x] is the index the logic_tree_set had in the input list.
+    plot_output_directory : Union[Path, str]
+        The directory where the plot will be saved.
+    locations : list[str], optional
+        The locations to plot (default is ["AKL", "WLG", "CHC"]).
+    im : str, optional
+        The intensity measure (default is "PGA").
+    vs30 : int, optional
+        The Vs30 value (default is 400).
+    plot_dpi : int, optional
+        The resolution of the plot in dots per inch (default is 500).
+    """
+
+    ### tectonic region type and model name lookup dictionaries
     trt_short_to_long = {"CRU":"crust",
                          "INTER":"subduction interface\n"}
 
+    ### model name lookup dictionary
     model_name_short_to_long = {"deformation_model":"deformation model\n(geologic or geodetic)",
                                 "time_dependence":"time dependence\n(time-dependent or time-independent)",
                                 "MFD":"magnitude frequency distribution",
                                 "moment_rate_scaling":"moment rate scaling"}
 
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
 
-    #filtered_df = run_notes_df[~run_notes_df["slt_note"].str.contains("INTER_only")]
+    if isinstance(results_directory, str):
+        results_directory = Path(results_directory)
+    if isinstance(plot_output_directory, str):
+        plot_output_directory = Path(plot_output_directory)
 
-    ## Filter out the slab as well with just "only"
-    filtered_df = run_notes_df[~run_notes_df["slt_note"].str.contains("only")]
+    loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
 
-    logic_tree_index_list = [f"run_{x}" for x in filtered_df["run_counter"].values]
+    logic_tree_name_notes_df = loaded_results.run_notes_df
+    data_df = loaded_results.data_df
+
+    ## filter out all notes except those that are needed
+    filtered_logic_tree_name_notes_df = logic_tree_name_notes_df[~logic_tree_name_notes_df["slt_note"].str.contains("only")]
+
+    logic_tree_name_strs = [f"logic_tree_index_{x}" for x in filtered_logic_tree_name_notes_df["logic_tree_index"].values]
 
     fig, axes = plt.subplots(1, 3, figsize=(8,4))
 
@@ -975,30 +577,27 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
 
     for location_idx, location in enumerate(locations):
 
-        for run in logic_tree_index_list:
+        for logic_tree_name in logic_tree_name_strs:
 
             nloc_001_str = locations_nloc_dict[location]
-
-            run_counter = int(run.split("_")[-1])
 
             mean = data_df[(data_df["agg"] == "mean") &
                       (data_df["vs30"] == vs30) &
                       (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == run) &
+                      (data_df["hazard_model_id"] == logic_tree_name) &
                       (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
             std_ln = data_df[(data_df["agg"] == "std_ln") &
                       (data_df["vs30"] == vs30) &
                       (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == run) &
+                      (data_df["hazard_model_id"] == logic_tree_name) &
                       (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
 
             needed_idx = mean > 1e-8
             mean = mean[needed_idx]
             std_ln = std_ln[needed_idx]
 
-            slt_note = f"{run_notes_df[run_notes_df["run_counter"] == run_counter]["slt_note"].values[0]}"
-            #glt_note = f"{run_notes_df[run_notes_df["run_counter"]==run_counter]["glt_note"].values[0]}"
+            slt_note = f"{logic_tree_name_notes_df[logic_tree_name_notes_df["logic_tree_index"] == int(logic_tree_name.split("_")[-1])]["slt_note"].values[0]}"
 
             tectonic_region_type = slt_note.split(">")[1].strip(" ]'").split("[")[-1]
 
@@ -1032,96 +631,9 @@ def do_srm_model_plots_with_seperate_location_subplots(im):
                                   handlelength=2.2,
                                   handletextpad=0.2)
 
-    #fig.suptitle(f'Fixed: IM={im}, Vs30 = 400 m/s')
-
     plt.subplots_adjust(wspace=0.0,left=0.1,right=0.99,top=0.94)
-    plt.savefig(plot_output_directory / f"{auto_dir.name}_source_mean_vs_dispersion.png",dpi=1000)
+    plt.savefig(plot_output_directory / f"srm_dispersions_from_dir_{results_directory.name}.png",dpi=plot_dpi)
 
-## tidied up function
-def remove_special_characters(s: str, chars_to_remove: list[str] = ["'", "[", "]", '"']) -> str:
-    """
-    Remove specified special characters from a string.
-
-    Parameters
-    ----------
-    s : str
-        The input string from which to remove characters.
-    chars_to_remove : list of str, optional
-        A list of characters to remove from the input string. Default is ["'", "[", "]", '"'].
-
-    Returns
-    -------
-    str
-        The string with the specified characters removed.
-    """
-    translation_table = str.maketrans('', '', ''.join(chars_to_remove))
-    return s.translate(translation_table)
-
-
-## tidied up
-@dataclass
-class RealizationName():
-    """
-    Class to store the names of the seismicity rate model and ground motion
-    characterization model used in a realization.
-    """
-    seismicity_rate_model_id: str
-    ground_motion_characterization_models_id: str
-    
-
-### tidied up
-def lookup_realization_name_from_hash(individual_realization_df: pd.DataFrame,
-                                      registry_directory:Union[Path,str]) -> list[RealizationName]:
-
-    """
-    Looks up the model names used in the realization based on the branch hash ids in the output parquet file.
-
-    Parameters
-    ----------
-    individual_realization_df : pd.DataFrame
-        Dataframe containing the individual realizations
-        (produced by the modified version of toshi_hazard_post with output_individual_realizations == True).
-    registry_directory : Union[Path, str]
-        The directory containing the branch registry files that come with the GNS package nshm-model.
-
-    Returns
-    -------
-    realization_names : list[RealizationName]
-        List of RealizationName objects containing the seismicity rate model (SRM) and
-        ground motion characterization model (GMCM) names.
-    """
-
-    gmm_registry_df = pd.read_csv(registry_directory / 'gmm_branches.csv')
-    source_registry_df = pd.read_csv(registry_directory / 'source_branches.csv')
-
-    seismicity_rate_model_ids = []
-    ground_motion_characterization_models_ids = []
-
-    ### Get all realization ids (consisting of source and gmm ids) for a single location
-    for idx, row in individual_realization_df.iterrows():
-
-        contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
-        contributing_branches_hash_ids_clean = remove_special_characters(contributing_branches_hash_ids).split(", ")
-
-        for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
-
-            seismicity_rate_model_id = contributing_branches_hash_id[0:12]
-            ground_motion_characterization_models_id = contributing_branches_hash_id[12:24]
-
-            gmm_reg_idx = gmm_registry_df["hash_digest"] == ground_motion_characterization_models_id
-            ground_motion_characterization_models_id = gmm_registry_df[gmm_reg_idx]["identity"].values[0]
-
-            source_reg_idx = source_registry_df["hash_digest"] == seismicity_rate_model_id
-            seismicity_rate_model_id = source_registry_df[source_reg_idx]["extra"].values[0]
-
-            seismicity_rate_model_ids.append(seismicity_rate_model_id)
-            ground_motion_characterization_models_ids.append(ground_motion_characterization_models_id)
-            
-    realization_names = [RealizationName(seismicity_rate_model_id, ground_motion_characterization_models_id)
-                         for seismicity_rate_model_id, ground_motion_characterization_models_id in
-                         zip(seismicity_rate_model_ids, ground_motion_characterization_models_ids)]
-
-    return realization_names
 
 ### tidied up
 def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
@@ -1189,7 +701,7 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
 
     filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
 
-    realization_names = lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+    realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
 
     hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
 
@@ -1199,7 +711,7 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     ### Convert the rate to annual probability of exceedance
     hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
-    resulting_hazard_curves = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
+    resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
 
     agg_stats_df = resulting_hazard_curves.data_df
 
@@ -1378,76 +890,3 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
 
     plt.savefig(plot_output_directory / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png", dpi=plot_dpi)
-
-
-
-if __name__ == "__main__":
-
-    # get_interpolated_gmms()
-
-    #plot_gmm_dispersion_ranges()
-
-    #do_srm_model_plots_with_seperate_location_subplots("PGA")
-
-    make_figure_of_gmcms(results_directory = "/home/arr65/data/nshm/output/gmcm_models",
-                         plot_output_directory = "/home/arr65/data/nshm/plots",
-                         locations = ["AKL", "WLG", "CHC"])
-
-
-    print()
-
-    # make_figure_showing_Bradley2009_method(results_directory = "/home/arr65/data/nshm/output/gmcm_models/logic_tree_index_3",
-    #                                 plot_output_directory = "/home/arr65/data/nshm/plots",
-    #                                 registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources",
-    #                                 location_short_name = "WLG",
-    #                                 vs30 = 400,
-    #                                 im = "PGA")
-
-    #print()
-
-
-
-
-    ### use autorun15 for these plots
-
-    make_figure_of_coefficient_of_variation(results_directory="/home/arr65/data/nshm/output/full_component_logic_trees",
-                                         plot_output_directory="/home/arr65/data/nshm/plots")
-
-
-    #print()
-
-    ### use autorun21 for these plots
-    # run_list_sorted = get_alphabetical_run_list()
-    # for location in ["AKL", "WLG", "CHC"]:
-    #     do_gmcm_plots_with_seperate_tectonic_region_type(run_list_sorted, location, "PGA")
-
-    #make_figure_of_gmcm(21)
-
-    #do_plot_for_poster()
-
-    #make_srm_and_gmcm_model_dispersions_figure(["WLG", "CHC"])
-    #make_srm_and_gmcm_model_dispersions_figure(["WLG","CHC","AKL"])
-    make_figure_of_srm_and_gmcm_model_dispersions(
-        locations=["WLG","CHC"],#,"AKL"],
-        srm_models_data_directory="/home/arr65/data/nshm/output/srm_models",
-        gmcm_models_data_directory="/home/arr65/data/nshm/output/gmcm_models",
-        plot_output_directory="/home/arr65/data/nshm/plots")
-
-    #make_explanation_plot_for_poster(21,3)
-
-    print()
-
-    #range_dispersions = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
-
-    # plt.figure()
-    # plt.semilogx(mm, range_dispersions, 'r--')
-    # plt.show()
-
-    #do_plots_with_seperate_tectonic_region_type_per_location("CHC", "PGA")
-
-    #print()
-    #do_plots(over_plot_all=True)
-    #do_plots(over_plot_all=False)
-
-    #do_plots_with_seperate_location_subplots(over_plot_all=True)
-    #do_plots_with_seperate_location_subplots(over_plot_all=False)
