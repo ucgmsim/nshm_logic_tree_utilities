@@ -1,3 +1,8 @@
+"""
+This module contains helper functions for plotting logic tree investigation results .
+"""
+
+
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
@@ -8,6 +13,7 @@ import pandas as pd
 import scipy
 import pyarrow.dataset as ds
 from typing import Union
+import toml
 
 
 from cycler import cycler
@@ -17,9 +23,8 @@ from matplotlib import pyplot as plt, ticker as mticker
 import toshi_hazard_post.calculators as calculators
 
 ##########################################
-### dataclasses to store data
+### dataclasses to store loaded data
 
-## Tidied up
 @dataclass
 class MarginFractions:
     """
@@ -36,7 +41,7 @@ class MarginFractions:
     bottom: float
     top: float
 
-## Tidied up
+
 @dataclass
 class LoadedResults():
 
@@ -55,7 +60,6 @@ class LoadedResults():
     data_df :  pd.DataFrame()
     run_notes_df : pd.DataFrame()
 
-## tidied up
 @dataclass
 class RealizationName():
     """
@@ -65,9 +69,9 @@ class RealizationName():
     seismicity_rate_model_id: str
     ground_motion_characterization_models_id: str
 
-##########################################
+################################################
+### functions
 
-### tidied up
 def convert_edge_margin_in_pixels_to_fraction(fig: matplotlib.figure.Figure,
                                               left_margin_pixels: int,
                                               right_margin_pixels: int,
@@ -112,7 +116,6 @@ def convert_edge_margin_in_pixels_to_fraction(fig: matplotlib.figure.Figure,
     return MarginFractions(left_margin_fraction, right_margin_fraction, bottom_margin_fraction, top_margin_fraction)
 
 
-## tidied up function
 def remove_special_characters(s: str, chars_to_remove: list[str] = ["'", "[", "]", '"']) -> str:
     """
     Remove specified special characters from a string.
@@ -133,7 +136,6 @@ def remove_special_characters(s: str, chars_to_remove: list[str] = ["'", "[", "]
     return s.translate(translation_table)
 
 
-### tidied up
 def load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_logic_tree: Union[Path, str], location: str) -> pd.DataFrame:
 
     """
@@ -184,7 +186,7 @@ def load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_log
 
     return results_df
 
-### tidied up
+
 def load_aggregate_stats_for_one_logic_tree_several_locations(results_dir_for_one_logic_tree: Union[Path, str], locations: list[str]) -> pd.DataFrame:
 
     """
@@ -218,7 +220,7 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(results_dir_for_on
 
     return results_df
 
-### tidied up
+
 def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Union[Path, str],
                                                           locations:list[str] = ["AKL","WLG","CHC"]) -> LoadedResults:
 
@@ -253,7 +255,7 @@ def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Uni
 
     return LoadedResults(data_df=results_df, run_notes_df=pd.read_csv(results_directory / "run_notes.csv"))
 
-## Tidied up
+
 def insert_ln_std(data_df:pd.DataFrame) -> pd.DataFrame:
 
     """
@@ -303,18 +305,6 @@ def insert_ln_std(data_df:pd.DataFrame) -> pd.DataFrame:
     return new_df
 
 
-# def remove_duplicates_in_x(x, y):
-#     # Find unique values in x and their indices
-#     unique_x, indices = np.unique(x, return_index=True)
-#
-#     # Use indices to filter both x and y
-#     filtered_x = x[indices]
-#     filtered_y = y[indices]
-#
-#     return filtered_x, filtered_y
-
-
-### tidied up
 def lookup_realization_name_from_hash(individual_realization_df: pd.DataFrame,
                                       registry_directory: Union[Path, str]) -> list[RealizationName]:
     """
@@ -367,8 +357,6 @@ def lookup_realization_name_from_hash(individual_realization_df: pd.DataFrame,
     return realization_names
 
 
-### Used function
-### tidied up
 def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[str]:
     """
     Sort the logic_tree_index_[x] names by the ground motion characterization model that
@@ -415,12 +403,77 @@ def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[st
     # Return the sorted list of logic tree indices
     return [x[0] for x in sorted_run_list_label_tuple_list]
 
-### Used function
+
+
+
+def remove_duplicates_in_x(x:np.ndarray, y:np.ndarray) -> tuple:
+    """
+    Remove duplicate values in x and filter y accordingly.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The input array from which to remove duplicate values.
+    y : np.ndarray
+        The input array to filter based on the unique values in x.
+
+    Returns
+    -------
+    tuple
+        A tuple containing two arrays: the filtered x and y arrays.
+    """
+    # Find unique values in x and their indices
+    unique_x, indices = np.unique(x, return_index=True)
+
+    # Use indices to filter both x and y
+    filtered_x = x[indices]
+    filtered_y = y[indices]
+
+    return filtered_x, filtered_y
+
+
 def get_interpolated_gmms(results_directory: Union[Path, str],
                          locations : list[str],
                           filter_strs: list[str],
-                         vs30: int = 400,
-                         im:str = "PGA"):
+                          vs30: int,
+                          im:str,
+                          num_interp_mean_points:int,
+                          min_log10_mean_for_interp:int,
+                          max_log10_mean_for_interp:int,
+                          plot_interpolations:bool,
+                          min_mean_value_for_interp_plots:float) -> dict[str, dict[str, np.ndarray]]:
+
+    """
+    Get interpolated ground motion models (GMMs) for specified locations and filters.
+
+    Parameters
+    ----------
+    results_directory : Union[Path, str]
+        The directory containing the results data.
+    locations : list of str
+        A list of location codes to include in the interpolation.
+    filter_strs : list of str
+        A list of filter strings to apply to the data.
+    vs30 : int
+        The Vs30 value to use in the interpolation.
+    im : str
+        The intensity measure to use in the interpolation.
+    num_interp_mean_points : int
+        The number of interpolation points for the mean.
+    min_log10_mean_for_interp : int
+        The minimum log10 mean value for interpolation.
+    max_log10_mean_for_interp : int
+        The maximum log10 mean value for interpolation.
+    plot_interpolations : bool
+        Whether to plot interpolations.
+    min_mean_value_for_interp_plots : float
+        The minimum mean value for interpolation plots.
+
+    Returns
+    -------
+    dict[str, dict[str, np.ndarray]]
+        A dictionary containing the dispersion ranges for each location and filter.
+    """
 
     loaded_results = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
     data_df = loaded_results.data_df
@@ -441,8 +494,132 @@ def get_interpolated_gmms(results_directory: Union[Path, str],
 
             for location in locations:
 
-                mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df, location, im)
+                mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df,
+                                                                         location,
+                                                                         vs30,
+                                                                         im,
+                                                                         num_interp_mean_points,
+                                                                         min_log10_mean_for_interp,
+                                                                         max_log10_mean_for_interp,
+                                                                         plot_interpolations,
+                                                                         min_mean_value_for_interp_plots)
 
                 dispersion_range_dict[location][filter_str] = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
 
     return dispersion_range_dict
+
+
+def interpolate_ground_motion_models(data_df:pd.DataFrame,
+                                     location:str,
+                                     vs30:int,
+                                     im:str,
+                                     num_interp_mean_points: int,
+                                     min_log10_mean_for_interp: int,
+                                     max_log10_mean_for_interp: int,
+                                     plot_interpolations: bool,
+                                     min_mean_value_for_interp_plots:float):
+
+    """
+    Interpolate ground motion models (GMMs) for a specified location.
+
+    Parameters
+    ----------
+    data_df : pd.DataFrame
+        The DataFrame containing the data to be interpolated.
+    location : str
+        The location code for which to perform the interpolation.
+    vs30 : int
+        The Vs30 value to use in the interpolation.
+    im : str
+        The intensity measure to use in the interpolation.
+    num_interp_mean_points : int
+        The number of interpolation points for the mean.
+    min_log10_mean_for_interp : int
+        The minimum log10 mean value for interpolation.
+    max_log10_mean_for_interp : int
+        The maximum log10 mean value for interpolation.
+    plot_interpolations : bool
+        Whether to plot interpolations.
+    min_mean_value_for_interp_plots : float
+        The minimum mean value for interpolation plots.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the interpolation points (mm) and the interpolated dispersion array (interp_disp_array).
+    """
+
+    mean_list = []
+    std_ln_list = []
+    non_zero_name_list = []
+
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+
+    ### Gather the data for the interpolation
+    for logic_tree_name in natsort.natsorted(data_df["hazard_model_id"].unique()):
+
+        nloc_001_str = locations_nloc_dict[location]
+
+        mean = data_df[(data_df["agg"] == "mean") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == logic_tree_name) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+        mean_max = np.max(mean)
+        print(f'logic_tree_name {logic_tree_name} max mean: {mean_max}')
+
+        std_ln = data_df[(data_df["agg"] == "std_ln") &
+                  (data_df["vs30"] == vs30) &
+                  (data_df["imt"] == im) &
+                  (data_df["hazard_model_id"] == logic_tree_name) &
+                  (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+
+        mean_list.append(mean)
+        std_ln_list.append(std_ln)
+        non_zero_name_list.append(logic_tree_name)
+
+    mean_array = np.array(mean_list)
+    std_ln_array = np.array(std_ln_list)
+
+
+    mm = np.logspace(min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points)
+
+    interp_disp_array = np.zeros((len(mean_array),num_interp_mean_points))
+
+    ### Interpolate the data
+    for model_idx in range(len(mean_array)):
+
+        std_ln_vect = std_ln_array[model_idx]
+        mean_vect = mean_array[model_idx]
+
+        std_ln_vect2 = std_ln_vect[mean_vect > min_mean_value_for_interp_plots]
+        mean_vect2 = mean_vect[mean_vect > min_mean_value_for_interp_plots]
+
+        mean_vect3, std_ln_vect3 = remove_duplicates_in_x(mean_vect2, std_ln_vect2)
+
+        if len(mean_vect3) == 0:
+            interp_disp_array[model_idx, :] = np.nan
+
+        else:
+
+            mean_to_dispersion_func = scipy.interpolate.interp1d(mean_vect3, std_ln_vect3, kind='linear',bounds_error=False, fill_value=np.nan)
+            interp_disp = mean_to_dispersion_func(mm)
+            interp_disp_array[model_idx, :] = interp_disp
+
+            if plot_interpolations:
+                plt.figure()
+
+                print(f"model_idx: {model_idx}, logic_tree_name: {non_zero_name_list[model_idx]}")
+
+                plt.semilogx(mean_vect, std_ln_vect, '.',label='data points before lower cutoff')
+
+                plt.semilogx(mean_vect3, std_ln_vect3, 'r.',label='available data points')
+                plt.semilogx(mm, interp_disp, 'r--',label='interpolation (range that is defined for all models)')
+                plt.title(f"model_index_{model_idx} location {location}")
+                plt.xlabel(rf'Mean annual hazard probability, $\mu_{{P({im.upper()}={im.lower()})}}$')
+                plt.ylabel(rf'Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$')
+                plt.legend()
+                plt.show()
+
+    return mm, interp_disp_array

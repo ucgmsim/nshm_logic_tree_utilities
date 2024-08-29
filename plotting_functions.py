@@ -22,13 +22,54 @@ import plotting_helpers
 
 
 ### Used function
-def plot_gmm_dispersion_ranges(results_directory: Union[Path, str],
+### tidied up
+def make_figure_of_gmm_dispersion_ranges(results_directory: Union[Path, str],
                          plot_output_directory: Union[Path, str],
                          locations : list[str] = ["AKL", "WLG", "CHC"],
                          filter_strs: list[str] = ["CRU", "HIK_and_PUY", "SLAB"],
                          vs30: int = 400,
                          im:str = "PGA",
-                         plot_dpi=500):
+                         plot_dpi=500,
+                         num_interp_mean_points = 1000,
+                         min_log10_mean_for_interp = -6,
+                         max_log10_mean_for_interp = -2,
+                         plot_interpolations=False,
+                         min_mean_value_for_interp_plots = 1e-9):
+
+    """
+    Generate a figure showing the dispersion ranges of ground motion models (GMMs) for specified locations.
+
+    Parameters
+    ----------
+    results_directory : Union[Path, str]
+        The directory containing the results data.
+    plot_output_directory : Union[Path, str]
+        The directory where the plot will be saved.
+    locations : list of str, optional
+        A list of location codes to include in the plot. Default is ["AKL", "WLG", "CHC"].
+    filter_strs : list of str, optional
+        A list of filter strings to apply to the data. Default is ["CRU", "HIK_and_PUY", "SLAB"].
+    vs30 : int, optional
+        The Vs30 value to use in the plot. Default is 400.
+    im : str, optional
+        The intensity measure to use in the plot. Default is "PGA".
+    plot_dpi : int, optional
+        The resolution of the plot in dots per inch. Default is 500.
+    num_interp_mean_points : int, optional
+        The number of interpolation points for the mean. Default is 1000.
+    min_log10_mean_for_interp : int, optional
+        The minimum log10 mean value for interpolation. Default is -6.
+    max_log10_mean_for_interp : int, optional
+        The maximum log10 mean value for interpolation. Default is -2.
+    plot_interpolations : bool, optional
+        Whether to plot interpolations. Default is False.
+    min_mean_value_for_interp_plots : float, optional
+        The minimum mean value for interpolation plots. Default is 1e-9.
+
+    Returns
+    -------
+    None
+    """
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -36,7 +77,17 @@ def plot_gmm_dispersion_ranges(results_directory: Union[Path, str],
         plot_output_directory = Path(plot_output_directory)
 
 
-    dispersion_range_dict = plotting_helpers.get_interpolated_gmms()
+    dispersion_range_dict = plotting_helpers.get_interpolated_gmms(
+        results_directory=results_directory,
+        locations=              locations,
+        filter_strs =                filter_strs,
+        vs30 =                 vs30,
+        im =                   im,
+        num_interp_mean_points=num_interp_mean_points,
+    min_log10_mean_for_interp= min_log10_mean_for_interp,
+    max_log10_mean_for_interp= max_log10_mean_for_interp,
+        plot_interpolations =                  plot_interpolations,
+        min_mean_value_for_interp_plots =    min_mean_value_for_interp_plots)
 
 
     linestyle_lookup_dict = {"CRU":"--",
@@ -49,8 +100,8 @@ def plot_gmm_dispersion_ranges(results_directory: Union[Path, str],
 
     plt.figure()
 
-    num_mean_points = 1000
-    mm = np.logspace(-6, -2, num_mean_points)
+
+    mm = np.logspace(min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points)
 
     for location in locations:
 
@@ -75,8 +126,8 @@ def plot_gmm_dispersion_ranges(results_directory: Union[Path, str],
                     color=color_lookup_dict[location])
 
     plt.legend()
-    plt.ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
-    plt.xlabel(r'Range in dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+    plt.ylabel(rf'Mean annual hazard probability, $\mu_{{P({im.upper()}={im.lower()})}}$')
+    plt.xlabel(rf'Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$')
     plt.grid(linestyle='--')
     plt.savefig(plot_output_directory / f"dispersion_ranges_from_dir_{results_directory.name}.png", dpi=plot_dpi)
 

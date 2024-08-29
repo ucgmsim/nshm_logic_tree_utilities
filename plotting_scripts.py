@@ -5,6 +5,22 @@ import plotting_functions
 #do_srm_model_plots_with_seperate_location_subplots("PGA")
 
 
+### Used function
+plotting_functions.make_figure_of_gmm_dispersion_ranges(results_directory = "/home/arr65/data/nshm/output/gmcm_models",
+                         plot_output_directory = "/home/arr65/data/nshm/plots",
+                         locations = ["AKL", "WLG", "CHC"],
+                         filter_strs = ["CRU", "HIK_and_PUY", "SLAB"],
+                         vs30 = 400,
+                         im = "PGA",
+                         plot_dpi=500,
+                        num_interp_mean_points=1000,
+                        min_log10_mean_for_interp=-6,
+                        max_log10_mean_for_interp=-2,
+                         plot_interpolations=True,
+                        min_mean_value_for_interp_plots=1e-9)
+
+print()
+
 
 plotting_functions.make_figure_of_srm_model_components(results_directory = "/home/arr65/data/nshm/output/srm_models",
                                                        plot_output_directory = "/home/arr65/data/nshm/plots",
