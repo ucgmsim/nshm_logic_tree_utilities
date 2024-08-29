@@ -415,3 +415,34 @@ def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[st
     # Return the sorted list of logic tree indices
     return [x[0] for x in sorted_run_list_label_tuple_list]
 
+### Used function
+def get_interpolated_gmms(results_directory: Union[Path, str],
+                         locations : list[str],
+                          filter_strs: list[str],
+                         vs30: int = 400,
+                         im:str = "PGA"):
+
+    loaded_results = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
+    data_df = loaded_results.data_df
+    run_notes_df = loaded_results.run_notes_df
+
+    dispersion_range_dict = {}
+
+    for location in locations:
+        dispersion_range_dict[location] = {}
+
+    for filter_str in filter_strs:
+
+            filtered_run_notes_df = run_notes_df[run_notes_df["slt_note"].str.contains(filter_str)]
+
+            logic_tree_names = [f"logic_tree_index_{x}" for x in filtered_run_notes_df["logic_tree_index"].values]
+
+            filtered_data_df = data_df[data_df["hazard_model_id"].isin(logic_tree_names)]
+
+            for location in locations:
+
+                mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df, location, im)
+
+                dispersion_range_dict[location][filter_str] = np.nanmax(interp_disp_array, axis=0) - np.nanmin(interp_disp_array, axis=0)
+
+    return dispersion_range_dict
