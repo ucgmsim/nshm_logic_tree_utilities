@@ -9,8 +9,8 @@ hazard_model_id = "temp"
 
 #model_version = "NSHM_v1.0.4"
 
-srm_file = "../custom_input_files/nshm_v1.0.4_v2.json"
-gmcm_file = "../custom_input_files/gmcm_nshm_v1.0.4.json"
+srm_file = "../input_files/nshm_v1.0.4_v2.json"
+gmcm_file = "../input_files/gmcm_nshm_v1.0.4.json"
 
 [site]
 #vs30s = [ 225, 400, 750,]

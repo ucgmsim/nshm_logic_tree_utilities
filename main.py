@@ -61,26 +61,27 @@ full_lt_set = logic_tree_tools.CustomLogicTreeSet(
 )
 
 ## This script will iterate over the CustomLogicTreeSet objects in logic_tree_set_list
-# and run toshi_hazard_post with each CustomLogicTreeSet object
+# and run toshi_hazard_post with each CustomLogicTreeSet object.
+# some examples are shown below.
 
-#### Option 1 ####
+#### Example 1 ####
 
 ### This constructs a logic_tree_set_list of:
 ## Index 0: The full source logic tree and full ground motion logic tree
 ## Index 1: Only the highest weighted branch of the source logic tree and the full ground motion logic tree
 ## Index 2: The full source logic tree and only the highest weighted branch of the ground motion logic tree
 
-logic_tree_set_list = [
-    full_lt_set,
-    logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
-        full_lt_set, slt_nth_highest=1, glt_nth_highest=None
-    ),
-    logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
-        full_lt_set, slt_nth_highest=None, glt_nth_highest=1
-    ),
-]
+# logic_tree_set_list = [
+#     full_lt_set,
+#     logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
+#         full_lt_set, slt_nth_highest=1, glt_nth_highest=None
+#     ),
+#     logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
+#         full_lt_set, slt_nth_highest=None, glt_nth_highest=1
+#     ),
+# ]
 
-#### Option 2 ####
+#### Example 2 ####
 
 ### This constructs a logic_tree_set_list of individual ground motion models,
 ### paired with the highest weighted branch of the source logic tree
@@ -90,15 +91,15 @@ logic_tree_set_list = [
 #     tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
 #     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
-#### Option 3 ####
+#### Example 3 ####
 
 ### This constructs a logic_tree_set_list of individual source models,
 ### paired with the highest weighted branch of the ground motion models logic tree
 
-# logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
-#     initial_logic_tree_set = full_lt_set,
-#     tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-#     which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
+logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
+    initial_logic_tree_set = full_lt_set,
+    tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
+    which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
 
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_set_list)

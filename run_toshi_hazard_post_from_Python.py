@@ -67,14 +67,14 @@ def run_with_modified_logic_trees(
         print(f"doing run {logic_tree_index} and location {location}")
 
         args.locations = [location]
-        args.hazard_model_id = f"run_{logic_tree_index}"
+        args.hazard_model_id = f"logic_tree_index_{logic_tree_index}"
 
         args.srm_logic_tree = modified_slt
         args.gmcm_logic_tree = modified_glt
 
         run_aggregation(args)
 
-    run_output_dir = output_dir / f"run_{logic_tree_index}"
+    run_output_dir = output_dir / f"logic_tree_index_{logic_tree_index}"
     run_output_dir.mkdir(parents=True, exist_ok=False)
 
     ### Move the output files from the staging directory to the run output directory
