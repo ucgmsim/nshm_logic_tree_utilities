@@ -99,18 +99,18 @@ class LoadedResults():
     data_df :  pd.DataFrame()
     run_notes_df : pd.DataFrame()
 
+
 ### tidied up
-def load_aggregate_stats_for_one_location(results_directory: Union[Path, str], location: str) -> pd.DataFrame:
+def load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_logic_tree: Union[Path, str], location: str) -> pd.DataFrame:
 
     """
     Load aggregate statistics results for a single location.
 
     Parameters
     ----------
-    results_directory : Union[Path, str]
-        The directory containing the results of a run of main.py.
-        results_directory should contain one subdirectory for each trialled logic tree
-        (named as logic_tree_index_0) and the run_notes.csv file.
+    results_dir_for_one_logic_tree : Union[Path, str]
+        The directory containing the results of a run of main.py for a single logic tree. This directory has a
+        name like logic_tree_index_0. This directory should contain location subdirectories.
 
     location : str
         The location code, which must be one of ["AKL", "WLG", "CHC"].
@@ -126,8 +126,8 @@ def load_aggregate_stats_for_one_location(results_directory: Union[Path, str], l
         If the location is not one of ["AKL", "WLG", "CHC"].
     """
 
-    if isinstance(results_directory, str):
-        results_directory = Path(results_directory)
+    if isinstance(results_dir_for_one_logic_tree, str):
+        results_dir_for_one_logic_tree = Path(results_dir_for_one_logic_tree)
 
     results_df = pd.DataFrame()
 
@@ -141,27 +141,27 @@ def load_aggregate_stats_for_one_location(results_directory: Union[Path, str], l
     if location == 'AKL':
         nloc_str = "nloc_0=-37.0~175.0"
 
-    results_dir = results_directory / nloc_str
+    results_dir = results_dir_for_one_logic_tree / nloc_str
 
     for index, file in enumerate(results_dir.glob('*.parquet')):
 
         results_df = pd.concat([results_df, pd.read_parquet(file)], ignore_index=True)
-    print()
+
     results_df = insert_ln_std(results_df)
 
     return results_df
 
-def load_aggregate_stats_for_several_locations(results_directory: Union[Path, str], locations: list[str]) -> pd.DataFrame:
+### tidied up
+def load_aggregate_stats_for_one_logic_tree_several_locations(results_dir_for_one_logic_tree: Union[Path, str], locations: list[str]) -> pd.DataFrame:
 
     """
     Load aggregate statistics results for several locations.
 
     Parameters
     ----------
-    results_directory : Union[Path, str]
-        The directory containing the results of a run of main.py.
-        results_directory should contain one subdirectory for each trialled logic tree
-        (named as logic_tree_index_0) and the run_notes.csv file.
+    results_dir_for_one_logic_tree : Union[Path, str]
+        The directory containing the results of a run of main.py for a single logic tree. This directory has a
+        name like logic_tree_index_0. This directory should contain location subdirectories.
 
     locations : list[str]
         A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"].
@@ -171,8 +171,8 @@ def load_aggregate_stats_for_several_locations(results_directory: Union[Path, st
     LoadedResults
         An instance of LoadedResults containing loaded data and corresponding notes for the specified locations.
     """
-    if isinstance(results_directory, str):
-        results_directory = Path(results_directory)
+    if isinstance(results_dir_for_one_logic_tree, str):
+        results_dir_for_one_logic_tree = Path(results_dir_for_one_logic_tree)
 
     results_df = pd.DataFrame()
 
@@ -180,11 +180,45 @@ def load_aggregate_stats_for_several_locations(results_directory: Union[Path, st
 
         results_df = (pd.concat
                       ([results_df,
-                        load_aggregate_stats_for_one_location(results_directory, location)],
+                        load_aggregate_stats_for_one_logic_tree_one_location(results_dir_for_one_logic_tree, location)],
                        ignore_index=True))
-    print()
-    return LoadedResults(data_df=results_df, run_notes_df=pd.read_csv(results_directory / "run_notes.csv"))
 
+    return results_df
+
+### tidied up
+def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Union[Path, str],
+                                                          locations:list[str] = ["AKL","WLG","CHC"]) -> LoadedResults:
+
+    """
+    Load aggregate statistics for all logic trees in the results_directory.
+
+    Parameters
+    ----------
+    results_directory : Union[Path, str]
+        The directory containing the results of one or more logic trees.
+        Should contain directories named like logic_tree_index_0, logic_tree_index_0 etc.
+    locations : list of str, optional
+        A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"]. Default is ["AKL", "WLG", "CHC"].
+
+    Returns
+    -------
+    LoadedResults
+        An instance of LoadedResults containing the data and run notes for all logic trees in the directory.
+    """
+
+    if isinstance(results_directory, str):
+        results_directory = Path(results_directory)
+
+    results_df = pd.DataFrame()
+
+    for run_dir in results_directory.iterdir():
+        if run_dir.is_dir():
+            results_df = (pd.concat
+                          ([results_df,
+                            load_aggregate_stats_for_one_logic_tree_several_locations(run_dir,locations)],
+                           ignore_index=True))
+
+    return LoadedResults(data_df=results_df, run_notes_df=pd.read_csv(results_directory / "run_notes.csv"))
 
 ## Tidied up
 def insert_ln_std(data_df:pd.DataFrame) -> pd.DataFrame:
@@ -485,8 +519,6 @@ def plot_gmm_dispersion_ranges():
     # print()
 
 
-
-
 ## A good plotting function. Use autorun21 for these plots
 ## Plots the ground motion models with subplots for different tectonic region types
 ## for a given location
@@ -503,16 +535,15 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
     model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
     glt_model_color = toml.load('resources/model_plot_colors.toml')
 
-    # auto_dir = Path(f"/home/arr65/data/nshm/auto_output/auto{run_num}")
-
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
 
-    loaded_run_results = load_aggregate_stats_for_several_locations(results_directory, locations)
+    if isinstance(plot_output_directory, str):
+        plot_output_directory = Path(plot_output_directory)
+
+    loaded_run_results = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
     data_df = loaded_run_results.data_df
     run_notes_df = loaded_run_results.run_notes_df
-
-    print()
 
     plt.close("all")
     fig, axes = plt.subplots(3, 3,figsize=(6,9))
@@ -593,7 +624,6 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
 
             if subplot_idx == 0:
                 axes[0,0].set_title("Active shallow crust", fontsize=11)
-                #axes[0,1].set_title(f"{location_to_full_location[location]}\nsubduction interface", fontsize=11)
                 axes[0, 1].set_title("Subduction interface", fontsize=11)
                 axes[0,2].set_title("Subduction intraslab", fontsize=11)
 
@@ -620,7 +650,7 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
 
     plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
 
-    plt.savefig(plot_output_directory / f"gmcms_in_{results_directory.name}_{im}_all_locations.png",dpi=plot_dpi)
+    plt.savefig(plot_output_directory / f"gmcms_in_dir_{results_directory.name}_{im}_all_locations.png",dpi=plot_dpi)
 
 
 ## tidied up function
@@ -661,9 +691,9 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
     glt_model_color = toml.load('resources/model_plot_colors.toml')
 
     ## relate plot row to data
-    plot_row_to_data_lookup = {0:load_aggregate_stats_for_several_locations(gmcm_models_data_directory),
-                               1:load_aggregate_stats_for_several_locations(gmcm_models_data_directory),
-                               2:load_aggregate_stats_for_several_locations(srm_models_data_directory)}
+    plot_row_to_data_lookup = {0:load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
+                               1:load_aggregate_stats_for_all_logic_trees_in_directory(gmcm_models_data_directory),
+                               2:load_aggregate_stats_for_all_logic_trees_in_directory(srm_models_data_directory)}
 
     ## Sort the logic_tree_index_[x] names by the ground motion characterization model that
     ## was isolated by that logic tree.
@@ -855,6 +885,8 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     -------
     None
     """
+
+    nshm_im_levels = np.loadtxt('resources/nshm_im_levels.txt')
     
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -868,7 +900,7 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     mean_list = []
     cov_list = []
 
-    resulting_hazard_curves = load_aggregate_stats_for_several_locations(results_directory)
+    resulting_hazard_curves = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
 
     data_df = resulting_hazard_curves.data_df
     run_notes_df = resulting_hazard_curves.run_notes_df
@@ -1138,6 +1170,7 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
 
 
     locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
     plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
@@ -1166,7 +1199,7 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     ### Convert the rate to annual probability of exceedance
     hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
-    resulting_hazard_curves = load_aggregate_stats_for_several_locations(results_directory.parent)
+    resulting_hazard_curves = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
 
     agg_stats_df = resulting_hazard_curves.data_df
 
@@ -1363,14 +1396,14 @@ if __name__ == "__main__":
 
     print()
 
-    make_figure_showing_Bradley2009_method(results_directory = "/home/arr65/data/nshm/output/gmcm_models/logic_tree_index_3",
-                                    plot_output_directory = "/home/arr65/data/nshm/plots",
-                                    registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources",
-                                    location_short_name = "WLG",
-                                    vs30 = 400,
-                                    im = "PGA")
+    # make_figure_showing_Bradley2009_method(results_directory = "/home/arr65/data/nshm/output/gmcm_models/logic_tree_index_3",
+    #                                 plot_output_directory = "/home/arr65/data/nshm/plots",
+    #                                 registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources",
+    #                                 location_short_name = "WLG",
+    #                                 vs30 = 400,
+    #                                 im = "PGA")
 
-    print()
+    #print()
 
 
 
