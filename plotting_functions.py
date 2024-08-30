@@ -941,3 +941,10 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
 
     plt.savefig(plot_output_directory / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png", dpi=plot_dpi)
+
+def mae
+
+
+
+
+

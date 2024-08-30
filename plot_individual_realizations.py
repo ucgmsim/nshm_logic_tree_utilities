@@ -91,13 +91,15 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto19")
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto20")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto30")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
 
 run_dirs = [x for x in base_dir.iterdir() if x.is_dir()]
 run_dirs = natsort.natsorted(run_dirs)
+
+print()
 
 statistical_aggregation_df = pd.DataFrame()
 individual_realization_df = pd.DataFrame()
@@ -127,7 +129,7 @@ print()
 
 poe_list = []
 
-run_name = "run_3"
+run_name = "logic_tree_index_3"
 #fig, axs = plt.subplots(2, 3)
 fig, axs = plt.subplots(2, 3,figsize=(12, 8))
 for loc_plot_index, loc_name in enumerate(locations_nloc_dict.keys()):
@@ -188,17 +190,17 @@ for loc_plot_index, loc_name in enumerate(locations_nloc_dict.keys()):
     needed_poe_indices = hazard_prob_of_exceedance[0,:] > 1e-6
 
 
-
+    print()
     for realization_index in range(len(filtered_individual_realization_df)):
 
-        if run_name == "run_0":
+        if run_name == "logic_tree_index_0":
             label = source_ids[realization_index].split(",")[0].strip("[")
-        if run_name == "run_1":
+        if run_name == "logic_tree_index_1":
             label = source_ids[realization_index].split(",")[1].strip()
-        if run_name == "run_2":
+        if run_name == "logic_tree_index_2":
             label = source_ids[realization_index].split(",")[2].strip() + ", " + source_ids[realization_index].split(",")[3].strip()
 
-        if run_name == "run_3":
+        if run_name == "logic_tree_index_3":
             label = source_ids[realization_index].split(",")[-1].strip(" ]")
 
 

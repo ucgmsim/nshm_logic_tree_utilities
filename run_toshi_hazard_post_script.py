@@ -12,7 +12,7 @@ from toshi_hazard_post.aggregation_args import (
 
 import config as cfg
 import logic_tree_tools
-import run_toshi_hazard_post_from_Python
+import run_toshi_hazard_post_helper
 
 config = cfg.Config()
 
@@ -117,7 +117,7 @@ run_notes_df.to_csv(output_dir / config.get_value("run_notes_file_name"))
 
 ## Run toshi_hazard_post with the modified logic trees
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
-    run_toshi_hazard_post_from_Python.run_with_modified_logic_trees(
+    run_toshi_hazard_post_helper.run_with_modified_logic_trees(
         args,
         output_dir,
         logic_tree_index,

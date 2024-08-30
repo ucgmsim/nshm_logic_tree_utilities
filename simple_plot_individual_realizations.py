@@ -81,7 +81,7 @@ source_registry_df = pd.read_csv(registry_dir / 'source_branches.csv')
 
 #base_dir = Path("/home/arr65/data/nshm/auto_output/auto12")
 
-base_dir = Path("/home/arr65/data/nshm/auto_output/auto18")
+base_dir = Path("/home/arr65/data/nshm/auto_output/auto30")
 
 #realization_dir = Path("/home/arr65/data/nshm/auto_output/auto10/run_0/individual_realizations/nloc_0=-41.0~175.0")
 
@@ -162,7 +162,7 @@ def plot_individual_srm_models_residual_per_location(run_names,location_code_str
         for run_name in run_names:
 
             print()
-            individual_realization_df2 = ds.dataset(source=f"/home/arr65/data/nshm/auto_output/auto18/{run_name}/individual_realizations", format="parquet").to_table().to_pandas()
+            individual_realization_df2 = ds.dataset(source=f"/home/arr65/data/nshm/auto_output/auto30/{run_name}/individual_realizations", format="parquet").to_table().to_pandas()
 
             df2_masked = individual_realization_df2[(individual_realization_df2["hazard_model_id"] == run_name) &
                                             (individual_realization_df2["nloc_001"] == location_code_str)]
