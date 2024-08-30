@@ -942,7 +942,222 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
 
     plt.savefig(plot_output_directory / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png", dpi=plot_dpi)
 
-def mae
+def make_figures_of_all_individual_realizations(srm_or_gmcm:str,
+                                                results_directory:Union[Path, str],
+                                                plot_output_directory:Union[Path, str],
+                                                registry_directory:Union[Path, str],
+                                                locations: list[str] = ["AKL", "WLG", "CHC"],
+                                                im: str = "PGA",
+                                                vs30: int = 400,
+                                                im_xlims = (9e-5, 5),
+                                                poe_min_plot = 1e-5,
+                                                plot_dpi: int = 500):
+
+    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    model_name_to_plot_format = toml.load('resources/model_name_lookup_for_plot.toml')
+    srm_name_component_index_to_name = toml.load('resources/srm_name_component_index_to_name.toml')
+
+
+
+    print()
+
+    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
+
+    needed_im_level_indices = np.where((nshm_im_levels >= im_xlims[0]) & (nshm_im_levels <= im_xlims[1]))[0]
+
+
+    if isinstance(results_directory, str):
+        results_directory = Path(results_directory)
+    if isinstance(plot_output_directory, str):
+        plot_output_directory = Path(plot_output_directory)
+    if isinstance(registry_directory, str):
+        registry_directory = Path(registry_directory)
+
+    print()
+
+    if not plot_output_directory.exists():
+        plot_output_directory.mkdir(parents=True)
+
+
+    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+
+    run_notes_df = aggregate_stats_results.run_notes_df
+
+    ### Slab only has one branch so needs to be treated differently
+    slab_index = run_notes_df[run_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+
+
+
+
+    print()
+
+    #for logic_tree_index_dir in results_directory.iterdir():
+    for logic_tree_index_dir in [0]:
+
+        logic_tree_index_dir = Path('/home/arr65/data/nshm/output/srm_models/logic_tree_index_2')
+
+        print(f"Processing {logic_tree_index_dir.name}")
+
+        print()
+
+        if logic_tree_index_dir.is_dir():
+
+            individual_realization_df = ds.dataset(source=logic_tree_index_dir / "individual_realizations",
+                                                   format="parquet").to_table().to_pandas()
+
+            plt.close("all")
+
+            fig, axes = plt.subplots(2, len(locations),figsize=(3*len(locations), 6))
+
+            poe_maxs = []
+            ln_resid_mins = []
+            ln_resid_maxs = []
+
+            for location_idx, location in enumerate(locations):
+
+                nloc_001_str = locations_nloc_dict[location]
+
+                individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == logic_tree_index_dir.name) & \
+                     (individual_realization_df["nloc_001"] == nloc_001_str)
+
+                filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+
+                realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+
+                hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+
+                for realization_index in range(len(filtered_individual_realization_df)):
+                    hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+
+                ### Convert the rate to annual probability of exceedance
+                hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+
+                ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
+
+                if len(hazard_prob_of_exceedance) == 0:
+                    print()
+
+                model_names = []
+                for realization_index in range(len(hazard_prob_of_exceedance)):
+                    if srm_or_gmcm == "gmcm":
+                        gmcm_name_with_branch = realization_names[realization_index].ground_motion_characterization_models_id
+                        gmcm_name = gmcm_name_with_branch.split("(")[0]
+                        plot_label = gmcm_name_with_branch
+                        title = f"{model_name_to_plot_format[gmcm_name]} ({logic_tree_index_dir.name})"
+
+                    if srm_or_gmcm == "srm":
+                        srm_name = realization_names[realization_index].seismicity_rate_model_id
+                        plot_label = srm_name
+                        model_names.append(srm_name)
+
+                    poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
+                    axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
+                                   label=plot_label)
+
+                    axes[0, location_idx].set_xlim(im_xlims)
+                    axes[0, location_idx].grid(which='major',
+                                linestyle='--',
+                                linewidth='0.5',
+                                color='black',
+                                alpha=0.5)
+
+                    axes[0, location_idx].set_title(location)
+                    axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
+
+                    ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
+                    ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
+                    axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
+                                   label=plot_label)
+                    axes[1, location_idx].set_xlim(im_xlims)
+
+                    axes[1, location_idx].grid(which='major',
+                                linestyle='--',
+                                linewidth='0.5',
+                                color='black',
+                                alpha=0.5)
+
+                    axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
+
+                    if location_idx > 0:
+                        axes[0, location_idx].set_yticklabels([])
+                        axes[1, location_idx].set_yticklabels([])
+                    axes[0, location_idx].set_xticklabels([])
+
+                if srm_or_gmcm == "srm":
+
+                    srm_name_components_0 = model_names[0].split(",")
+
+                    if int(logic_tree_index_dir.name.split("_")[-1]) != slab_index:
+
+                        for srm_name_component_index in range(len(srm_name_components_0)):
+
+                            if model_names[1].split(",")[srm_name_component_index] != srm_name_components_0[srm_name_component_index]:
+                                different_srm_name_component_index = srm_name_component_index
+                                break
+                        ### The dictionary is stored as a toml file which can only have strings as dictionary keys
+                        srm_model_component_name = srm_name_component_index_to_name[str(different_srm_name_component_index)]
+                    else:
+                        srm_model_component_name="SLAB"
+
+                    print()
+
+            ### Set all the y-axis limits to the max values found in the last loop over locations
+            for location_idx in range(len(locations)):
+                axes[0, location_idx].set_ylim(poe_min_plot, np.max(poe_maxs)*1.1)
+                axes[1, location_idx].set_ylim(np.min(ln_resid_mins), np.max(ln_resid_maxs))
+
+            axes[0, 0].set_ylabel('Annual probability of exceedance')
+            axes[1, 0].set_ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+
+
+            axes[1, 1].set_xlabel(f'{im} level')
+
+            plt.suptitle(f"{srm_model_component_name} (index {logic_tree_index_dir.name.split("_")[-1]})")
+
+            plt.subplots_adjust(left=0.08, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
+
+            plt.savefig(
+                plot_output_directory / f"{srm_model_component_name}_idx_{logic_tree_index_dir.name.split("_")[-1]}_individual_realizations.png",
+                dpi=plot_dpi)
+
+        print()
+
+
+
+
+
+
+
+
+    #
+    #
+    #
+    #
+    # individual_realization_df = ds.dataset(source=results_directory/"individual_realizations",
+    #                                        format="parquet").to_table().to_pandas()
+    #
+    # individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == results_directory.name) & \
+    #                  (individual_realization_df["nloc_001"] == locations_nloc_dict[location_short_name])
+    #
+    # filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+    #
+    # realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+    #
+    # hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+    #
+    # for realization_index in range(len(filtered_individual_realization_df)):
+    #     hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+    #
+    # ### Convert the rate to annual probability of exceedance
+    # hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+    #
+    # resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
+    #
+    # agg_stats_df = resulting_hazard_curves.data_df
+    #
+    #
+    #
+
 
 
 

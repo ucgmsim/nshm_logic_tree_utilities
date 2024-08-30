@@ -5,6 +5,24 @@ import plotting_functions
 #do_srm_model_plots_with_seperate_location_subplots("PGA")
 
 
+# plotting_functions.make_figures_of_all_individual_realizations(srm_or_gmcm="gmcm",
+#     results_directory = "/home/arr65/data/nshm/output/gmcm_models",
+#                                             plot_output_directory = "/home/arr65/data/nshm/plots/gmcm_individual_realizations",
+#                                             locations = ["AKL", "WLG", "CHC"],
+#                                             registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources",)
+
+plotting_functions.make_figures_of_all_individual_realizations(srm_or_gmcm="srm",
+    results_directory = "/home/arr65/data/nshm/output/srm_models",
+                                            plot_output_directory = "/home/arr65/data/nshm/plots/srm_individual_realizations",
+                                            locations = ["AKL", "WLG", "CHC"],
+                                            registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources")
+
+
+
+
+print()
+
+
 ### Used function
 plotting_functions.make_figure_of_gmm_dispersion_ranges(results_directory = "/home/arr65/data/nshm/output/gmcm_models",
                          plot_output_directory = "/home/arr65/data/nshm/plots",
