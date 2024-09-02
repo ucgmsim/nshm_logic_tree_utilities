@@ -976,6 +976,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
     run_notes_df = aggregate_stats_results.run_notes_df
 
+    ### Slab only has one branch so needs to be treated differently
+    slab_index = run_notes_df[run_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+
     ## Get the tectonic region type from run_notes_df
     logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
 
@@ -1071,7 +1074,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
                 srm_name_components_0 = model_names[0].split(",")
 
-                if "SLAB" not in tectonic_region_type:
+                if int(logic_tree_index_dir.name.split("_")[-1]) != slab_index:
 
                     for srm_name_component_index in range(len(srm_name_components_0)):
 
