@@ -1,6 +1,6 @@
 ## Optional settings for the run
 overwrite_if_output_directory_exists : False
-output_individual_realizations : False
+output_individual_realizations : True
 
 ## Input information
 input_directory : "input_files"
@@ -11,7 +11,7 @@ locations : ["AKL","WLG","CHC"]
 #locations : ["WLG"]
 
 ## Output information
-output_directory : "/home/arr65/data/nshm/output/test_one_dir"
+output_directory : "/home/arr65/data/nshm/output_all_in_one"
 collated_notes_file_name : "collated_notes.csv"
 
 

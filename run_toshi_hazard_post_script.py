@@ -104,6 +104,8 @@ logic_tree_pair_list3 = logic_tree_tools.get_logic_tree_sets_for_individual_sour
 ### concatenate the logic_tree_pair_lists
 logic_tree_pair_list = logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
 
+#logic_tree_pair_list = logic_tree_pair_list2
+
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_pair_list)
 

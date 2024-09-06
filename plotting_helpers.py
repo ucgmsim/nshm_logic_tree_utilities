@@ -15,6 +15,7 @@ import pyarrow.dataset as ds
 from typing import Union
 import toml
 
+import config as cfg
 
 from cycler import cycler
 import natsort
@@ -58,7 +59,7 @@ class LoadedResults():
     """
 
     data_df :  pd.DataFrame()
-    run_notes_df : pd.DataFrame()
+    collated_notes_df : pd.DataFrame()
 
 @dataclass
 class RealizationName():
@@ -241,6 +242,8 @@ def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Uni
         An instance of LoadedResults containing the data and run notes for all logic trees in the directory.
     """
 
+    config = cfg.Config()
+
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
 
@@ -253,7 +256,7 @@ def load_aggregate_stats_for_all_logic_trees_in_directory(results_directory: Uni
                             load_aggregate_stats_for_one_logic_tree_several_locations(run_dir,locations)],
                            ignore_index=True))
 
-    return LoadedResults(data_df=results_df, run_notes_df=pd.read_csv(results_directory / "run_notes.csv"))
+    return LoadedResults(data_df=results_df, collated_notes_df=pd.read_csv(results_directory / config.get_value("collated_notes_file_name")))
 
 
 def insert_ln_std(data_df:pd.DataFrame) -> pd.DataFrame:

@@ -9,6 +9,10 @@ import scipy
 import pyarrow.dataset as ds
 from typing import Union
 
+import config as cfg
+
+
+
 
 from cycler import cycler
 import natsort
@@ -159,7 +163,7 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
 
     loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
     data_df = loaded_results.data_df
-    run_notes_df = loaded_results.run_notes_df
+    collated_notes_df = loaded_results.collated_notes_df
 
     plt.close("all")
     fig, axes = plt.subplots(3, 3,figsize=(6,9))
@@ -198,8 +202,8 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
             mean_list.append(mean)
             std_ln_list.append(std_ln)
             non_zero_run_list.append(logic_tree_name_str)
-            slt_note = f"{run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
-            glt_note = f"{run_notes_df[run_notes_df["logic_tree_index"]==logic_tree_index]["glt_note"].values[0]}"
+            slt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
+            glt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["glt_note"].values[0]}"
 
             trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
             glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
@@ -323,14 +327,14 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
 
     for row_index in range(3):
         if row_index == 0:
-            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].run_notes_df[
-                plot_row_to_data_lookup[row_index].run_notes_df["slt_note"].str.contains("CRU")]["logic_tree_index"]
+            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].collated_notes_df[
+                plot_row_to_data_lookup[row_index].collated_notes_df["slt_note"].str.contains("CRU")]["logic_tree_index"]
         if row_index == 1:
-            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].run_notes_df[
-                plot_row_to_data_lookup[row_index].run_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["logic_tree_index"]
+            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].collated_notes_df[
+                plot_row_to_data_lookup[row_index].collated_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["logic_tree_index"]
         if row_index == 2:
-            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].run_notes_df[
-                plot_row_to_data_lookup[row_index].run_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["logic_tree_index"]
+            plot_row_to_logic_tree_index[row_index] = plot_row_to_data_lookup[row_index].collated_notes_df[
+                plot_row_to_data_lookup[row_index].collated_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["logic_tree_index"]
 
     ####################################################
 
@@ -360,12 +364,12 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
                     logic_tree_name_str = f"logic_tree_index_{sorted_logic_tree_index}"
 
                     if row_index in [0,1]:
-                        run_note = plot_row_to_data_lookup[row_index].run_notes_df[plot_row_to_data_lookup[row_index].run_notes_df["logic_tree_index"] == sorted_logic_tree_index]["glt_note"].values[0]
+                        run_note = plot_row_to_data_lookup[row_index].collated_notes_df[plot_row_to_data_lookup[row_index].collated_notes_df["logic_tree_index"] == sorted_logic_tree_index]["glt_note"].values[0]
                         short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
                         plot_label = model_to_plot_label[short_note]
 
                     if row_index == 2:
-                        run_note = plot_row_to_data_lookup[row_index].run_notes_df[plot_row_to_data_lookup[row_index].run_notes_df["logic_tree_index"] == sorted_logic_tree_index]["slt_note"].values[0]
+                        run_note = plot_row_to_data_lookup[row_index].collated_notes_df[plot_row_to_data_lookup[row_index].collated_notes_df["logic_tree_index"] == sorted_logic_tree_index]["slt_note"].values[0]
                         short_note = run_note.split(">")[1].split(":")[-1].strip(" []") + "_" +\
                                      run_note.split(">")[2].strip()
 
@@ -519,9 +523,9 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path,str], 
     resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
 
     data_df = resulting_hazard_curves.data_df
-    run_notes_df = resulting_hazard_curves.run_notes_df
+    collated_notes_df = resulting_hazard_curves.collated_notes_df
 
-    logic_tree_index_list = [f"logic_tree_index_{x}" for x in run_notes_df["logic_tree_index"].values]
+    logic_tree_index_list = [f"logic_tree_index_{x}" for x in collated_notes_df["logic_tree_index"].values]
     for run_idx, logic_tree_index_str in enumerate(logic_tree_index_list):
 
         mean = data_df[(data_df["agg"] == "mean") &
@@ -614,7 +618,7 @@ def make_figure_of_srm_model_components(results_directory: Union[Path,str],
 
     loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
 
-    logic_tree_name_notes_df = loaded_results.run_notes_df
+    logic_tree_name_notes_df = loaded_results.collated_notes_df
     data_df = loaded_results.data_df
 
     ## filter out all notes except those that are needed
@@ -943,20 +947,18 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     plt.savefig(plot_output_directory / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png", dpi=plot_dpi)
 
 
-def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:str,
-                                                logic_tree_index_dir:Union[Path, str],
+def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_index_dir:Union[Path, str],
                                                 plot_output_directory:Union[Path, str],
-                                                registry_directory:Union[Path, str],
                                                 locations: list[str] = ["AKL", "WLG", "CHC"],
                                                 im: str = "PGA",
                                                 vs30: int = 400,
-                                                im_xlims = (9e-5, 5),
-                                                poe_min_plot = 1e-5,
+                                                im_xlims:tuple = (9e-5, 5),
+                                                poe_min_plot:float = 1e-5,
+                                                ybuffer_absmax_over_val:float = 10.0,
                                                 plot_dpi: int = 500):
 
     locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
     model_name_to_plot_format = toml.load('resources/model_name_lookup_for_plot.toml')
-    srm_name_component_index_to_name = toml.load('resources/srm_name_component_index_to_name.toml')
 
     nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
@@ -966,8 +968,6 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
         logic_tree_index_dir = Path(logic_tree_index_dir)
     if isinstance(plot_output_directory, str):
         plot_output_directory = Path(plot_output_directory)
-    if isinstance(registry_directory, str):
-        registry_directory = Path(registry_directory)
 
     if not plot_output_directory.exists():
         plot_output_directory.mkdir(parents=True)
@@ -977,16 +977,29 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
     output_notes = toml.load(logic_tree_index_dir / "notes.toml")
 
-    if "1 (nth) h.w.b." in output_notes["slt_note"]:
-        srm_or_gmcm = "gmcm"
+    if output_notes["slt_note"] == "full > " and output_notes["glt_note"] == "full > ":
+        model_name_short = "full"
+        model_name_long = model_name_short
 
-    if "1 (nth) h.w.b." not in output_notes["glt_note"]:
-        srm_or_gmcm = "srm"
+    if output_notes["slt_note"] == "full > 1 (nth) h.w.b. > " and output_notes["slt_note"] == "full > ":
+        model_name_short = "all_srm"
+        model_name_long = model_name_short
 
-    if srm_or_gmcm == "srm":
+    if output_notes["slt_note"] == "full > " and output_notes["slt_note"] == "full > 1 (nth) h.w.b. > ":
+        model_name_short = "all_gmcm"
+        model_name_long = model_name_short
+
+    ### The GMCM logic tree was reduced to the single highest weighted branch so we can use the SRM model components
+    if "1 (nth) h.w.b." in output_notes["glt_note"]:
         model_name_short = output_notes['slt_note'].split(">")[1].split("[")[1].strip("[ ] ") + \
                             "_" + \
                            output_notes['slt_note'].split(">")[-2].strip()
+        model_name_long = model_name_to_plot_format[model_name_short]
+
+
+    ### The source logic tree was reduced to the single highest weighted branch so we can use the gmcm models
+    if "1 (nth) h.w.b." in output_notes["slt_note"]:
+        model_name_short = output_notes["glt_note"].split(">")[-2].split("*")[0].strip(" [ ]")
 
         model_name_long = model_name_to_plot_format[model_name_short]
 
@@ -1009,10 +1022,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
         filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
 
-        ### realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
-
         hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
-
         for realization_index in range(len(filtered_individual_realization_df)):
             hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
 
@@ -1021,9 +1031,17 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
         ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
 
-        poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
-        axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
-                       label=model_name_short)
+        ### Plot the individual realizations in a loop
+        for realization_index in range(len(filtered_individual_realization_df)):
+
+            poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
+            axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
+                           label=model_name_short)
+
+            ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
+            ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
+            axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
+                           label=model_name_short)
 
         axes[0, location_idx].set_xlim(im_xlims)
         axes[0, location_idx].grid(which='major',
@@ -1033,12 +1051,8 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
                     alpha=0.5)
 
         axes[0, location_idx].set_title(location)
-        axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
+        axes[0, location_idx].legend(loc="lower left",prop={'size': 5})
 
-        ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
-        ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
-        axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
-                       label=model_name_short)
         axes[1, location_idx].set_xlim(im_xlims)
 
         axes[1, location_idx].grid(which='major',
@@ -1047,7 +1061,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
                     color='black',
                     alpha=0.5)
 
-        axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
+        axes[1, location_idx].legend(loc="lower left",prop={'size': 5})
 
         if location_idx > 0:
             axes[0, location_idx].set_yticklabels([])
@@ -1055,12 +1069,26 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
         axes[0, location_idx].set_xticklabels([])
 
     ### Set all the y-axis limits to the max values found in the last loop over locations
+
+    ln_resid_mins = np.array(ln_resid_mins)
+    ln_resid_maxs = np.array(ln_resid_maxs)
+    poe_maxs = np.array(poe_maxs)
+
+    finite_ln_resid_mins = ln_resid_mins[np.isfinite(ln_resid_mins)]
+    finite_ln_resid_maxs = ln_resid_maxs[np.isfinite(ln_resid_maxs)]
+
+
+    abs_max = np.nanmax(np.hstack((np.abs(finite_ln_resid_mins), finite_ln_resid_maxs)))
+
+
+    print()
     for location_idx in range(len(locations)):
-        axes[0, location_idx].set_ylim(poe_min_plot, np.max(poe_maxs)*1.1)
-        axes[1, location_idx].set_ylim(np.min(ln_resid_mins), np.max(ln_resid_maxs))
+        axes[0, location_idx].set_ylim(poe_min_plot, np.nanmax(poe_maxs)+np.nanmax(poe_maxs)/ybuffer_absmax_over_val)
+        axes[1, location_idx].set_ylim(np.min(finite_ln_resid_mins)-abs_max/ybuffer_absmax_over_val,
+                                       np.max(finite_ln_resid_maxs)+abs_max/ybuffer_absmax_over_val)
 
     axes[0, 0].set_ylabel('Annual probability of exceedance')
-    axes[1, 0].set_ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+    axes[1, 0].set_ylabel(r"$\ln$(APoE$_n$)-$\ln$(APoE$_0$)")
 
     axes[1, 1].set_xlabel(f'{im} level')
 
@@ -1072,137 +1100,122 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
         plot_output_directory / f"{model_name_short}_individual_realizations.png",
         dpi=plot_dpi)
 
-    print()
 
-
-
-
-
-
-
-
-    #
-    #
-    #
-    #
-    # individual_realization_df = ds.dataset(source=results_directory/"individual_realizations",
-    #                                        format="parquet").to_table().to_pandas()
-    #
-    # individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == results_directory.name) & \
-    #                  (individual_realization_df["nloc_001"] == locations_nloc_dict[location_short_name])
-    #
-    # filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
-    #
-    # realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
-    #
-    # hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
-    #
-    # for realization_index in range(len(filtered_individual_realization_df)):
-    #     hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
-    #
-    # ### Convert the rate to annual probability of exceedance
-    # hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
-    #
-    # resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
-    #
-    # agg_stats_df = resulting_hazard_curves.data_df
-    #
-    #
-    #
-
-
-
-
-
-
-
-
-
-def make_figures_of_all_individual_realizations(srm_or_gmcm:str,
-                                                results_directory:Union[Path, str],
-                                                plot_output_directory:Union[Path, str],
-                                                registry_directory:Union[Path, str],
+def make_figures_of_several_individual_realizations(results_directory: Union[Path, str],
+                                                plot_output_directory: Union[Path, str],
                                                 locations: list[str] = ["AKL", "WLG", "CHC"],
                                                 im: str = "PGA",
                                                 vs30: int = 400,
                                                 im_xlims: tuple = (9e-5, 5),
                                                 poe_min_plot: float = 1e-5,
+                                                ybuffer_absmax_over_val: float = 10.0,
+                                                selected_subduction_interface="INTER_HIK_and_PUY",
+                                                plot_dpi: int = 500):
+    if isinstance(results_directory, str):
+        results_directory = Path(results_directory)
+    if isinstance(plot_output_directory, str):
+        plot_output_directory = Path(plot_output_directory)
+
+    if not plot_output_directory.exists():
+        plot_output_directory.mkdir(parents=True)
+
+    logic_tree_indices_to_skip = []
+
+    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    collated_notes_df = aggregate_stats_results.collated_notes_df
+
+    ### Skip the interface branches that are not the selected one
+    interface_logic_tree_indices = collated_notes_df["slt_note"].str.contains("INTER")
+    interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices]["slt_note"].str.contains(
+        selected_subduction_interface)
+    logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
+
+    ### Slab only has one branch so needs to be treated differently
+    slab_index = collated_notes_df[collated_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+    logic_tree_indices_to_skip.append(slab_index)
+
+    for logic_tree_index_dir in natsort.natsorted(results_directory.iterdir()):
+
+        if logic_tree_index_dir.is_dir():
+
+            print(f"Processing {logic_tree_index_dir.name}")
+
+            logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
+
+            if logic_tree_idx in logic_tree_indices_to_skip:
+                print(f"Skipping logic tree index {logic_tree_idx}")
+                continue
+
+            make_figures_of_individual_realizations_for_a_single_logic_tree(
+                logic_tree_index_dir=logic_tree_index_dir,
+                plot_output_directory=plot_output_directory,
+                locations=locations,
+                im=im,
+                vs30=vs30,
+                im_xlims=im_xlims,
+                poe_min_plot=poe_min_plot,
+                ybuffer_absmax_over_val=ybuffer_absmax_over_val,
+                plot_dpi=plot_dpi)
+
+
+def make_figures_of_all_individual_realizations(results_directory:Union[Path, str],
+                                                plot_output_directory:Union[Path, str],
+                                                locations: list[str] = ["AKL", "WLG", "CHC"],
+                                                im: str = "PGA",
+                                                vs30: int = 400,
+                                                im_xlims: tuple = (9e-5, 5),
+                                                poe_min_plot: float = 1e-5,
+                                                ybuffer_absmax_over_val:float = 10.0,
+                                                selected_subduction_interface = "INTER_HIK_and_PUY",
                                                 plot_dpi: int = 500):
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
     if isinstance(plot_output_directory, str):
         plot_output_directory = Path(plot_output_directory)
-    if isinstance(registry_directory, str):
-        registry_directory = Path(registry_directory)
 
     if not plot_output_directory.exists():
         plot_output_directory.mkdir(parents=True)
 
-    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    logic_tree_indices_to_skip = []
 
-    run_notes_df = aggregate_stats_results.run_notes_df
+    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    collated_notes_df = aggregate_stats_results.collated_notes_df
+    
+    
+
+    ### Skip the interface branches that are not the selected one
+    interface_logic_tree_indices = collated_notes_df["slt_note"].str.contains("INTER")
+    interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices]["slt_note"].str.contains(selected_subduction_interface)
+    logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
 
     ### Slab only has one branch so needs to be treated differently
-    slab_index = run_notes_df[run_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+    slab_index = collated_notes_df[collated_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+    logic_tree_indices_to_skip.append(slab_index)
 
-    for logic_tree_index_dir in results_directory.iterdir():
-
-        print(f"Processing {logic_tree_index_dir.name}")
+    for logic_tree_index_dir in natsort.natsorted(results_directory.iterdir()):
 
         if logic_tree_index_dir.is_dir():
 
+            print(f"Processing {logic_tree_index_dir.name}")
+
             logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
 
-            if logic_tree_idx == slab_index:
-                print("Skipping SLAB as it only has one branch")
+            if logic_tree_idx in logic_tree_indices_to_skip:
+                print(f"Skipping logic tree index {logic_tree_idx}")
                 continue
 
-            make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm=srm_or_gmcm,
+            make_figures_of_individual_realizations_for_a_single_logic_tree(
                 logic_tree_index_dir = logic_tree_index_dir,
                 plot_output_directory = plot_output_directory,
                 locations = locations,
-                registry_directory = registry_directory,
                 im = im,
                 vs30 = vs30,
                 im_xlims = im_xlims,
                 poe_min_plot = poe_min_plot,
+                ybuffer_absmax_over_val = ybuffer_absmax_over_val,
                 plot_dpi = plot_dpi)
 
-
-
-
-
-
-
-    #
-    #
-    #
-    #
-    # individual_realization_df = ds.dataset(source=results_directory/"individual_realizations",
-    #                                        format="parquet").to_table().to_pandas()
-    #
-    # individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == results_directory.name) & \
-    #                  (individual_realization_df["nloc_001"] == locations_nloc_dict[location_short_name])
-    #
-    # filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
-    #
-    # realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
-    #
-    # hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
-    #
-    # for realization_index in range(len(filtered_individual_realization_df)):
-    #     hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
-    #
-    # ### Convert the rate to annual probability of exceedance
-    # hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
-    #
-    # resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
-    #
-    # agg_stats_df = resulting_hazard_curves.data_df
-    #
-    #
-    #
 
 
 

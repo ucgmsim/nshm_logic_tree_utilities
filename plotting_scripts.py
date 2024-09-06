@@ -1,31 +1,26 @@
 import plotting_functions
 
-plotting_functions.make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm="srm",
-    logic_tree_index_dir = "/home/arr65/data/nshm/output/srm_models/logic_tree_index_0",
-                                            plot_output_directory = "/home/arr65/data/nshm/plots/srm_individual_realizations",
-                                            locations = ["AKL", "WLG", "CHC"],
-                                            registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources")
-
-print()
-
-# plotting_functions.make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm="gmcm",
-#     logic_tree_index_dir = "/home/arr65/data/nshm/output/gmcm_models/logic_tree_index_0",
-#                                             plot_output_directory = "/home/arr65/data/nshm/plots/gmcm_individual_realizations",
+# plotting_functions.make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_index_dir = "/home/arr65/data/nshm/output/srm_models/logic_tree_index_1",
+#                                             plot_output_directory = "/home/arr65/data/nshm/plots/srm_individual_realizations",
 #                                             locations = ["AKL", "WLG", "CHC"],
 #                                             registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources")
 
-print()
+# print()
+#
+# plotting_functions.make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_index_dir = "/home/arr65/data/nshm/output/gmcm/logic_tree_index_20",
+#                                             plot_output_directory = "/home/arr65/data/nshm/plots/srm_individual_realizations",
+#                                             locations = ["AKL", "WLG", "CHC"])
 
-# plotting_functions.make_figures_of_all_individual_realizations(srm_or_gmcm = "srm",
-#                                                 results_directory = "/home/arr65/data/nshm/output/srm_models",
-#                                                 plot_output_directory = "/home/arr65/data/nshm/plots/srm_individual_realizations",
-#                                                 registry_directory = "/home/arr65/src/gns/modified_gns/nzshm-model/resources",
-#                                                 locations = ["AKL", "WLG", "CHC"],
-#                                                 im = "PGA",
-#                                                 vs30 = 400,
-#                                                 im_xlims = (9e-5, 5),
-#                                                 poe_min_plot = 1e-5,
-#                                                 plot_dpi = 500)
+# print()
+
+plotting_functions.make_figures_of_several_individual_realizations(results_directory = "/home/arr65/data/nshm/output_all_in_one",
+                                                plot_output_directory = "/home/arr65/data/nshm/new_plots2",
+                                                locations = ["AKL", "WLG", "CHC"],
+                                                im = "PGA",
+                                                vs30 = 400,
+                                                im_xlims = (9e-5, 5),
+                                                poe_min_plot = 1e-5,
+                                                plot_dpi = 500)
 
 
 print()
