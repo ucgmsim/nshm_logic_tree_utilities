@@ -972,18 +972,23 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
     if not plot_output_directory.exists():
         plot_output_directory.mkdir(parents=True)
 
-
-
-
-
     individual_realization_df = ds.dataset(source=logic_tree_index_dir / "individual_realizations",
                                            format="parquet").to_table().to_pandas()
 
-    output_notes = toml.load(logic_tree_index_dir / )
+    output_notes = toml.load(logic_tree_index_dir / "notes.toml")
 
-    # slt_note = run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_idx]["slt_note"].values[0]
-    # tectonic_region_type = slt_note[slt_note.find("[")+1:slt_note.find("]")].strip()
+    if "1 (nth) h.w.b." in output_notes["slt_note"]:
+        srm_or_gmcm = "gmcm"
 
+    if "1 (nth) h.w.b." not in output_notes["glt_note"]:
+        srm_or_gmcm = "srm"
+
+    if srm_or_gmcm == "srm":
+        model_name_short = output_notes['slt_note'].split(">")[1].split("[")[1].strip("[ ] ") + \
+                            "_" + \
+                           output_notes['slt_note'].split(">")[-2].strip()
+
+        model_name_long = model_name_to_plot_format[model_name_short]
 
     plt.close("all")
 
@@ -1004,7 +1009,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
         filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
 
-        realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+        ### realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
 
         hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
 
@@ -1016,69 +1021,38 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
         ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
 
-        if len(hazard_prob_of_exceedance) == 0:
-            print()
+        poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
+        axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
+                       label=model_name_short)
 
-        model_names = []
-        for realization_index in range(len(hazard_prob_of_exceedance)):
-            if srm_or_gmcm == "gmcm":
-                gmcm_name_with_branch = realization_names[realization_index].ground_motion_characterization_models_id
-                gmcm_name = gmcm_name_with_branch.split("(")[0]
-                plot_label = gmcm_name_with_branch
-                title = f"{model_name_to_plot_format[gmcm_name]} ({logic_tree_index_dir.name})"
+        axes[0, location_idx].set_xlim(im_xlims)
+        axes[0, location_idx].grid(which='major',
+                    linestyle='--',
+                    linewidth='0.5',
+                    color='black',
+                    alpha=0.5)
 
-            if srm_or_gmcm == "srm":
-                srm_name = realization_names[realization_index].seismicity_rate_model_id
-                plot_label = srm_name
-                model_names.append(srm_name)
+        axes[0, location_idx].set_title(location)
+        axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
 
-            poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
-            axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
-                           label=plot_label)
+        ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
+        ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
+        axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
+                       label=model_name_short)
+        axes[1, location_idx].set_xlim(im_xlims)
 
-            axes[0, location_idx].set_xlim(im_xlims)
-            axes[0, location_idx].grid(which='major',
-                        linestyle='--',
-                        linewidth='0.5',
-                        color='black',
-                        alpha=0.5)
+        axes[1, location_idx].grid(which='major',
+                    linestyle='--',
+                    linewidth='0.5',
+                    color='black',
+                    alpha=0.5)
 
-            axes[0, location_idx].set_title(location)
-            axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
+        axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
 
-            ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
-            ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
-            axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
-                           label=plot_label)
-            axes[1, location_idx].set_xlim(im_xlims)
-
-            axes[1, location_idx].grid(which='major',
-                        linestyle='--',
-                        linewidth='0.5',
-                        color='black',
-                        alpha=0.5)
-
-            axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
-
-            if location_idx > 0:
-                axes[0, location_idx].set_yticklabels([])
-                axes[1, location_idx].set_yticklabels([])
-            axes[0, location_idx].set_xticklabels([])
-
-        if srm_or_gmcm == "srm":
-
-            srm_name_components_0 = model_names[0].split(",")
-
-            for srm_name_component_index in range(len(srm_name_components_0)):
-                if model_names[1].split(",")[srm_name_component_index] != srm_name_components_0[srm_name_component_index]:
-                    different_srm_name_component_index = srm_name_component_index
-
-                    break
-            print()
-            ### The dictionary is stored as a toml file which can only have strings as dictionary keys
-            srm_model_component_name = srm_name_component_index_to_name[str(different_srm_name_component_index)]
-            model_name_for_lookup = f"{tectonic_region_type}_{srm_model_component_name}"
-            title = f"{model_name_to_plot_format[model_name_for_lookup]} (index {logic_tree_index_dir.name.split("_")[-1]})"
+        if location_idx > 0:
+            axes[0, location_idx].set_yticklabels([])
+            axes[1, location_idx].set_yticklabels([])
+        axes[0, location_idx].set_xticklabels([])
 
     ### Set all the y-axis limits to the max values found in the last loop over locations
     for location_idx in range(len(locations)):
@@ -1090,12 +1064,12 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
 
     axes[1, 1].set_xlabel(f'{im} level')
 
-    plt.suptitle(title)
+    plt.suptitle(model_name_long)
 
     plt.subplots_adjust(left=0.08, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
 
     plt.savefig(
-        plot_output_directory / f"{title}_individual_realizations.png",
+        plot_output_directory / f"{model_name_short}_individual_realizations.png",
         dpi=plot_dpi)
 
     print()

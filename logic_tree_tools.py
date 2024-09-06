@@ -1,3 +1,8 @@
+"""
+Module containing functions to modify logic trees.
+"""
+
+
 import copy
 import logging
 import os
@@ -19,7 +24,7 @@ from toshi_hazard_post.aggregation_args import (
     AggregationArgs,
 )
 
-
+from run_toshi_hazard_post_helper import CustomLogicTreePair
 
 def reduce_logic_tree_to_nth_highest_weighted_branch(
     logic_tree: Union[SourceLogicTree, GMCMLogicTree], nth_highest: int
@@ -217,41 +222,76 @@ def transpose_lists(lists):
 
 
 def get_source_branch_parameters(logic_tree):
+    """
+    Extracts and processes the branch parameters from a logic tree.
+
+    This function iterates through the branch sets of a given logic tree,
+    converts the branch values to strings, transposes the lists of values,
+    and identifies unique values for each parameter.
+
+    Parameters
+    ----------
+    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
+        The logic tree from which to extract branch parameters.
+
+    Returns
+    -------
+    unique_values_dict : dict
+        A dictionary where keys are branch set short names and values are lists of unique parameter values.
+    """
+
     values_dict = {}
 
+    # Iterate through each branch set in the logic tree
     for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
 
         values_list = []
 
+        # Convert branch values to strings and collect them in a list
         for branch_index, branch in enumerate(branch_set.branches):
             values_as_str = [str(value) for value in branch.values]
             values_list.append(values_as_str)
 
+        # Store the list of string values in the dictionary with the branch set short name as the key
         values_dict[branch_set.short_name] = values_list
 
+    # Create a deep copy of the values dictionary for transposition
     transpose_dict = copy.deepcopy(values_dict)
 
+    # Transpose the lists of values
     for key, value in values_dict.items():
         transpose_dict[key] = transpose_lists(value)
 
+    # Create a deep copy of the transposed dictionary to store unique values
     unique_values_dict = copy.deepcopy(transpose_dict)
 
-    # print()
-
+    # Identify unique values for each parameter in the transposed lists
     for branch_set_index, list_of_branch_values in transpose_dict.items():
-
-        # print()
-
         for value_idx, values in enumerate(list_of_branch_values):
-
-            # print(value_idx, values)
-
             unique_values_dict[branch_set_index][value_idx] = list(set(values))
 
     return unique_values_dict
 
-
 def get_params_with_num_options(logic_tree, num_options):
+    """
+    Extracts parameters from a logic tree that have a specific number of unique options.
+
+    This function processes the branch parameters of a given logic tree and identifies
+    parameters that have exactly the specified number of unique values.
+
+    Parameters
+    ----------
+    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
+        The logic tree from which to extract branch parameters.
+    num_options : int
+        The number of unique options to filter the parameters by.
+
+    Returns
+    -------
+    dict_n_unique_vals : dict
+        A dictionary where keys are branch set short names and values are lists of unique parameter values
+        that have exactly `num_options` unique values.
+    """
 
     unique_values_dict = get_source_branch_parameters(logic_tree)
 
@@ -259,14 +299,9 @@ def get_params_with_num_options(logic_tree, num_options):
     for key, item in unique_values_dict.items():
         dict_n_unique_vals[key] = []
 
-    print()
-
     for key, item in unique_values_dict.items():
-
         for unique_val_idx, unique_values in enumerate(item):
-
             if len(unique_values) == num_options:
-
                 dict_n_unique_vals[key].append(unique_values)
 
     return dict_n_unique_vals
@@ -546,7 +581,6 @@ def print_info_about_logic_tree_sets(
 ):
     """
     Print information about a logic tree set or a list of logic tree sets.
-
 
     Parameters
     ----------

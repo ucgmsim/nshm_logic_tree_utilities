@@ -45,6 +45,9 @@ from toshi_hazard_post.aggregation_args import (
 
 import logic_tree_tools
 
+
+
+
 @dataclass
 class CustomLogicTreePair:
     """
@@ -73,19 +76,27 @@ class CustomLogicTreePair:
     other_notes: Optional[str] = ""
 
     def notes_to_toml(self, path: Path):
-        data = asdict(self)
-        with path.open("w") as f:
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
+        with path.open('w') as f:
             toml.dump(data, f)
 
     def notes_to_pandas_df(self):
-        data = asdict(self)
+        data = {
+            'slt_note': self.slt_note,
+            'glt_note': self.glt_note,
+            'other_notes': self.other_notes
+        }
         return pd.DataFrame(data, index=[0])
 
 def run_with_modified_logic_trees(
     args: AggregationArgs,
     output_dir: Path,
     logic_tree_index: int,
-    custom_logic_tree_set: logic_tree_tools.CustomLogicTreeSet,
+    custom_logic_tree_pair: CustomLogicTreePair,
     locations: list[str],
     output_staging_dir: Path,
 ):
@@ -100,7 +111,7 @@ def run_with_modified_logic_trees(
         The directory where the output files will be saved.
     logic_tree_index : int
         The index of the logic_tree_set in the input list (used for naming the output directory).
-    custom_logic_tree_set : logic_tree_tools.CustomLogicTreeSet
+    custom_logic_tree_pair : CustomLogicTreePair
         The logic tree set to run toshi_hazard_post with.
     locations : list[str]
         The locations to run toshi_hazard_post for.
@@ -111,21 +122,21 @@ def run_with_modified_logic_trees(
 
     run_start_time = time.time()
 
-    modified_slt = copy.deepcopy(custom_logic_tree_set.slt)
-    modified_glt = copy.deepcopy(custom_logic_tree_set.glt)
+    modified_slt = copy.deepcopy(custom_logic_tree_pair.slt)
+    modified_glt = copy.deepcopy(custom_logic_tree_pair.glt)
 
-    logic_tree_tools.print_info_about_logic_tree_sets(custom_logic_tree_set)
+    logic_tree_tools.print_info_about_logic_tree_sets(custom_logic_tree_pair)
 
     # check the validity of the weights
-    logic_tree_tools.check_weight_validity(custom_logic_tree_set.slt)
-    logic_tree_tools.check_weight_validity(custom_logic_tree_set.glt)
+    logic_tree_tools.check_weight_validity(custom_logic_tree_pair.slt)
+    logic_tree_tools.check_weight_validity(custom_logic_tree_pair.glt)
 
     ### Save a copy of the logic trees for later inspection
     modified_slt.to_json(output_staging_dir / f"srm_logic_tree.json")
     modified_glt.to_json(output_staging_dir / f"gmcm_logic_tree.json")
 
     ### Save human-readable notes describing the changes to the logic tree
-    custom_logic_tree_set.notes_to_toml(
+    custom_logic_tree_pair.notes_to_toml(
         output_staging_dir / f"notes.toml"
     )
 
