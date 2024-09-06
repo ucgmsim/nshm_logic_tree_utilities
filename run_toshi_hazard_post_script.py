@@ -105,15 +105,15 @@ logic_tree_set_list = logic_tree_tools.get_logic_tree_sets_for_individual_source
 logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_set_list)
 
 ## Write notes about the modified logic trees
-run_notes_df = pd.DataFrame()
+collated_notes_df = pd.DataFrame()
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
     notes_df = custom_logic_tree_set.notes_to_pandas_df()
     notes_df["logic_tree_index"] = [logic_tree_index]
-    run_notes_df = pd.concat([run_notes_df, notes_df], ignore_index=True)
+    collated_notes_df = pd.concat([collated_notes_df, notes_df], ignore_index=True)
 
 # move the "logic_tree_index" column to the left-most position
-run_notes_df.insert(0, "logic_tree_index", run_notes_df.pop("logic_tree_index"))
-run_notes_df.to_csv(output_dir / config.get_value("run_notes_file_name"))
+collated_notes_df.insert(0, "logic_tree_index", collated_notes_df.pop("logic_tree_index"))
+collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
 
 ## Run toshi_hazard_post with the modified logic trees
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
@@ -128,5 +128,5 @@ for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_set_list):
 
 end_time = time.time()
 print(
-    f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_set_list)} runs"
+    f"Time taken: {(end_time - start_time)/60} mins for {len(logic_tree_set_list)} logic trees"
 )

@@ -1,3 +1,17 @@
+"""
+Module for helping to run toshi_hazard_post with modified logic trees.
+
+Classes
+-------
+CustomLogicTreePair
+    A dataclass to store a pair of logic trees for use with toshi_hazard_post.
+
+Functions
+---------
+run_with_modified_logic_trees
+    Runs toshi_hazard_post with modified logic trees.
+"""
+
 import copy
 import shutil
 import time
@@ -8,8 +22,64 @@ from toshi_hazard_post.aggregation import (
     run_aggregation,
 )
 
+import copy
+import logging
+import os
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Optional, Union
+
+import numpy as np
+import pandas as pd
+import toml
+from nzshm_model.logic_tree import (
+    GMCMLogicTree,
+    SourceLogicTree,
+)
+from nzshm_model.logic_tree.correlation import (
+    LogicTreeCorrelations,
+)
+from toshi_hazard_post.aggregation_args import (
+    AggregationArgs,
+)
+
 import logic_tree_tools
 
+@dataclass
+class CustomLogicTreePair:
+    """
+    A dataclass to store a pair of logic trees for use with toshi_hazard_post.
+
+    The pair must consist of one SourceLogicTree for the seismicity rate model (SRM) and one GMCMLogicTree
+    for the ground motion characterization model (GMCM).
+
+    slt: SourceLogicTree, optional
+        The seismicity rate model (SRM) logic tree to be used in the run.
+    glt: GMCMLogicTree, optional
+        The ground motion characterization model (GMCM) logic tree to be used in the run
+    slt_note: str, optional
+        A human-readable note describing changes to the SourceLogicTree.
+    glt_note: str, optional
+        A human-readable note describing changes to the GMCMLogicTree.
+    other_notes: str, optional
+        Any other notes that are relevant.
+    """
+
+    slt: Optional[SourceLogicTree] = None
+    glt: Optional[GMCMLogicTree] = None
+
+    slt_note: Optional[str] = ""
+    glt_note: Optional[str] = ""
+    other_notes: Optional[str] = ""
+
+    def notes_to_toml(self, path: Path):
+        data = asdict(self)
+        with path.open("w") as f:
+            toml.dump(data, f)
+
+    def notes_to_pandas_df(self):
+        data = asdict(self)
+        return pd.DataFrame(data, index=[0])
 
 def run_with_modified_logic_trees(
     args: AggregationArgs,
@@ -51,12 +121,12 @@ def run_with_modified_logic_trees(
     logic_tree_tools.check_weight_validity(custom_logic_tree_set.glt)
 
     ### Save a copy of the logic trees for later inspection
-    modified_slt.to_json(output_staging_dir / f"slt_{logic_tree_index}.json")
-    modified_glt.to_json(output_staging_dir / f"glt_{logic_tree_index}.json")
+    modified_slt.to_json(output_staging_dir / f"srm_logic_tree.json")
+    modified_glt.to_json(output_staging_dir / f"gmcm_logic_tree.json")
 
     ### Save human-readable notes describing the changes to the logic tree
     custom_logic_tree_set.notes_to_toml(
-        output_staging_dir / f"run_{logic_tree_index}_notes.toml"
+        output_staging_dir / f"notes.toml"
     )
 
     ### While several locations can be passed into the same toshi_hazard_post run,

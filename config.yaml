@@ -12,7 +12,7 @@ locations : ["AKL","WLG","CHC"]
 
 ## Output information
 output_directory : "/home/arr65/data/nshm/output/srm_models"
-run_notes_file_name : "run_notes.csv"
+collated_notes_file_name : "collated_notes.csv"
 
 
 
