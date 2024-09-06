@@ -972,135 +972,131 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(srm_or_gmcm:
     if not plot_output_directory.exists():
         plot_output_directory.mkdir(parents=True)
 
-    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(logic_tree_index_dir.parent)
 
-    run_notes_df = aggregate_stats_results.run_notes_df
 
-    ## Get the tectonic region type from run_notes_df
-    logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
 
-    slt_note = run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_idx]["slt_note"].values[0]
-    tectonic_region_type = slt_note[slt_note.find("[")+1:slt_note.find("]")].strip()
 
-    print(f"Processing {logic_tree_index_dir.name}")
+    individual_realization_df = ds.dataset(source=logic_tree_index_dir / "individual_realizations",
+                                           format="parquet").to_table().to_pandas()
 
-    if logic_tree_index_dir.is_dir():
+    output_notes = toml.load(logic_tree_index_dir / )
 
-        individual_realization_df = ds.dataset(source=logic_tree_index_dir / "individual_realizations",
-                                               format="parquet").to_table().to_pandas()
+    # slt_note = run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_idx]["slt_note"].values[0]
+    # tectonic_region_type = slt_note[slt_note.find("[")+1:slt_note.find("]")].strip()
 
-        plt.close("all")
 
-        fig, axes = plt.subplots(2, len(locations),figsize=(3*len(locations), 6))
+    plt.close("all")
 
-        poe_maxs = []
-        ln_resid_mins = []
-        ln_resid_maxs = []
+    fig, axes = plt.subplots(2, len(locations),figsize=(3*len(locations), 6))
 
-        for location_idx, location in enumerate(locations):
+    poe_maxs = []
+    ln_resid_mins = []
+    ln_resid_maxs = []
 
-            nloc_001_str = locations_nloc_dict[location]
+    for location_idx, location in enumerate(locations):
 
-            individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == logic_tree_index_dir.name) & \
-                 (individual_realization_df["nloc_001"] == nloc_001_str) & \
-                 (individual_realization_df["vs30"] == vs30) & \
-                 (individual_realization_df["imt"] == im)
+        nloc_001_str = locations_nloc_dict[location]
 
-            filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+        individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == logic_tree_index_dir.name) & \
+             (individual_realization_df["nloc_001"] == nloc_001_str) & \
+             (individual_realization_df["vs30"] == vs30) & \
+             (individual_realization_df["imt"] == im)
 
-            realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+        filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
 
-            hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+        realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
 
-            for realization_index in range(len(filtered_individual_realization_df)):
-                hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+        hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
 
-            ### Convert the rate to annual probability of exceedance
-            hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
+        for realization_index in range(len(filtered_individual_realization_df)):
+            hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
 
-            ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
+        ### Convert the rate to annual probability of exceedance
+        hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
-            if len(hazard_prob_of_exceedance) == 0:
-                print()
+        ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
 
-            model_names = []
-            for realization_index in range(len(hazard_prob_of_exceedance)):
-                if srm_or_gmcm == "gmcm":
-                    gmcm_name_with_branch = realization_names[realization_index].ground_motion_characterization_models_id
-                    gmcm_name = gmcm_name_with_branch.split("(")[0]
-                    plot_label = gmcm_name_with_branch
-                    title = f"{model_name_to_plot_format[gmcm_name]} ({logic_tree_index_dir.name})"
+        if len(hazard_prob_of_exceedance) == 0:
+            print()
 
-                if srm_or_gmcm == "srm":
-                    srm_name = realization_names[realization_index].seismicity_rate_model_id
-                    plot_label = srm_name
-                    model_names.append(srm_name)
-
-                poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
-                axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
-                               label=plot_label)
-
-                axes[0, location_idx].set_xlim(im_xlims)
-                axes[0, location_idx].grid(which='major',
-                            linestyle='--',
-                            linewidth='0.5',
-                            color='black',
-                            alpha=0.5)
-
-                axes[0, location_idx].set_title(location)
-                axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
-
-                ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
-                ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
-                axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
-                               label=plot_label)
-                axes[1, location_idx].set_xlim(im_xlims)
-
-                axes[1, location_idx].grid(which='major',
-                            linestyle='--',
-                            linewidth='0.5',
-                            color='black',
-                            alpha=0.5)
-
-                axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
-
-                if location_idx > 0:
-                    axes[0, location_idx].set_yticklabels([])
-                    axes[1, location_idx].set_yticklabels([])
-                axes[0, location_idx].set_xticklabels([])
+        model_names = []
+        for realization_index in range(len(hazard_prob_of_exceedance)):
+            if srm_or_gmcm == "gmcm":
+                gmcm_name_with_branch = realization_names[realization_index].ground_motion_characterization_models_id
+                gmcm_name = gmcm_name_with_branch.split("(")[0]
+                plot_label = gmcm_name_with_branch
+                title = f"{model_name_to_plot_format[gmcm_name]} ({logic_tree_index_dir.name})"
 
             if srm_or_gmcm == "srm":
+                srm_name = realization_names[realization_index].seismicity_rate_model_id
+                plot_label = srm_name
+                model_names.append(srm_name)
 
-                srm_name_components_0 = model_names[0].split(",")
+            poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
+            axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
+                           label=plot_label)
 
-                for srm_name_component_index in range(len(srm_name_components_0)):
-                    if model_names[1].split(",")[srm_name_component_index] != srm_name_components_0[srm_name_component_index]:
-                        different_srm_name_component_index = srm_name_component_index
+            axes[0, location_idx].set_xlim(im_xlims)
+            axes[0, location_idx].grid(which='major',
+                        linestyle='--',
+                        linewidth='0.5',
+                        color='black',
+                        alpha=0.5)
 
-                        break
-                print()
-                ### The dictionary is stored as a toml file which can only have strings as dictionary keys
-                srm_model_component_name = srm_name_component_index_to_name[str(different_srm_name_component_index)]
-                model_name_for_lookup = f"{tectonic_region_type}_{srm_model_component_name}"
-                title = f"{model_name_to_plot_format[model_name_for_lookup]} (index {logic_tree_index_dir.name.split("_")[-1]})"
+            axes[0, location_idx].set_title(location)
+            axes[0, location_idx].legend(loc="lower left",prop={'size': 3})
 
-        ### Set all the y-axis limits to the max values found in the last loop over locations
-        for location_idx in range(len(locations)):
-            axes[0, location_idx].set_ylim(poe_min_plot, np.max(poe_maxs)*1.1)
-            axes[1, location_idx].set_ylim(np.min(ln_resid_mins), np.max(ln_resid_maxs))
+            ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
+            ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
+            axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
+                           label=plot_label)
+            axes[1, location_idx].set_xlim(im_xlims)
 
-        axes[0, 0].set_ylabel('Annual probability of exceedance')
-        axes[1, 0].set_ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+            axes[1, location_idx].grid(which='major',
+                        linestyle='--',
+                        linewidth='0.5',
+                        color='black',
+                        alpha=0.5)
 
-        axes[1, 1].set_xlabel(f'{im} level')
+            axes[1, location_idx].legend(loc="lower left",prop={'size': 4})
 
-        plt.suptitle(title)
+            if location_idx > 0:
+                axes[0, location_idx].set_yticklabels([])
+                axes[1, location_idx].set_yticklabels([])
+            axes[0, location_idx].set_xticklabels([])
 
-        plt.subplots_adjust(left=0.08, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
+        if srm_or_gmcm == "srm":
 
-        plt.savefig(
-            plot_output_directory / f"{title}_individual_realizations.png",
-            dpi=plot_dpi)
+            srm_name_components_0 = model_names[0].split(",")
+
+            for srm_name_component_index in range(len(srm_name_components_0)):
+                if model_names[1].split(",")[srm_name_component_index] != srm_name_components_0[srm_name_component_index]:
+                    different_srm_name_component_index = srm_name_component_index
+
+                    break
+            print()
+            ### The dictionary is stored as a toml file which can only have strings as dictionary keys
+            srm_model_component_name = srm_name_component_index_to_name[str(different_srm_name_component_index)]
+            model_name_for_lookup = f"{tectonic_region_type}_{srm_model_component_name}"
+            title = f"{model_name_to_plot_format[model_name_for_lookup]} (index {logic_tree_index_dir.name.split("_")[-1]})"
+
+    ### Set all the y-axis limits to the max values found in the last loop over locations
+    for location_idx in range(len(locations)):
+        axes[0, location_idx].set_ylim(poe_min_plot, np.max(poe_maxs)*1.1)
+        axes[1, location_idx].set_ylim(np.min(ln_resid_mins), np.max(ln_resid_maxs))
+
+    axes[0, 0].set_ylabel('Annual probability of exceedance')
+    axes[1, 0].set_ylabel(r"$\ln$(APoE$_1$)-$\ln$(APoE$_2$)")
+
+    axes[1, 1].set_xlabel(f'{im} level')
+
+    plt.suptitle(title)
+
+    plt.subplots_adjust(left=0.08, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
+
+    plt.savefig(
+        plot_output_directory / f"{title}_individual_realizations.png",
+        dpi=plot_dpi)
 
     print()
 
