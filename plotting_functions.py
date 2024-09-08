@@ -1110,7 +1110,8 @@ def make_figures_of_several_individual_realizations(results_directory: Union[Pat
                                                 poe_min_plot: float = 1e-5,
                                                 ybuffer_absmax_over_val: float = 10.0,
                                                 selected_subduction_interface="INTER_HIK_and_PUY",
-                                                plot_dpi: int = 500):
+                                                plot_dpi: int = 500,
+                                                notes_to_exclude=[]):
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
     if isinstance(plot_output_directory, str):
@@ -1124,21 +1125,28 @@ def make_figures_of_several_individual_realizations(results_directory: Union[Pat
     aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
     collated_notes_df = aggregate_stats_results.collated_notes_df
 
+    ## exclude the specified logic tree indices
+    for slt_note, glt_note in notes_to_exclude:
+
+        exclude_bool_idx = (collated_notes_df['slt_note'] == slt_note) & (collated_notes_df['glt_note'] == glt_note)
+        logic_tree_indices_to_skip.append(collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0])
+
     ### Skip the interface branches that are not the selected one
     interface_logic_tree_indices = collated_notes_df["slt_note"].str.contains("INTER")
     interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices]["slt_note"].str.contains(
         selected_subduction_interface)
     logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
 
-    ### Slab only has one branch so needs to be treated differently
-    slab_index = collated_notes_df[collated_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
-    logic_tree_indices_to_skip.append(slab_index)
+    # ### Slab only has one branch so needs to be treated differently
+    # slab_index = collated_notes_df[collated_notes_df["slt_note"].str.contains("SLAB")]["logic_tree_index"].values[0]
+    # logic_tree_indices_to_skip.append(slab_index)
+    # print()
 
     for logic_tree_index_dir in natsort.natsorted(results_directory.iterdir()):
 
         if logic_tree_index_dir.is_dir():
 
-            print(f"Processing {logic_tree_index_dir.name}")
+            print(f"Plotting {logic_tree_index_dir.name}")
 
             logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
 

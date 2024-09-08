@@ -20,7 +20,12 @@ plotting_functions.make_figures_of_several_individual_realizations(results_direc
                                                 vs30 = 400,
                                                 im_xlims = (9e-5, 5),
                                                 poe_min_plot = 1e-5,
-                                                plot_dpi = 500)
+                                                plot_dpi = 500,
+                                                notes_to_exclude=[("full > ", "full > "),
+                                                                  ("full > 1 (nth) h.w.b. > ", "full > "),
+                                                                  ("full > ", "full > 1 (nth) h.w.b. > "),
+                                                                  ("full > tectonic_region_type_set:[SLAB] > slab_only_branch > ",
+                                                                   "full > 1 (nth) h.w.b. > tectonic_region_type_set:[SLAB] > ")])
 
 
 print()
