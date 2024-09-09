@@ -10,9 +10,7 @@ from nzshm_model.logic_tree import (
     GMCMLogicTree,
     SourceLogicTree,
 )
-from nzshm_model.logic_tree.correlation import (
-    LogicTreeCorrelations,
-)
+from nzshm_model.logic_tree.correlation import LogicTreeCorrelations
 
 from run_toshi_hazard_post_helper import CustomLogicTreePair
 

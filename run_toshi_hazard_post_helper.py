@@ -15,37 +15,18 @@ run_with_modified_logic_trees
 import copy
 import shutil
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
-from toshi_hazard_post.aggregation import (
-    AggregationArgs,
-    run_aggregation,
-)
-
-import copy
-import logging
-import os
-from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import Optional, Union
-
-import numpy as np
 import pandas as pd
 import toml
-from nzshm_model.logic_tree import (
-    GMCMLogicTree,
-    SourceLogicTree,
-)
-from nzshm_model.logic_tree.correlation import (
-    LogicTreeCorrelations,
-)
-from toshi_hazard_post.aggregation_args import (
-    AggregationArgs,
-)
+from nzshm_model.logic_tree import GMCMLogicTree, SourceLogicTree
+
+from toshi_hazard_post.aggregation import run_aggregation
+from toshi_hazard_post.aggregation_args import AggregationArgs
 
 import logic_tree_tools
-
-
 
 
 @dataclass
@@ -77,20 +58,21 @@ class CustomLogicTreePair:
 
     def notes_to_toml(self, path: Path):
         data = {
-            'slt_note': self.slt_note,
-            'glt_note': self.glt_note,
-            'other_notes': self.other_notes
+            "slt_note": self.slt_note,
+            "glt_note": self.glt_note,
+            "other_notes": self.other_notes,
         }
-        with path.open('w') as f:
+        with path.open("w") as f:
             toml.dump(data, f)
 
     def notes_to_pandas_df(self):
         data = {
-            'slt_note': self.slt_note,
-            'glt_note': self.glt_note,
-            'other_notes': self.other_notes
+            "slt_note": self.slt_note,
+            "glt_note": self.glt_note,
+            "other_notes": self.other_notes,
         }
         return pd.DataFrame(data, index=[0])
+
 
 def run_with_modified_logic_trees(
     args: AggregationArgs,
@@ -136,9 +118,7 @@ def run_with_modified_logic_trees(
     modified_glt.to_json(output_staging_dir / f"gmcm_logic_tree.json")
 
     ### Save human-readable notes describing the changes to the logic tree
-    custom_logic_tree_pair.notes_to_toml(
-        output_staging_dir / f"notes.toml"
-    )
+    custom_logic_tree_pair.notes_to_toml(output_staging_dir / f"notes.toml")
 
     ### While several locations can be passed into the same toshi_hazard_post run,
     ### this requires more memory than is available in a typical desktop workstation.

@@ -434,7 +434,10 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         fontsize=plot_title_font_size,
     )
 
-    plt.savefig(plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png", dpi=plot_dpi)
+    plt.savefig(
+        plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png",
+        dpi=plot_dpi,
+    )
 
 
 def make_figure_of_srm_model_components(
@@ -589,7 +592,10 @@ def make_figure_of_srm_model_components(
         )
 
     plt.subplots_adjust(wspace=0.0, left=0.1, right=0.99, top=0.94)
-    plt.savefig(plot_output_directory / f"srm_dispersions_{"_".join(locations)}.png",dpi=plot_dpi)
+    plt.savefig(
+        plot_output_directory / f"srm_dispersions_{"_".join(locations)}.png",
+        dpi=plot_dpi,
+    )
 
 
 def make_figure_of_gmcms(
@@ -779,7 +785,9 @@ def make_figure_of_gmcms(
         wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97
     )
 
-    plt.savefig(plot_output_directory / f"gmcms_{im}_{"_".join(locations)}.png",dpi=plot_dpi)
+    plt.savefig(
+        plot_output_directory / f"gmcms_{im}_{"_".join(locations)}.png", dpi=plot_dpi
+    )
 
 
 def make_figure_showing_Bradley2009_method(
