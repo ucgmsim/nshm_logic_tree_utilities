@@ -126,7 +126,9 @@ def make_figure_of_coefficient_of_variation(
         mean_list.append(mean)
         cov_list.append(cov)
 
+    original_fontsize = plt.rcParams["font.size"]
     plt.rcParams.update({"font.size": plot_fontsize})
+
     plt.figure(figsize=figsize)
 
     plt.semilogx(
@@ -160,7 +162,9 @@ def make_figure_of_coefficient_of_variation(
 
     plt.subplots_adjust(left=0.11, right=0.99, bottom=0.12, top=0.97)
     plt.savefig(plot_output_directory / "coefficient_of_variation.png", dpi=plot_dpi)
-    plt.close()
+
+    ## reset the rcParams font size back to original
+    plt.rcParams.update({"font.size": original_fontsize})
 
 
 def make_figure_of_srm_and_gmcm_model_dispersions(
@@ -260,7 +264,6 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 
     ####################################################
 
-    plt.close("all")
     fig, axes = plt.subplots(3, num_plot_cols, figsize=(3 * num_plot_cols, 9))
 
     for row_index in range(3):
@@ -670,7 +673,6 @@ def make_figure_of_gmcms(
         )
     )
 
-    plt.close("all")
     fig, axes = plt.subplots(3, 3, figsize=(6, 9))
 
     for location_row_idx, location in enumerate(locations):
@@ -1236,9 +1238,9 @@ def make_figure_of_gmm_dispersion_ranges(
         rf"Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$"
     )
     plt.grid(linestyle="--")
+    plt.subplots_adjust(right=0.99, top=0.98)
     plt.savefig(
-        plot_output_directory
-        / f"dispersion_ranges_from_dir_{results_directory.name}.png",
+        plot_output_directory / "gmcm_models_dispersion_ranges.png",
         dpi=plot_dpi,
     )
 
@@ -1346,8 +1348,6 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
             output_notes["glt_note"].split(">")[-2].split("*")[0].strip(" [ ]")
         )
         model_name_long = model_name_to_plot_format[model_name_short]
-
-    plt.close("all")
 
     fig, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
 
@@ -1461,7 +1461,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
     plt.suptitle(model_name_long)
 
-    plt.subplots_adjust(left=0.08, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
+    plt.subplots_adjust(left=0.10, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
 
     plt.savefig(
         plot_output_directory / f"{model_name_short}_individual_realizations.png",
