@@ -346,8 +346,6 @@ def select_branch_sets_given_tectonic_region_type(
         tectonic_region_types = [tectonic_region_types]
 
     modified_logic_tree = copy.deepcopy(logic_tree)
-    print()
-    # available_trts = [branch_set.tectonic_region_type for branch_set in logic_tree.branch_sets]
     new_branch_sets = []
     for branch_set in logic_tree.branch_sets:
         print()
@@ -390,82 +388,6 @@ def select_branch_sets_given_tectonic_region_type(
     return modified_logic_tree
 
 
-# def select_branch_sets_given_tectonic_region_type(logic_tree: Union[SourceLogicTree, GMCMLogicTree],
-#                            tectonic_region_types: Union[list[str], str], which_interface: str = "HIK_and_PUY"):
-#
-#     """
-#     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
-#
-#     Parameters
-#     ----------
-#     logic_tree : SourceLogicTree or GMCMLogicTree
-#         The logic tree to modify.
-#
-#     tectonic_region_types : list[str] or str
-#         A list of the selected tectonic region types.
-#         If selecting only a single tectonic region type, can be a string.
-#         Valid tectonic region types are:
-#             "Active Shallow Crust",
-#             "Subduction Interface",
-#             "Subduction Intraslab".
-#
-#     which_interface : str, default = "HIK_and_PUY"
-#         Which subduction interfaces to include.
-#         Valid options are:
-#            "HIK_and_PUY" which includes HIK_and_PUY the Hikurangi–Kermadec (only_HIK) and Puysegur (only_PUY) subduction zones
-#            "only_HIK" which includes only the Hikurangi–Kermadec (only_HIK) subduction zone
-#            "only_PUY" which includes only the Puysegur (only_PUY) subduction zone.
-#
-#     Returns
-#     -------
-#     modified_logic_tree : SourceLogicTree or GMCMLogicTree
-#         The modified logic tree that only includes branch sets corresponding
-#         to the selected tectonic region type.
-#     """
-#
-#     if isinstance(tectonic_region_types, str):
-#         tectonic_region_types = [tectonic_region_types]
-#
-#     modified_logic_tree = copy.deepcopy(logic_tree)
-#     print()
-#     #available_trts = [branch_set.tectonic_region_type for branch_set in logic_tree.branch_sets]
-#     new_branch_sets = []
-#     for branch_set in logic_tree.branch_sets:
-#         print()
-#         if isinstance(logic_tree, SourceLogicTree):
-#             for tectonic_region_type in branch_set.tectonic_region_types:
-#                 print()
-#                 if tectonic_region_type in tectonic_region_types:
-#                     if tectonic_region_type == "Subduction Interface":
-#                         if which_interface == "HIK_and_PUY":
-#                             new_branch_sets.append(copy.deepcopy(branch_set))
-#                         elif which_interface == "only_HIK":
-#                             if branch_set.short_name == "only_HIK":
-#                                 new_branch_sets.append(copy.deepcopy(branch_set))
-#                         elif which_interface == "only_PUY":
-#                             if branch_set.short_name == "only_PUY":
-#                                 new_branch_sets.append(copy.deepcopy(branch_set))
-#
-#                     else:
-#                         new_branch_sets.append(copy.deepcopy(branch_set))
-#
-#         if isinstance(logic_tree, GMCMLogicTree):
-#             if branch_set.tectonic_region_type in tectonic_region_types:
-#                 new_branch_sets.append(copy.deepcopy(branch_set))
-#
-#     modified_logic_tree.branch_sets = new_branch_sets
-#     branch_set_short_names = [x.short_name for x in new_branch_sets]
-#
-#     if ("only_PUY" in branch_set_short_names) & ("only_HIK" in branch_set_short_names):
-#         # retain the only_HIK to only_PUY correlations
-#         pass
-#     else:
-#         # remove correlations
-#         modified_logic_tree.correlations = LogicTreeCorrelations()
-#     print()
-#     return modified_logic_tree
-
-
 def logic_tree_set_with_selected_tectonic_region_types(
     initial_logic_tree_set: CustomLogicTreePair,
     tectonic_region_type_set: list,
@@ -501,8 +423,6 @@ def logic_tree_set_with_selected_tectonic_region_types(
         to the selected tectonic region type.
     """
 
-    print()
-
     trt_short_lookup_dict = {
         "Active Shallow Crust": "CRU",
         "Subduction Interface": "INTER",
@@ -523,8 +443,6 @@ def logic_tree_set_with_selected_tectonic_region_types(
         short_tectonic_region_types_for_glt_note
     )
 
-    print()
-
     for short_trt_index, short_trt in enumerate(
         short_tectonic_region_types_for_slt_note
     ):
@@ -532,8 +450,6 @@ def logic_tree_set_with_selected_tectonic_region_types(
             short_tectonic_region_types_for_slt_note[short_trt_index] = (
                 f"INTER_{which_interface}"
             )
-
-    print()
 
     modified_slt = select_branch_sets_given_tectonic_region_type(
         slt, tectonic_region_type_set, which_interface
@@ -731,8 +647,6 @@ def get_logic_tree_sets_for_individual_ground_motion_models(
         which_interfaces=which_interfaces,
     )
 
-    print()
-
     modified_logic_tree_set_list = []
 
     all_glt_gsim_names = []
@@ -828,7 +742,7 @@ def get_logic_tree_sets_for_individual_source_models(
         initial_logic_tree_set, slt_nth_highest=None, glt_nth_highest=1
     )
 
-    # print_info_about_logic_tree_sets(initial_logic_tree_set)
+    ## print a blank line for clarity
     print()
 
     input_logic_tree_set_list = get_logic_tree_sets_for_tectonic_selection(
@@ -839,6 +753,7 @@ def get_logic_tree_sets_for_individual_source_models(
 
     print_info_about_logic_tree_sets(input_logic_tree_set_list)
 
+    ## print a blank line for clarity
     print()
 
     # print_info_about_logic_tree_sets(input_logic_tree_set_list)
@@ -847,20 +762,19 @@ def get_logic_tree_sets_for_individual_source_models(
 
     for lt_set in input_logic_tree_set_list:
 
+        ## print a blank line for clarity
         print()
 
         source_branch_set_short_name_to_index = {
             branch_set.short_name: branch_set_index
             for branch_set_index, branch_set in enumerate(lt_set.slt.branch_sets)
         }
-
+        ## print a blank line for clarity
         print()
 
         print_info_about_logic_tree_sets(lt_set)
 
         needed_branches_dict = get_needed_source_branches(lt_set)
-
-        print()
 
         ### HIK and PUY branch_sets will both be in needed_branches_dict if which_interface == "HIK_and_PUY"
         ### so if they are both present, only change the HIK branch_set in the normal way and then
@@ -900,10 +814,9 @@ def get_logic_tree_sets_for_individual_source_models(
                         source_branch_set_short_name_to_index["PUY"]
                     ].branches = needed_branches_dict["PUY"]["moment_rate_scaling"]
 
+                print() ## print a blank line for clarity
                 print("After modification")
-
                 print_info_about_logic_tree_sets(modified_logic_tree_set)
-
                 new_logic_tree_sets.append(copy.deepcopy(modified_logic_tree_set))
 
     return new_logic_tree_sets
@@ -954,8 +867,6 @@ def get_needed_source_branches(logic_tree_set):
         logic_tree_set.slt, 1
     )
 
-    print()
-
     slt_branch_set_short_names = [x.short_name for x in logic_tree_set.slt.branch_sets]
 
     for slt_branch_set_short_name in slt_branch_set_short_names:
@@ -975,7 +886,6 @@ def get_needed_source_branches(logic_tree_set):
             selected_branches_per_param = []
 
             ## Allow both values at index branch_param_idx and keep everything else as the highest weighted branch
-
             possible_values_for_this_param_index = slt_branch_params[
                 branch_set.short_name
             ][branch_param_idx]
@@ -991,7 +901,6 @@ def get_needed_source_branches(logic_tree_set):
                 .branches[0]
                 .values
             )
-            # print()
 
             ## branch_values_to_find list will be modifed for each param value
             branch_values_to_find = copy.deepcopy(hwb_values)
@@ -1005,12 +914,10 @@ def get_needed_source_branches(logic_tree_set):
 
                 for branch in branch_set.branches:
 
-                    # print()
 
                     if search_str == str(branch.values):
                         selected_branches_per_param.append(copy.deepcopy(branch))
 
-            print()
             ## The branches in selected_branches_per_param will be the only branches in this branch_set so
             ## their total weight needs to sum to 1.0
 
@@ -1032,58 +939,7 @@ def get_needed_source_branches(logic_tree_set):
                 ]
             ] = selected_branches_per_param
 
-            print()
     return results
-
-
-def OLD_get_needed_source_branches(slt, branch_set_idx_to_do):
-
-    slt_branch_params = get_source_branch_parameters(slt)
-
-    slt_highest_entry_list = get_custom_logic_tree_entry_for_nth_highest_branch(slt, 1)
-
-    num_params = len(slt.branch_sets[branch_set_idx_to_do].branches[0].values)
-
-    all_branch_sets = []
-    branch_param_index_list = []
-
-    for branch_param_idx in range(num_params):
-
-        selected_branches = []
-
-        ## Allow both values at index branch_param_idx and keep everything else as the highest weighted branch
-
-        possible_values_for_this_param_index = slt_branch_params[branch_set_idx_to_do][
-            branch_param_idx
-        ]
-
-        if len(possible_values_for_this_param_index) == 1:
-            continue
-
-        hwb_values = (
-            slt_highest_entry_list[0]
-            .slt.branch_sets[branch_set_idx_to_do]
-            .branches[0]
-            .values
-        )
-
-        branch_values_to_find = copy.deepcopy(hwb_values)
-
-        for possible_param_value in possible_values_for_this_param_index:
-
-            branch_values_to_find[branch_param_idx] = possible_param_value
-
-            search_str = remove_single_quotes(str(branch_values_to_find))
-
-            for branch in slt.branch_sets[branch_set_idx_to_do].branches:
-
-                if search_str == str(branch.values):
-                    selected_branches.append(copy.deepcopy(branch))
-
-        all_branch_sets.append(selected_branches)
-        branch_param_index_list.append(branch_param_idx)
-
-    return branch_param_index_list, all_branch_sets
 
 
 def make_srm_model_branch_groups(slt, branch_set_idx_to_do):
@@ -1100,11 +956,7 @@ def make_srm_model_branch_groups(slt, branch_set_idx_to_do):
 
     assert len(branch_param_index_list) == len(all_branch_groups)
 
-    # modified_slt.branch_sets = [copy.deepcopy(slt.branch_sets[branch_set_idx_to_do])]
-
     logic_tree_set_list = []
-
-    # print()
 
     for branch_group_idx in range(len(all_branch_groups)):
 
@@ -1132,7 +984,8 @@ def make_srm_model_branch_groups(slt, branch_set_idx_to_do):
 
         modified_slt_note = f"{branch_param_index_to_description[branch_param_index_list[branch_group_idx]]} > "
 
-        ### !! To do: this will only work if INTER TRTs are not used in the logic tree
+        ### This will only work if subduction interface (INTER)
+        ### tectonic region types (TRTs) are not in the logic tree
         modified_slt.correlations = LogicTreeCorrelations()
         custom_logic_tree_entry = CustomLogicTreePair(
             slt=modified_slt, slt_note=modified_slt_note
@@ -1149,7 +1002,7 @@ def make_logic_tree_sets_for_srm_models(
 
     modified_glt = copy.deepcopy(glt_matching_branch_set)
 
-    glt_hwb = get_custom_logic_tree_entry_for_nth_highest_branch(
+    glt_hwb = reduce_logic_tree_to_nth_highest_weighted_branch(
         glt_matching_branch_set, 1
     )
 
@@ -1171,275 +1024,3 @@ def make_logic_tree_sets_for_srm_models(
         logic_tree_set_list.append(new_lt_set)
 
     return logic_tree_set_list
-
-
-if __name__ == "__main__":
-
-    # import matplotlib.pyplot as plt
-
-    ## copying logging from scripts/cli.py
-    logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    logging.getLogger("toshi_hazard_post").setLevel(logging.INFO)
-    logging.getLogger("toshi_hazard_post.aggregation_calc").setLevel(logging.DEBUG)
-    logging.getLogger("toshi_hazard_post.aggregation").setLevel(logging.DEBUG)
-    logging.getLogger("toshi_hazard_post.aggregation_calc").setLevel(logging.DEBUG)
-    logging.getLogger("toshi_hazard_post.logic_tree").setLevel(logging.DEBUG)
-    logging.getLogger("toshi_hazard_post.parallel").setLevel(logging.DEBUG)
-    logging.getLogger("toshi_hazard_post").setLevel(logging.INFO)
-
-    os.environ["THP_ENV_FILE"] = str(
-        "/home/arr65/src/nshm_logic_tree_utilities/input_files.env_home"
-    )
-
-    # starting model
-    input_file = "/input_files/simple_input.toml"
-    args = AggregationArgs(input_file)
-
-    # run model
-    # run_aggregation(args)
-
-    # extract logic trees
-    slt = args.srm_logic_tree
-    glt = args.gmcm_logic_tree
-
-    slt_copy = copy.deepcopy(slt)
-    glt_copy = copy.deepcopy(glt)
-
-    slt_copy2 = copy.deepcopy(slt)
-    glt_copy2 = copy.deepcopy(glt)
-
-    slt_hw = reduce_to_highest_weighted_branch(slt_copy)
-    glt_hw = reduce_to_highest_weighted_branch(glt_copy)
-
-    # unique_param_dict = get_source_branch_parameters(slt)
-
-    # test = get_params_with_num_options(slt, 2)
-    # print()
-    # testg = get_params_with_num_options(glt, 2)
-
-    # val = 'dmgeodetic'
-    #
-    # b = slt.branch_sets[2].branches[0]
-    #
-    # print()
-
-    # test = get_slt_permutations_binary_options(slt)
-
-    # test = get_params_with_num_options(slt, 3)
-
-    # test = get_needed_source_branches(slt, 2)
-
-    # test = make_srm_model_branch_groups(slt, 2)
-
-    test = make_logic_tree_sets_for_srm_models(slt, glt, 2)
-
-    # print()
-
-    #
-    #
-    # for target_value in possible_values_for_this_param_index:
-    #
-    #     search_str =
-    #
-    # print()
-
-    # print()
-
-    # print()
-
-    # test = reduce_logic_tree_to_nth_highest_weighted_branch(logic_tree = slt, nth_highest = 9)
-
-    # test = combinations_of_n_branch_sets(slt, 1)
-
-    # for branch_set_index in range(len(slt.branch_sets)):
-    #
-    #     branch_set_running_sum = 0.0
-    #
-    #     for branch_index in range(len(slt.branch_sets[branch_set_index].branches)):
-    #         branch_set_running_sum += 0
-
-
-# print()
-# bs = slt.branch_sets[2]
-
-
-# Confirming that all branch weights within a branch set need to sum to 1.0
-# bw = []
-# for branch_set in glt.branch_sets:
-#     bsw = 0.0
-#     for branch in branch_set.branches:
-#         bsw += branch.weight
-#     bw.append(bsw)
-
-# slt_reduced_to_highest_weighted = reduce_to_highest_weighted_branch(slt)
-
-
-# slt_selected_branch_sets = select_source_branch_sets(logic_tree=source_logic_tree, branch_set_short_names_to_select = ['only_HIK', 'only_PUY', 'SLAB'])
-# slt_selected_branch_sets.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_HIK_PUY_SLAB.json')
-
-# slt_selected_branch_sets = select_source_branch_sets(logic_tree=source_logic_tree, branch_set_short_names_to_select = ['CRU'])
-# slt_selected_branch_sets.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_CRU.json')
-
-
-# selected_source_type = 'inversion' # 'distributed' or 'inversion'
-
-
-# slt_only_selected_source_type = logic_tree_single_source_type(source_logic_tree = source_logic_tree, selected_source_type = selected_source_type)
-
-# slt.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/test.json')
-# print()
-
-# slt_only_selected_source_type.to_json(f'/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_full_only_{selected_source_type}.json')
-
-
-# slt_only_highest_weight_branches = reduce_to_highest_weighted_branch(slt)
-# slt_only_highest_weight_branches.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/slt_only_highest_weighted_branches.json')
-#
-# glt_only_highest_weight_branches = reduce_to_highest_weighted_branch(glt)
-# glt_only_highest_weight_branches.to_json('/home/arr65/src/nshm_logic_tree_utilities/custom_logic_trees/glt_only_highest_weighted_branches.json')
-
-
-# print()
-#
-# slt2 = copy.deepcopy(slt)
-# glt2 = copy.deepcopy(glt)
-#
-# print()
-#
-#
-#
-# branch_weights = []
-#
-# test_lt = copy.deepcopy(glt)
-# set_idx = 3
-#
-# for branch in test_lt.branch_sets[set_idx].branches:
-#     branch_weights.append(branch.weight)
-# branch_weights = np.array(branch_weights)
-# highest_weighted_branch = test_lt.branch_sets[set_idx].branches[np.argmax(branch_weights)]
-#
-# gl3.branch_sets[set_idx].branches[0]
-
-
-# highest_weighted_branch_slt = reduce_to_highest_weighted_branch(slt)
-# highest_weighted_branch_glt = reduce_to_highest_weighted_branch(glt)
-
-# for branch_set_idx, branch_set in enumerate(slt2.branch_sets):
-#
-#     branch_weights = []
-#
-#     for branch_idx, branch in enumerate(branch_set.branches):
-#
-#         branch_weights.append(branch.weight)
-#
-#     branch_weights = np.array(branch_weights)
-#     highest_weighted_branch = branch_set.branches[np.argmax(branch_weights)]
-#     highest_weighted_branch.weight = 1.0
-#
-#     slt2.branch_sets[branch_set_idx] = [highest_weighted_branch]
-#
-# slt2.correlations = LogicTreeCorrelations()
-
-# for branch_set_idx, branch_set in enumerate(slt2.branch_sets):
-#
-#     branch_weights = []
-#
-#     for branch_idx, branch in enumerate(branch_set.branches):
-#
-#         branch_weights.append(branch.weight)
-#
-#     branch_weights = np.array(branch_weights)
-#     highest_weighted_branch = branch_set.branches[np.argmax(branch_weights)]
-#     highest_weighted_branch.weight = 1.0
-#
-#     slt2.branch_sets[branch_set_idx] = [highest_weighted_branch]
-#
-# slt2.correlations = LogicTreeCorrelations()
-
-# for set_idx in range(len(slt2.branch_sets)):
-#     highest_weight_branch_idx = 0
-#     highest_weight = 0.0
-#     for branch_idx in range(len(slt2.branch_sets[set_idx].branches)):
-#         if slt2.branch_sets[set_idx].branches[branch_idx].weight > highest_weight:
-#             highest_weight_branch_idx = branch_idx
-#
-#     slt2.branch_sets[set_idx].branches = [slt2.branch_sets[set_idx].branches[highest_weight_branch_idx]]
-#     slt2.branch_sets[set_idx].branches[0].weight = 1.0
-
-
-# def reduce_to_highest_weighted_branch(logic_tree):
-#
-#     modified_logic_tree = copy.copy(logic_tree)
-#
-#     for set_idx in range(len(logic_tree.branch_sets)):
-#         highest_weight_branch_idx = 0
-#         highest_weight = 0.0
-#         for branch_idx in range(len(logic_tree.branch_sets[set_idx].branches)):
-#             if logic_tree.branch_sets[set_idx].branches[branch_idx].weight > highest_weight:
-#                 highest_weight_branch_idx = branch_idx
-#                 logic_tree.branch_sets[set_idx].branches[branch_idx].weight
-#
-#         modified_logic_tree.branch_sets[set_idx].branches = [logic_tree.branch_sets[set_idx].branches[highest_weight_branch_idx]]
-#
-#         # The weight of all branches in a branch_set must sum to 1.0.
-#         # As we haved removed all branches except the highest weighted branch,
-#         # we set its weight to 1.0
-#         modified_logic_tree.branch_sets[set_idx].branches[0].weight = 1.0
-#
-#     # remove correlations
-#     modified_logic_tree.correlations = LogicTreeCorrelations()
-
-# return modified_logic_tree
-
-
-# def get_highest_weighted_branch(branch_set: list):
-#
-#     branch_weights = []
-#     for branch in branch_set.branches:
-#         branch_weights.append(branch.weight)
-#     branch_weights = np.array(branch_weights)
-#     return np.argmax(branch_weights)
-
-
-##################################################################################
-################################################
-#### Example code below
-
-
-# # write logic trees to json for later use
-# slt.to_json('/home/arr65/src/logic_tree_study/custom_logic_trees/slt_full_NSHM_v1.0.4.json')
-# glt.to_json('/home/arr65/src/logic_tree_study/custom_logic_trees/glt_full_NSHM_v1.0.4.json')
-
-# print("slt")
-# print(slt)
-# print()
-# print("glt")
-# print(glt)
-
-# print()
-#
-# # modify SRM logic tree
-# for branch_set in slt.branch_sets:
-#     print(branch_set.tectonic_region_types)
-# slt.branch_sets = [slt.branch_sets[0]]
-# slt.branch_sets[0].branches = [slt.branch_sets[0].branches[0]]
-#
-# # weights of branches of each branch set must sum to 1.0
-# slt.branch_sets[0].branches[0].weight = 1.0
-#
-# # remove correlations
-# slt.correlations = LogicTreeCorrelations()
-#
-# # modify GMCM logic tree to match the TRT of the new SRM logic tree
-# for branch_set in glt.branch_sets:
-#     print(branch_set.tectonic_region_type)
-# glt.branch_sets = [glt.branch_sets[1]]
-#
-# # write logic trees to json for later use
-# slt.to_json('slt_one_branch.json')
-# glt.to_json('glt_crust_only.json')
-#
-# args.srm_logic_tree = slt
-# args.gmcm_logic_tree = glt
-# args.hazard_model_id = 'ONE_SRM_BRANCH'
-# run_aggregation(args)
