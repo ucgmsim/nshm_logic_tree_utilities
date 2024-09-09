@@ -2,31 +2,16 @@
 This file contains functions to generate figures of the logic tree investigation results.
 """
 
-
-from dataclasses import dataclass
-
-import matplotlib.pyplot as plt
-import matplotlib
-import numpy as np
 from pathlib import Path
-import pandas as pd
-import scipy
-import pyarrow.dataset as ds
 from typing import Union
 
-import config as cfg
-
-
-
-
-from cycler import cycler
 import natsort
-from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib import pyplot as plt, ticker as mticker
-import toshi_hazard_post.calculators as calculators
-
-
+import numpy as np
+import pyarrow.dataset as ds
 import toml
+import toshi_hazard_post.calculators as calculators
+from matplotlib import pyplot as plt
+
 import plotting_helpers
 
 

@@ -86,25 +86,41 @@ logic_tree_pair_list1 = [
 ### This constructs a logic_tree_pair_list of individual ground motion models,
 ### paired with the highest weighted branch of the source logic tree
 
-logic_tree_pair_list2 = logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
-    initial_logic_tree_set = full_lt_set,
-    tectonic_region_type_sets=[["Active Shallow Crust"],["Subduction Interface"], ["Subduction Intraslab"]],
-    which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
+logic_tree_pair_list2 = (
+    logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
+        initial_logic_tree_set=full_lt_set,
+        tectonic_region_type_sets=[
+            ["Active Shallow Crust"],
+            ["Subduction Interface"],
+            ["Subduction Intraslab"],
+        ],
+        which_interfaces=["only_HIK", "only_PUY", "HIK_and_PUY"],
+    )
+)
 
 #### Example 3 ####
 
 ### This constructs a logic_tree_pair_list of individual source models,
 ### paired with the highest weighted branch of the ground motion models logic tree
 
-logic_tree_pair_list3 = logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
-    initial_logic_tree_set = full_lt_set,
-    tectonic_region_type_sets = [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]],
-    which_interfaces = ["only_HIK", "only_PUY", "HIK_and_PUY"])
+logic_tree_pair_list3 = (
+    logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
+        initial_logic_tree_set=full_lt_set,
+        tectonic_region_type_sets=[
+            ["Active Shallow Crust"],
+            ["Subduction Interface"],
+            ["Subduction Intraslab"],
+        ],
+        which_interfaces=["only_HIK", "only_PUY", "HIK_and_PUY"],
+    )
+)
 
 ### concatenate the logic_tree_pair_lists
-logic_tree_pair_list = logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
+logic_tree_pair_list = (
+    logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
+)
 
-#logic_tree_pair_list = logic_tree_pair_list2
+# logic_tree_pair_list = logic_tree_pair_list2
 
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_pair_list)
@@ -117,7 +133,9 @@ for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
     collated_notes_df = pd.concat([collated_notes_df, notes_df], ignore_index=True)
 
 # move the "logic_tree_index" column to the left-most position
-collated_notes_df.insert(0, "logic_tree_index", collated_notes_df.pop("logic_tree_index"))
+collated_notes_df.insert(
+    0, "logic_tree_index", collated_notes_df.pop("logic_tree_index")
+)
 collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
 
 ## Run toshi_hazard_post with the modified logic trees

@@ -4,24 +4,18 @@ This module contains helper functions for plotting logic tree investigation resu
 
 
 from dataclasses import dataclass
-
-import matplotlib.pyplot as plt
-import matplotlib
-import numpy as np
 from pathlib import Path
+from typing import Union
+
+import matplotlib
+import natsort
+import numpy as np
 import pandas as pd
 import scipy
-import pyarrow.dataset as ds
-from typing import Union
 import toml
+from matplotlib import pyplot as plt
 
 import config as cfg
-
-from cycler import cycler
-import natsort
-from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib import pyplot as plt, ticker as mticker
-import toshi_hazard_post.calculators as calculators
 
 ##########################################
 ### dataclasses to store loaded data
