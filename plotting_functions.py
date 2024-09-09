@@ -1557,7 +1557,7 @@ def make_figures_of_several_individual_realizations(
 
         if logic_tree_index_dir.is_dir():
 
-            print(f"Plotting {logic_tree_index_dir.name}")
+            print(f"Plotting hazard curves from {logic_tree_index_dir.name}")
 
             logic_tree_idx = int(logic_tree_index_dir.name.split("_")[-1])
 
