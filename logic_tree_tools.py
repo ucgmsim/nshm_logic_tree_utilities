@@ -1,18 +1,11 @@
 """
-Module containing functions to modify logic trees.
+Contains functions to modify logic trees.
 """
 
-
 import copy
-import logging
-import os
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
-import pandas as pd
-import toml
 from nzshm_model.logic_tree import (
     GMCMLogicTree,
     SourceLogicTree,
@@ -20,11 +13,9 @@ from nzshm_model.logic_tree import (
 from nzshm_model.logic_tree.correlation import (
     LogicTreeCorrelations,
 )
-from toshi_hazard_post.aggregation_args import (
-    AggregationArgs,
-)
 
 from run_toshi_hazard_post_helper import CustomLogicTreePair
+
 
 def reduce_logic_tree_to_nth_highest_weighted_branch(
     logic_tree: Union[SourceLogicTree, GMCMLogicTree], nth_highest: int
@@ -271,6 +262,7 @@ def get_source_branch_parameters(logic_tree):
             unique_values_dict[branch_set_index][value_idx] = list(set(values))
 
     return unique_values_dict
+
 
 def get_params_with_num_options(logic_tree, num_options):
     """
@@ -814,7 +806,7 @@ def get_logic_tree_sets_for_individual_source_models(
                         source_branch_set_short_name_to_index["PUY"]
                     ].branches = needed_branches_dict["PUY"]["moment_rate_scaling"]
 
-                print() ## print a blank line for clarity
+                print()  ## print a blank line for clarity
                 print("After modification")
                 print_info_about_logic_tree_sets(modified_logic_tree_set)
                 new_logic_tree_sets.append(copy.deepcopy(modified_logic_tree_set))
@@ -913,7 +905,6 @@ def get_needed_source_branches(logic_tree_set):
                 search_str = remove_single_quotes(str(branch_values_to_find))
 
                 for branch in branch_set.branches:
-
 
                     if search_str == str(branch.values):
                         selected_branches_per_param.append(copy.deepcopy(branch))
