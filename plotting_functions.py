@@ -434,7 +434,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         fontsize=plot_title_font_size,
     )
 
-    # plt.savefig(plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png", dpi=plot_dpi)
+    plt.savefig(plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png", dpi=plot_dpi)
 
 
 def make_figure_of_srm_model_components(
