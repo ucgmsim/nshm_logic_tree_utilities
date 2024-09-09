@@ -1,5 +1,5 @@
 """
-This module contains helper functions for plotting logic tree investigation results .
+This module contains helper functions for plotting logic tree investigation results.
 """
 
 
@@ -360,15 +360,15 @@ def lookup_realization_name_from_hash(individual_realization_df: pd.DataFrame,
     return realization_names
 
 
-def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[str]:
+def sort_logic_tree_index_by_gmcm_model_name(concatenated_notes_df: pd.DataFrame) -> list[str]:
     """
     Sort the logic_tree_index_[x] names by the ground motion characterization model that
     was isolated by that logic tree.
 
     Parameters
     ----------
-    results_directory : Path
-        The directory containing the run notes CSV file.
+    concatenated_notes_df : pd.DataFrame
+        A DataFrame containing the concatenated notes for all logic trees.
 
     Returns
     -------
@@ -378,15 +378,12 @@ def sort_logic_tree_index_by_gmcm_model_name(results_directory: Path) -> list[st
 
     run_list_label_tuple_list = []
 
-    # Read the run notes CSV file
-    run_notes_df = pd.read_csv(results_directory / "run_notes.csv")
-
     # Iterate over each logic tree index
-    for logic_tree_index in run_notes_df["logic_tree_index"]:
+    for logic_tree_index in concatenated_notes_df["logic_tree_index"]:
 
         # Extract the slt_note and glt_note for the current logic tree index
-        slt_note = f"{run_notes_df[run_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
-        glt_note = f"{run_notes_df[run_notes_df["logic_tree_index"]== logic_tree_index]["glt_note"].values[0]}"
+        slt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
+        glt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["glt_note"].values[0]}"
 
         # Isolate the useful parts of the notes
         trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
@@ -480,7 +477,7 @@ def get_interpolated_gmms(results_directory: Union[Path, str],
 
     loaded_results = load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
     data_df = loaded_results.data_df
-    run_notes_df = loaded_results.run_notes_df
+    collated_notes_df = loaded_results.collated_notes_df
 
     dispersion_range_dict = {}
 
@@ -489,7 +486,7 @@ def get_interpolated_gmms(results_directory: Union[Path, str],
 
     for filter_str in filter_strs:
 
-            filtered_run_notes_df = run_notes_df[run_notes_df["slt_note"].str.contains(filter_str)]
+            filtered_run_notes_df = collated_notes_df[collated_notes_df["slt_note"].str.contains(filter_str)]
 
             logic_tree_names = [f"logic_tree_index_{x}" for x in filtered_run_notes_df["logic_tree_index"].values]
 
@@ -497,7 +494,7 @@ def get_interpolated_gmms(results_directory: Union[Path, str],
 
             for location in locations:
 
-                mm, interp_disp_array = interpolate_ground_motion_models(filtered_data_df,
+                mean_interpolation_points, interp_disp_array = interpolate_ground_motion_models(filtered_data_df,
                                                                          location,
                                                                          vs30,
                                                                          im,
@@ -549,7 +546,7 @@ def interpolate_ground_motion_models(data_df:pd.DataFrame,
     Returns
     -------
     tuple
-        A tuple containing the interpolation points (mm) and the interpolated dispersion array (interp_disp_array).
+        A tuple containing the interpolation points (mean_interpolation_points) and the interpolated dispersion array (interp_disp_array).
     """
 
     mean_list = []
@@ -586,7 +583,7 @@ def interpolate_ground_motion_models(data_df:pd.DataFrame,
     std_ln_array = np.array(std_ln_list)
 
 
-    mm = np.logspace(min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points)
+    mean_interpolation_points = np.logspace(min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points)
 
     interp_disp_array = np.zeros((len(mean_array),num_interp_mean_points))
 
@@ -607,7 +604,7 @@ def interpolate_ground_motion_models(data_df:pd.DataFrame,
         else:
 
             mean_to_dispersion_func = scipy.interpolate.interp1d(mean_vect3, std_ln_vect3, kind='linear',bounds_error=False, fill_value=np.nan)
-            interp_disp = mean_to_dispersion_func(mm)
+            interp_disp = mean_to_dispersion_func(mean_interpolation_points)
             interp_disp_array[model_idx, :] = interp_disp
 
             if plot_interpolations:
@@ -618,11 +615,11 @@ def interpolate_ground_motion_models(data_df:pd.DataFrame,
                 plt.semilogx(mean_vect, std_ln_vect, '.',label='data points before lower cutoff')
 
                 plt.semilogx(mean_vect3, std_ln_vect3, 'r.',label='available data points')
-                plt.semilogx(mm, interp_disp, 'r--',label='interpolation (range that is defined for all models)')
+                plt.semilogx(mean_interpolation_points, interp_disp, 'r--',label='interpolation (range that is defined for all models)')
                 plt.title(f"model_index_{model_idx} location {location}")
                 plt.xlabel(rf'Mean annual hazard probability, $\mu_{{P({im.upper()}={im.lower()})}}$')
                 plt.ylabel(rf'Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$')
                 plt.legend()
                 plt.show()
 
-    return mm, interp_disp_array
+    return mean_interpolation_points, interp_disp_array
