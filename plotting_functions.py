@@ -15,17 +15,19 @@ from matplotlib import pyplot as plt
 import plotting_helpers
 
 
-def make_figure_of_coefficient_of_variation(results_directory: Union[Path, str],
-                                            plot_output_directory: Union[Path, str],
-                                            plot_dpi: int = 500,
-                                            plot_fontsize: float = 12.0,
-                                            plot_lineweight=5,
-                                            location: str = "WLG",
-                                            im: str = "PGA",
-                                            vs30: int = 400,
-                                            xlims: tuple = (1e-2, 5),
-                                            ylims: tuple = (0.05, 0.8),
-                                            figsize: tuple = (7.3, 4.62)):
+def make_figure_of_coefficient_of_variation(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    plot_dpi: int = 500,
+    plot_fontsize: float = 12.0,
+    plot_lineweight=5,
+    location: str = "WLG",
+    im: str = "PGA",
+    vs30: int = 400,
+    xlims: tuple = (1e-2, 5),
+    ylims: tuple = (0.05, 0.8),
+    figsize: tuple = (7.3, 4.62),
+):
     """
     Generates a figure showing the coefficient of variation of model predictions
     for a given location, intensity measure, and Vs30 value.
@@ -63,7 +65,7 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path, str],
     None
     """
 
-    nshm_im_levels = np.loadtxt('resources/nshm_im_levels.txt')
+    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -71,76 +73,105 @@ def make_figure_of_coefficient_of_variation(results_directory: Union[Path, str],
         plot_output_directory = Path(plot_output_directory)
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
 
     nloc_001_str = locations_nloc_dict[location]
 
     mean_list = []
     cov_list = []
 
-    resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    resulting_hazard_curves = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory
+        )
+    )
 
     data_df = resulting_hazard_curves.data_df
     collated_notes_df = resulting_hazard_curves.collated_notes_df
 
     ### Identify the outputs that are needed
-    slt_note_condition_idx = ((collated_notes_df["slt_note"] == "full > ") |
-                              (collated_notes_df["slt_note"] == "full > 1 (nth) h.w.b. > "))
+    slt_note_condition_idx = (collated_notes_df["slt_note"] == "full > ") | (
+        collated_notes_df["slt_note"] == "full > 1 (nth) h.w.b. > "
+    )
 
-    glt_note_condition_idx = ((collated_notes_df["glt_note"] == "full > ") |
-                              (collated_notes_df["glt_note"] == "full > 1 (nth) h.w.b. > "))
+    glt_note_condition_idx = (collated_notes_df["glt_note"] == "full > ") | (
+        collated_notes_df["glt_note"] == "full > 1 (nth) h.w.b. > "
+    )
 
-    collated_notes_df = collated_notes_df[slt_note_condition_idx & glt_note_condition_idx]
+    collated_notes_df = collated_notes_df[
+        slt_note_condition_idx & glt_note_condition_idx
+    ]
 
-    logic_tree_index_list = [f"logic_tree_index_{x}" for x in collated_notes_df["logic_tree_index"].values]
+    logic_tree_index_list = [
+        f"logic_tree_index_{x}" for x in collated_notes_df["logic_tree_index"].values
+    ]
 
     for logic_tree_idx, logic_tree_index_str in enumerate(logic_tree_index_list):
-        mean = data_df[(data_df["agg"] == "mean") &
-                       (data_df["vs30"] == vs30) &
-                       (data_df["imt"] == im) &
-                       (data_df["hazard_model_id"] == logic_tree_index_str) &
-                       (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        mean = data_df[
+            (data_df["agg"] == "mean")
+            & (data_df["vs30"] == vs30)
+            & (data_df["imt"] == im)
+            & (data_df["hazard_model_id"] == logic_tree_index_str)
+            & (data_df["nloc_001"] == nloc_001_str)
+        ]["values"].values[0]
 
-        cov = data_df[(data_df["agg"] == "cov") &
-                      (data_df["vs30"] == vs30) &
-                      (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == logic_tree_index_str) &
-                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+        cov = data_df[
+            (data_df["agg"] == "cov")
+            & (data_df["vs30"] == vs30)
+            & (data_df["imt"] == im)
+            & (data_df["hazard_model_id"] == logic_tree_index_str)
+            & (data_df["nloc_001"] == nloc_001_str)
+        ]["values"].values[0]
 
         mean_list.append(mean)
         cov_list.append(cov)
 
-    plt.rcParams.update({'font.size': plot_fontsize})
+    plt.rcParams.update({"font.size": plot_fontsize})
     plt.figure(figsize=figsize)
 
-    plt.semilogx(nshm_im_levels, cov_list[0], linestyle='--', linewidth=plot_lineweight, label='source model')
-    plt.semilogx(nshm_im_levels, cov_list[1], linestyle='-.', linewidth=plot_lineweight, label='ground motion model')
-    plt.semilogx(nshm_im_levels, cov_list[2], linestyle='-', linewidth=plot_lineweight, label='both')
+    plt.semilogx(
+        nshm_im_levels,
+        cov_list[0],
+        linestyle="--",
+        linewidth=plot_lineweight,
+        label="source model",
+    )
+    plt.semilogx(
+        nshm_im_levels,
+        cov_list[1],
+        linestyle="-.",
+        linewidth=plot_lineweight,
+        label="ground motion model",
+    )
+    plt.semilogx(
+        nshm_im_levels,
+        cov_list[2],
+        linestyle="-",
+        linewidth=plot_lineweight,
+        label="both",
+    )
     plt.legend(handlelength=4)
     plt.ylabel("Modelling uncertainty\n(coefficient of variation of model predictions)")
-    plt.xlabel('Peak ground acceleration (g)')
+    plt.xlabel("Peak ground acceleration (g)")
     plt.xlim(xlims)
     plt.ylim(ylims)
 
-    plt.grid(which='major',
-             linestyle='--',
-             linewidth='0.5',
-             color='black',
-             alpha=0.6)
+    plt.grid(which="major", linestyle="--", linewidth="0.5", color="black", alpha=0.6)
 
     plt.subplots_adjust(left=0.11, right=0.99, bottom=0.12, top=0.97)
     plt.savefig(plot_output_directory / "coefficient_of_variation.png", dpi=plot_dpi)
     plt.close()
 
 
-def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
-                                               results_directory: Union[Path, str],
-                                               plot_output_directory: Union[Path, str],
-                                               vs30:int=400,
-                                               im:str="PGA",
-                                               plot_title_font_size: float = 12,
-                                               plot_dpi=500):
-
+def make_figure_of_srm_and_gmcm_model_dispersions(
+    locations: list[str],
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    vs30: int = 400,
+    im: str = "PGA",
+    plot_title_font_size: float = 12,
+    plot_dpi=500,
+):
     """
     Make a figure containing subplots of mean prediction on the vertical axis and the dispersion in
     predictions on the horizontal axis, following Bradley (2009).
@@ -162,32 +193,46 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
 
     num_plot_cols = len(locations)
 
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
-    model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
-    glt_model_color = toml.load('resources/model_plot_colors.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
+    model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
+    glt_model_color = toml.load("resources/model_plot_colors.toml")
 
-    loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    loaded_results = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory
+        )
+    )
     data_df = loaded_results.data_df
     collated_notes_df = loaded_results.collated_notes_df
 
     #### Isolate the results for the ground motion models
     ## Filter to only include isolated ground motion models
     gmcm_filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("*",regex=False)]
+        collated_notes_df["glt_note"].str.contains("*", regex=False)
+    ]
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
-    gmcm_filtered_collated_notes_df = gmcm_filtered_collated_notes_df[~gmcm_filtered_collated_notes_df["slt_note"].str.contains("only")]
-    sorted_gmm_logic_tree_indices = plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(gmcm_filtered_collated_notes_df)
+    gmcm_filtered_collated_notes_df = gmcm_filtered_collated_notes_df[
+        ~gmcm_filtered_collated_notes_df["slt_note"].str.contains("only")
+    ]
+    sorted_gmm_logic_tree_indices = (
+        plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(
+            gmcm_filtered_collated_notes_df
+        )
+    )
 
     #### Isolate the results for the seismicity rate model components
     ## filter to only include the SRM components
     srm_filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("h.w.b. > t")]
+        collated_notes_df["glt_note"].str.contains("h.w.b. > t")
+    ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
-    srm_filtered_collated_notes_df = srm_filtered_collated_notes_df[~srm_filtered_collated_notes_df["slt_note"].str.contains("only")]
+    srm_filtered_collated_notes_df = srm_filtered_collated_notes_df[
+        ~srm_filtered_collated_notes_df["slt_note"].str.contains("only")
+    ]
 
     ### For each row of the subplot, identify the logic_tree_indices (output directories) that will
     ### be plotted by looking at the collated_notes dataframe, and identifying the rows that contain key strings
@@ -198,18 +243,25 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
     for row_index in range(3):
         if row_index == 0:
             plot_row_to_logic_tree_index[row_index] = gmcm_filtered_collated_notes_df[
-                gmcm_filtered_collated_notes_df["slt_note"].str.contains("CRU")]["logic_tree_index"]
+                gmcm_filtered_collated_notes_df["slt_note"].str.contains("CRU")
+            ]["logic_tree_index"]
         if row_index == 1:
             plot_row_to_logic_tree_index[row_index] = gmcm_filtered_collated_notes_df[
-                gmcm_filtered_collated_notes_df["slt_note"].str.contains("INTER_HIK_and_PUY|SLAB")]["logic_tree_index"]
+                gmcm_filtered_collated_notes_df["slt_note"].str.contains(
+                    "INTER_HIK_and_PUY|SLAB"
+                )
+            ]["logic_tree_index"]
         if row_index == 2:
             plot_row_to_logic_tree_index[row_index] = srm_filtered_collated_notes_df[
-                srm_filtered_collated_notes_df["slt_note"].str.contains("CRU|INTER_HIK_and_PUY")]["logic_tree_index"]
+                srm_filtered_collated_notes_df["slt_note"].str.contains(
+                    "CRU|INTER_HIK_and_PUY"
+                )
+            ]["logic_tree_index"]
 
     ####################################################
 
     plt.close("all")
-    fig, axes = plt.subplots(3, num_plot_cols, figsize=(3*num_plot_cols, 9))
+    fig, axes = plt.subplots(3, num_plot_cols, figsize=(3 * num_plot_cols, 9))
 
     for row_index in range(3):
 
@@ -219,13 +271,17 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
 
             plot_location = locations[column_index]
             if row_index == 0:
-                axes[row_index, column_index].set_title(location_to_full_location[plot_location],
-                                                        fontsize=plot_title_font_size)
+                axes[row_index, column_index].set_title(
+                    location_to_full_location[plot_location],
+                    fontsize=plot_title_font_size,
+                )
 
             if row_index != 2:
                 sorted_logic_tree_indices = sorted_gmm_logic_tree_indices
             if row_index == 2:
-                sorted_logic_tree_indices = srm_filtered_collated_notes_df["logic_tree_index"].values
+                sorted_logic_tree_indices = srm_filtered_collated_notes_df[
+                    "logic_tree_index"
+                ].values
 
             for sorted_logic_tree_index in sorted_logic_tree_indices:
 
@@ -233,120 +289,162 @@ def make_figure_of_srm_and_gmcm_model_dispersions(locations: list[str],
 
                     logic_tree_name_str = f"logic_tree_index_{sorted_logic_tree_index}"
 
-                    if row_index in [0,1]:
-                        run_note = gmcm_filtered_collated_notes_df[gmcm_filtered_collated_notes_df["logic_tree_index"] == sorted_logic_tree_index]["glt_note"].values[0]
+                    if row_index in [0, 1]:
+                        run_note = gmcm_filtered_collated_notes_df[
+                            gmcm_filtered_collated_notes_df["logic_tree_index"]
+                            == sorted_logic_tree_index
+                        ]["glt_note"].values[0]
                         short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
                         plot_label = model_to_plot_label[short_note]
 
                     if row_index == 2:
-                        run_note = srm_filtered_collated_notes_df[srm_filtered_collated_notes_df["logic_tree_index"] == sorted_logic_tree_index]["slt_note"].values[0]
-                        short_note = run_note.split(">")[1].split(":")[-1].strip(" []") + "_" +\
-                                     run_note.split(">")[2].strip()
+                        run_note = srm_filtered_collated_notes_df[
+                            srm_filtered_collated_notes_df["logic_tree_index"]
+                            == sorted_logic_tree_index
+                        ]["slt_note"].values[0]
+                        short_note = (
+                            run_note.split(">")[1].split(":")[-1].strip(" []")
+                            + "_"
+                            + run_note.split(">")[2].strip()
+                        )
 
                         plot_label = model_to_plot_label[short_note]
 
-                    mean = data_df[(data_df["agg"] == "mean") &
-                         (data_df["vs30"] == vs30) &
-                         (data_df["imt"] == im) &
-                         (data_df["hazard_model_id"] == logic_tree_name_str) &
-                         (data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+                    mean = data_df[
+                        (data_df["agg"] == "mean")
+                        & (data_df["vs30"] == vs30)
+                        & (data_df["imt"] == im)
+                        & (data_df["hazard_model_id"] == logic_tree_name_str)
+                        & (data_df["nloc_001"] == locations_nloc_dict[plot_location])
+                    ]["values"].values[0]
 
-                    std_ln = data_df[(data_df["agg"] == "std_ln") &
-                                     (data_df["vs30"] == vs30) &
-                                     (data_df["imt"] == im) &
-                                     (data_df["hazard_model_id"] == logic_tree_name_str) &
-                                     (data_df["nloc_001"] == locations_nloc_dict[plot_location])]["values"].values[0]
+                    std_ln = data_df[
+                        (data_df["agg"] == "std_ln")
+                        & (data_df["vs30"] == vs30)
+                        & (data_df["imt"] == im)
+                        & (data_df["hazard_model_id"] == logic_tree_name_str)
+                        & (data_df["nloc_001"] == locations_nloc_dict[plot_location])
+                    ]["values"].values[0]
 
                     if row_index != 2:
                         if "CRU" in run_note:
-                            plot_linestyle = '--'
+                            plot_linestyle = "--"
                         if "INTER" in run_note:
-                            plot_linestyle = '--'
+                            plot_linestyle = "--"
                         if "SLAB" in run_note:
-                            plot_linestyle = '-.'
+                            plot_linestyle = "-."
 
                     elif row_index == 2:
                         if "CRU" in run_note:
-                            plot_linestyle = '--'
+                            plot_linestyle = "--"
                         if "INTER" in run_note:
-                            plot_linestyle = '-.'
+                            plot_linestyle = "-."
 
-                    axes[row_index, column_index].semilogy(std_ln, mean, label=plot_label,
-                                                       color=glt_model_color[short_note],
-                                                           linestyle=plot_linestyle)
+                    axes[row_index, column_index].semilogy(
+                        std_ln,
+                        mean,
+                        label=plot_label,
+                        color=glt_model_color[short_note],
+                        linestyle=plot_linestyle,
+                    )
 
-                    axes[row_index, column_index].grid(which='major',
-                                                             linestyle='--',
-                                                             linewidth='0.5',
-                                                             color='black',
-                                                             alpha=0.6)
+                    axes[row_index, column_index].grid(
+                        which="major",
+                        linestyle="--",
+                        linewidth="0.5",
+                        color="black",
+                        alpha=0.6,
+                    )
 
                     axes[row_index, column_index].set_ylim(1e-5, 0.7)
                     axes[row_index, column_index].set_xlim(-0.01, 0.7)
 
                     axes[row_index, column_index].legend(
-                             loc="lower left",
-                             prop={'size': 6},
-                             framealpha=0.4,
-                             handlelength=2.2,
-                             handletextpad=0.2)
+                        loc="lower left",
+                        prop={"size": 6},
+                        framealpha=0.4,
+                        handlelength=2.2,
+                        handletextpad=0.2,
+                    )
 
-                    if row_index in [0,1]:
+                    if row_index in [0, 1]:
                         axes[row_index, column_index].set_xticklabels([])
                     if column_index > 0:
                         axes[row_index, column_index].set_yticklabels([])
 
                     if (row_index == 1) & (column_index == 0):
-                        axes[row_index, column_index].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
+                        axes[row_index, column_index].set_ylabel(
+                            r"Mean annual hazard probability, $\mu_{P(PGA=pga)}$"
+                        )
 
     ### The text on the left and bottom of the figure require a constant margin in pixels
     ### but the figure margins need to be provided in fractions of the figure dimensions.
     ### As the figure dimensions change depending on how many columns are in the figure,
     ### the figure margins need to be calculated in pixels and then converted to fractions
-    fig_margins = plotting_helpers.convert_edge_margin_in_pixels_to_fraction(fig,
-                                                            100,
-                                                            5,
-                                                            45,
-                                                            30)
+    fig_margins = plotting_helpers.convert_edge_margin_in_pixels_to_fraction(
+        fig, 100, 5, 45, 30
+    )
 
     ### Adjust the figure margins before using the figure axes positions to place text
-    plt.subplots_adjust(left=fig_margins.left,
-                        right = fig_margins.right,
-                        bottom = fig_margins.bottom,
-                        top = fig_margins.top,
-                        wspace=0.0,
-                        hspace=0.0)
+    plt.subplots_adjust(
+        left=fig_margins.left,
+        right=fig_margins.right,
+        bottom=fig_margins.bottom,
+        top=fig_margins.top,
+        wspace=0.0,
+        hspace=0.0,
+    )
 
     ### Center the x-axis label differently depending on whether there are an odd or even number of columns
-    if num_plot_cols % 2 != 0: # odd number of columns
-        middle_col_index = int(np.floor(num_plot_cols/2))
-        axes[2, middle_col_index].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
-    if num_plot_cols % 2 == 0: # even number of columns
+    if num_plot_cols % 2 != 0:  # odd number of columns
+        middle_col_index = int(np.floor(num_plot_cols / 2))
+        axes[2, middle_col_index].set_xlabel(
+            r"Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$"
+        )
+    if num_plot_cols % 2 == 0:  # even number of columns
         # anchoring the middle of the x-axis label text to the right edge of the column calculated here
-        anchor_col_index = int(num_plot_cols - num_plot_cols/2 - 1)
-        #fig.text(axes[2, anchor_col_index].get_position().x1, axes[2, anchor_col_index].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
-        fig.text(axes[2, anchor_col_index].get_position().x1, 0.01,
-             r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+        anchor_col_index = int(num_plot_cols - num_plot_cols / 2 - 1)
+        # fig.text(axes[2, anchor_col_index].get_position().x1, axes[2, anchor_col_index].get_position().y0 - 0.05, r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$', ha='center', va='center')
+        fig.text(
+            axes[2, anchor_col_index].get_position().x1,
+            0.01,
+            r"Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$",
+            ha="center",
+            va="center",
+        )
 
     row_titles_x0 = 0.02
-    fig.text(row_titles_x0, axes[0, 0].get_position().y0,'Ground Motion Characterization Models', ha='center',
-             va='center',rotation=90, fontsize=plot_title_font_size)
+    fig.text(
+        row_titles_x0,
+        axes[0, 0].get_position().y0,
+        "Ground Motion Characterization Models",
+        ha="center",
+        va="center",
+        rotation=90,
+        fontsize=plot_title_font_size,
+    )
 
-    fig.text(row_titles_x0, (axes[2, 0].get_position().y0 + axes[2, 0].get_position().y1)/2.0,
-             'Seismicity Rate Models',
-             ha='center', va='center', rotation=90, fontsize=plot_title_font_size)
+    fig.text(
+        row_titles_x0,
+        (axes[2, 0].get_position().y0 + axes[2, 0].get_position().y1) / 2.0,
+        "Seismicity Rate Models",
+        ha="center",
+        va="center",
+        rotation=90,
+        fontsize=plot_title_font_size,
+    )
+
+    # plt.savefig(plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png", dpi=plot_dpi)
 
 
-    plt.savefig(plot_output_directory / f"{"_".join(locations)}_dispersion_poster_plot.png", dpi=plot_dpi)
-
-
-def make_figure_of_srm_model_components(results_directory: Union[Path,str],
-                                        plot_output_directory:Union[Path, str],
-                                        locations: list[str] = ["AKL", "WLG", "CHC"],
-                                        im: str="PGA",
-                                        vs30:int=400,
-                                        plot_dpi:int=500):
-
+def make_figure_of_srm_model_components(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    locations: list[str] = ["AKL", "WLG", "CHC"],
+    im: str = "PGA",
+    vs30: int = 400,
+    plot_dpi: int = 500,
+):
     """
     Make a figure of the dispersion in the seismicity rate model components.
 
@@ -368,17 +466,18 @@ def make_figure_of_srm_model_components(results_directory: Union[Path,str],
     """
 
     ### tectonic region type and model name lookup dictionaries
-    trt_short_to_long = {"CRU":"crust",
-                         "INTER":"subduction interface\n"}
+    trt_short_to_long = {"CRU": "crust", "INTER": "subduction interface\n"}
 
     ### model name lookup dictionary
-    model_name_short_to_long = {"deformation_model":"deformation model\n(geologic or geodetic)",
-                                "time_dependence":"time dependence\n(time-dependent or time-independent)",
-                                "MFD":"magnitude frequency distribution",
-                                "moment_rate_scaling":"moment rate scaling"}
+    model_name_short_to_long = {
+        "deformation_model": "deformation model\n(geologic or geodetic)",
+        "time_dependence": "time dependence\n(time-dependent or time-independent)",
+        "MFD": "magnitude frequency distribution",
+        "moment_rate_scaling": "moment rate scaling",
+    }
 
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -387,24 +486,34 @@ def make_figure_of_srm_model_components(results_directory: Union[Path,str],
 
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-    loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    loaded_results = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory
+        )
+    )
 
     logic_tree_name_notes_df = loaded_results.collated_notes_df
     data_df = loaded_results.data_df
 
     ## filter to only include the SRM components
     filtered_logic_tree_name_notes_df = logic_tree_name_notes_df[
-        logic_tree_name_notes_df["glt_note"].str.contains("h.w.b. > t")]
+        logic_tree_name_notes_df["glt_note"].str.contains("h.w.b. > t")
+    ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
-    filtered_logic_tree_name_notes_df = filtered_logic_tree_name_notes_df[~filtered_logic_tree_name_notes_df["slt_note"].str.contains("only")]
+    filtered_logic_tree_name_notes_df = filtered_logic_tree_name_notes_df[
+        ~filtered_logic_tree_name_notes_df["slt_note"].str.contains("only")
+    ]
 
-    logic_tree_name_strs = [f"logic_tree_index_{x}" for x in filtered_logic_tree_name_notes_df["logic_tree_index"].values]
+    logic_tree_name_strs = [
+        f"logic_tree_index_{x}"
+        for x in filtered_logic_tree_name_notes_df["logic_tree_index"].values
+    ]
 
-    fig, axes = plt.subplots(1, len(locations), figsize=(2.7*len(locations), 4))
+    fig, axes = plt.subplots(1, len(locations), figsize=(2.7 * len(locations), 4))
 
-    linestyle_lookup_dict = {"CRU":"-", "INTER":"--"}
+    linestyle_lookup_dict = {"CRU": "-", "INTER": "--"}
 
     for location_idx, location in enumerate(locations):
 
@@ -412,17 +521,21 @@ def make_figure_of_srm_model_components(results_directory: Union[Path,str],
 
             nloc_001_str = locations_nloc_dict[location]
 
-            mean = data_df[(data_df["agg"] == "mean") &
-                      (data_df["vs30"] == vs30) &
-                      (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == logic_tree_name) &
-                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            mean = data_df[
+                (data_df["agg"] == "mean")
+                & (data_df["vs30"] == vs30)
+                & (data_df["imt"] == im)
+                & (data_df["hazard_model_id"] == logic_tree_name)
+                & (data_df["nloc_001"] == nloc_001_str)
+            ]["values"].values[0]
 
-            std_ln = data_df[(data_df["agg"] == "std_ln") &
-                      (data_df["vs30"] == vs30) &
-                      (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == logic_tree_name) &
-                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            std_ln = data_df[
+                (data_df["agg"] == "std_ln")
+                & (data_df["vs30"] == vs30)
+                & (data_df["imt"] == im)
+                & (data_df["hazard_model_id"] == logic_tree_name)
+                & (data_df["nloc_001"] == nloc_001_str)
+            ]["values"].values[0]
 
             needed_idx = mean > 1e-8
             mean = mean[needed_idx]
@@ -439,40 +552,54 @@ def make_figure_of_srm_model_components(results_directory: Union[Path,str],
 
             note = f"{trt_short_to_long[tectonic_region_type]} {model_name_short_to_long[model_name]}"
 
-            axes[location_idx].semilogy(std_ln, mean, label=note, linestyle = linestyle_lookup_dict[tectonic_region_type])
+            axes[location_idx].semilogy(
+                std_ln,
+                mean,
+                label=note,
+                linestyle=linestyle_lookup_dict[tectonic_region_type],
+            )
 
-            axes[location_idx].set_ylim(1e-6,0.6)
+            axes[location_idx].set_ylim(1e-6, 0.6)
             axes[location_idx].set_xlim(-0.01, 0.37)
             axes[location_idx].set_title(location_to_full_location[location])
 
             if location_idx == 0:
-                axes[location_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+                axes[location_idx].set_ylabel(
+                    r"Mean annual hazard probability, $\mu_{P(IM=im)}$"
+                )
 
             if location_idx == 1:
-                axes[location_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                axes[location_idx].set_xlabel(
+                    r"Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$"
+                )
                 axes[location_idx].set_yticklabels([])
             if location_idx == 2:
                 axes[location_idx].set_yticklabels([])
 
-        axes[location_idx].grid(which='major', linestyle='--', linewidth='0.5', color='black')
+        axes[location_idx].grid(
+            which="major", linestyle="--", linewidth="0.5", color="black"
+        )
 
-        axes[location_idx].legend(loc="lower left",
-                                  prop={'size': 6},
-                                  framealpha=0.6,
-                                  handlelength=2.2,
-                                  handletextpad=0.2)
+        axes[location_idx].legend(
+            loc="lower left",
+            prop={"size": 6},
+            framealpha=0.6,
+            handlelength=2.2,
+            handletextpad=0.2,
+        )
 
-    plt.subplots_adjust(wspace=0.0,left=0.1,right=0.99,top=0.94)
+    plt.subplots_adjust(wspace=0.0, left=0.1, right=0.99, top=0.94)
     plt.savefig(plot_output_directory / f"srm_dispersions_{"_".join(locations)}.png",dpi=plot_dpi)
 
 
-def make_figure_of_gmcms(results_directory: Union[Path, str],
-                         plot_output_directory: Union[Path, str],
-                         locations : list[str] = ["AKL", "WLG", "CHC"],
-                         vs30: int = 400,
-                         im: str = "PGA",
-                         plot_dpi = 500):
-
+def make_figure_of_gmcms(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    locations: list[str] = ["AKL", "WLG", "CHC"],
+    vs30: int = 400,
+    im: str = "PGA",
+    plot_dpi=500,
+):
     """
     Generate a figure of ground motion characterization models (GMCMs) for specified locations.
 
@@ -496,11 +623,13 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
     None
     """
 
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    tectonic_type_to_linestyle = toml.load('resources/tectonic_region_type_to_linestyle.toml')
-    location_to_full_location = toml.load('resources/location_code_to_full_name.toml')
-    model_to_plot_label = toml.load('resources/model_name_lookup_for_plot.toml')
-    glt_model_color = toml.load('resources/model_plot_colors.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    tectonic_type_to_linestyle = toml.load(
+        "resources/tectonic_region_type_to_linestyle.toml"
+    )
+    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
+    model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
+    glt_model_color = toml.load("resources/model_plot_colors.toml")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -510,22 +639,33 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
 
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-    loaded_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory, locations)
+    loaded_results = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory, locations
+        )
+    )
     data_df = loaded_results.data_df
     collated_notes_df = loaded_results.collated_notes_df
 
     ## Filter to only include isolated ground motion models
     filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("*",regex=False)]
+        collated_notes_df["glt_note"].str.contains("*", regex=False)
+    ]
 
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
-    filtered_collated_notes_df = filtered_collated_notes_df[~filtered_collated_notes_df["slt_note"].str.contains("only")]
+    filtered_collated_notes_df = filtered_collated_notes_df[
+        ~filtered_collated_notes_df["slt_note"].str.contains("only")
+    ]
 
-    sorted_logic_tree_indices = plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(filtered_collated_notes_df)
+    sorted_logic_tree_indices = (
+        plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(
+            filtered_collated_notes_df
+        )
+    )
 
     plt.close("all")
-    fig, axes = plt.subplots(3, 3,figsize=(6,9))
+    fig, axes = plt.subplots(3, 3, figsize=(6, 9))
 
     for location_row_idx, location in enumerate(locations):
 
@@ -539,20 +679,24 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
 
             logic_tree_name_str = f"logic_tree_index_{logic_tree_index}"
 
-            mean = data_df[(data_df["agg"] == "mean") &
-                      (data_df["vs30"] == vs30) &
-                      (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == logic_tree_name_str) &
-                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            mean = data_df[
+                (data_df["agg"] == "mean")
+                & (data_df["vs30"] == vs30)
+                & (data_df["imt"] == im)
+                & (data_df["hazard_model_id"] == logic_tree_name_str)
+                & (data_df["nloc_001"] == nloc_001_str)
+            ]["values"].values[0]
 
             mean_max = np.max(mean)
-            print(f'logic_tree_name_str {logic_tree_name_str} max mean: {mean_max}')
+            print(f"logic_tree_name_str {logic_tree_name_str} max mean: {mean_max}")
 
-            std_ln = data_df[(data_df["agg"] == "std_ln") &
-                      (data_df["vs30"] == vs30) &
-                      (data_df["imt"] == im) &
-                      (data_df["hazard_model_id"] == logic_tree_name_str) &
-                      (data_df["nloc_001"] == nloc_001_str)]["values"].values[0]
+            std_ln = data_df[
+                (data_df["agg"] == "std_ln")
+                & (data_df["vs30"] == vs30)
+                & (data_df["imt"] == im)
+                & (data_df["hazard_model_id"] == logic_tree_name_str)
+                & (data_df["nloc_001"] == nloc_001_str)
+            ]["values"].values[0]
 
             mean_list.append(mean)
             std_ln_list.append(std_ln)
@@ -578,36 +722,43 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
             if "SLAB" in trts_from_note:
                 subplot_idx = 2
 
-            axes[location_row_idx, subplot_idx].semilogy(std_ln, mean, label=model_to_plot_label[glt_model],
-                                        linestyle=linestyle, color=glt_model_color[glt_model])
+            axes[location_row_idx, subplot_idx].semilogy(
+                std_ln,
+                mean,
+                label=model_to_plot_label[glt_model],
+                linestyle=linestyle,
+                color=glt_model_color[glt_model],
+            )
 
             axes[location_row_idx, subplot_idx].text(
                 x=0.68,
                 y=0.2,
                 s=location_to_full_location[location],
                 horizontalalignment="right",
-                bbox=dict(facecolor='white', alpha=0.4, edgecolor='none',pad=0)
+                bbox=dict(facecolor="white", alpha=0.4, edgecolor="none", pad=0),
             )
 
-            axes[location_row_idx, subplot_idx].set_ylim(1e-5,0.6)
+            axes[location_row_idx, subplot_idx].set_ylim(1e-5, 0.6)
             axes[location_row_idx, subplot_idx].set_xlim(-0.01, 0.7)
-            axes[location_row_idx, subplot_idx].grid(which='major',
-                                                     linestyle='--',
-                                                     linewidth='0.5',
-                                                     color='black',
-                                                     alpha=0.5)
+            axes[location_row_idx, subplot_idx].grid(
+                which="major", linestyle="--", linewidth="0.5", color="black", alpha=0.5
+            )
 
             if subplot_idx == 0:
-                axes[0,0].set_title("Active shallow crust", fontsize=11)
+                axes[0, 0].set_title("Active shallow crust", fontsize=11)
                 axes[0, 1].set_title("Subduction interface", fontsize=11)
-                axes[0,2].set_title("Subduction intraslab", fontsize=11)
+                axes[0, 2].set_title("Subduction intraslab", fontsize=11)
 
                 if location_row_idx == 1:
-                    axes[location_row_idx, subplot_idx].set_ylabel(r'Mean annual hazard probability, $\mu_{P(IM=im)}$')
+                    axes[location_row_idx, subplot_idx].set_ylabel(
+                        r"Mean annual hazard probability, $\mu_{P(IM=im)}$"
+                    )
 
             if subplot_idx == 1:
                 if location_row_idx == 2:
-                    axes[location_row_idx, subplot_idx].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$')
+                    axes[location_row_idx, subplot_idx].set_xlabel(
+                        r"Dispersion in hazard probability, $\sigma_{\ln P(IM=im)}$"
+                    )
                 axes[location_row_idx, subplot_idx].set_yticklabels([])
 
             if subplot_idx == 2:
@@ -617,25 +768,29 @@ def make_figure_of_gmcms(results_directory: Union[Path, str],
                 axes[location_row_idx, subplot_idx].set_xticklabels([])
 
             axes[location_row_idx, subplot_idx].legend(
-                             loc="lower left",
-                             prop={'size': 6},
-                             framealpha=0.4,
-                             handlelength=2.2,
-                             handletextpad=0.2)
+                loc="lower left",
+                prop={"size": 6},
+                framealpha=0.4,
+                handlelength=2.2,
+                handletextpad=0.2,
+            )
 
-    plt.subplots_adjust(wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97)
+    plt.subplots_adjust(
+        wspace=0.0, hspace=0.0, left=0.11, right=0.99, bottom=0.05, top=0.97
+    )
 
     plt.savefig(plot_output_directory / f"gmcms_{im}_{"_".join(locations)}.png",dpi=plot_dpi)
 
 
-def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
-                                     plot_output_directory: Union[Path,str],
-                                     registry_directory: Union[Path,str],
-                                     location_short_name:str="WLG",
-                                     vs30:int=400,
-                                     im:str="PGA",
-                                     plot_dpi:int=500):
-
+def make_figure_showing_Bradley2009_method(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    registry_directory: Union[Path, str],
+    location_short_name: str = "WLG",
+    vs30: int = 400,
+    im: str = "PGA",
+    plot_dpi: int = 500,
+):
     """
     For a given model, make a figure showing the predictions of the individual realizations and the
     epistemic dispersion as in Bradley (2009).
@@ -672,59 +827,87 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     if isinstance(registry_directory, str):
         registry_directory = Path(registry_directory)
 
-
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
     nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
     plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
 
-    plot_label_lookup = {"Stafford2022(mu_branch=Upper)":"Upper branch of Stafford 2022",
-                        "Stafford2022(mu_branch=Central)":"Central branch of Stafford 2022",
-                        "Stafford2022(mu_branch=Lower)":"Lower branch of Stafford 2022"}
+    plot_label_lookup = {
+        "Stafford2022(mu_branch=Upper)": "Upper branch of Stafford 2022",
+        "Stafford2022(mu_branch=Central)": "Central branch of Stafford 2022",
+        "Stafford2022(mu_branch=Lower)": "Lower branch of Stafford 2022",
+    }
 
-    gmcm_name_formatting_lookup = {"Stafford2022":"Stafford (2022)"}
+    gmcm_name_formatting_lookup = {"Stafford2022": "Stafford (2022)"}
 
-    individual_realization_df = ds.dataset(source=results_directory/"individual_realizations",
-                                           format="parquet").to_table().to_pandas()
+    individual_realization_df = (
+        ds.dataset(
+            source=results_directory / "individual_realizations", format="parquet"
+        )
+        .to_table()
+        .to_pandas()
+    )
 
-    individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == results_directory.name) & \
-                     (individual_realization_df["nloc_001"] == locations_nloc_dict[location_short_name])
+    individual_realizations_needed_indices = (
+        individual_realization_df["hazard_model_id"] == results_directory.name
+    ) & (
+        individual_realization_df["nloc_001"]
+        == locations_nloc_dict[location_short_name]
+    )
 
-    filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+    filtered_individual_realization_df = individual_realization_df[
+        individual_realizations_needed_indices
+    ]
 
-    realization_names = plotting_helpers.lookup_realization_name_from_hash(filtered_individual_realization_df, registry_directory)
+    realization_names = plotting_helpers.lookup_realization_name_from_hash(
+        filtered_individual_realization_df, registry_directory
+    )
 
-    hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+    hazard_rate_array = np.zeros((len(filtered_individual_realization_df), 44))
 
     for realization_index in range(len(filtered_individual_realization_df)):
-        hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+        hazard_rate_array[realization_index, :] = (
+            filtered_individual_realization_df.iloc[realization_index][
+                "branches_hazard_rates"
+            ]
+        )
 
     ### Convert the rate to annual probability of exceedance
     hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
-    resulting_hazard_curves = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory.parent)
+    resulting_hazard_curves = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory.parent
+        )
+    )
 
     agg_stats_df = resulting_hazard_curves.data_df
 
     ## Get the needed mean and standard deviation values
-    mean = agg_stats_df[(agg_stats_df["agg"] == "mean") &
-                   (agg_stats_df["vs30"] == vs30) &
-                   (agg_stats_df["imt"] == im) &
-                   (agg_stats_df["hazard_model_id"] == results_directory.name) &
-                   (agg_stats_df["nloc_001"] == locations_nloc_dict[location_short_name])]["values"].values[0]
+    mean = agg_stats_df[
+        (agg_stats_df["agg"] == "mean")
+        & (agg_stats_df["vs30"] == vs30)
+        & (agg_stats_df["imt"] == im)
+        & (agg_stats_df["hazard_model_id"] == results_directory.name)
+        & (agg_stats_df["nloc_001"] == locations_nloc_dict[location_short_name])
+    ]["values"].values[0]
 
-    std_ln = agg_stats_df[(agg_stats_df["agg"] == "std_ln") &
-                     (agg_stats_df["vs30"] == vs30) &
-                     (agg_stats_df["imt"] == im) &
-                     (agg_stats_df["hazard_model_id"] == results_directory.name) &
-                     (agg_stats_df["nloc_001"] == locations_nloc_dict[location_short_name])]["values"].values[0]
+    std_ln = agg_stats_df[
+        (agg_stats_df["agg"] == "std_ln")
+        & (agg_stats_df["vs30"] == vs30)
+        & (agg_stats_df["imt"] == im)
+        & (agg_stats_df["hazard_model_id"] == results_directory.name)
+        & (agg_stats_df["nloc_001"] == locations_nloc_dict[location_short_name])
+    ]["values"].values[0]
 
-    plot_ylims = (1e-5,1)
+    plot_ylims = (1e-5, 1)
     fig, axes = plt.subplots(1, 2, figsize=(8, 5))
 
     for realization_index in range(len(hazard_prob_of_exceedance)):
-        gmcm_name_with_branch = realization_names[realization_index].ground_motion_characterization_models_id
+        gmcm_name_with_branch = realization_names[
+            realization_index
+        ].ground_motion_characterization_models_id
         gmcm_name = gmcm_name_with_branch.split("(")[0]
 
         if gmcm_name_with_branch in plot_label_lookup.keys():
@@ -732,11 +915,14 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
         else:
             plot_label = gmcm_name_with_branch
 
-        axes[0].loglog(nshm_im_levels, hazard_prob_of_exceedance[realization_index],
-                       label=plot_label,
-                       marker="o",
-                       color=plot_colors[realization_index],
-                       linestyle=plot_linestyles[realization_index])
+        axes[0].loglog(
+            nshm_im_levels,
+            hazard_prob_of_exceedance[realization_index],
+            label=plot_label,
+            marker="o",
+            color=plot_colors[realization_index],
+            linestyle=plot_linestyles[realization_index],
+        )
 
     # Customize the second subplot
     if gmcm_name in gmcm_name_formatting_lookup.keys():
@@ -744,20 +930,20 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
     else:
         gmcm_name_label = gmcm_name
 
-    axes[1].semilogy(std_ln, mean,marker="o", linestyle="-", color="tab:blue", label=gmcm_name_label)
+    axes[1].semilogy(
+        std_ln, mean, marker="o", linestyle="-", color="tab:blue", label=gmcm_name_label
+    )
 
     axes[0].legend(loc="lower left")
     axes[1].legend(loc="lower left")
 
     for ax_index in range(len(axes)):
-        axes[ax_index].grid(which='major',
-                     linestyle='--',
-                     linewidth='0.5',
-                     color='black',
-                     alpha=0.5)
+        axes[ax_index].grid(
+            which="major", linestyle="--", linewidth="0.5", color="black", alpha=0.5
+        )
 
         axes[ax_index].set_ylim(plot_ylims)
-    axes[0].set_xlim(9e-5,5)
+    axes[0].set_xlim(9e-5, 5)
     axes[1].set_xlim(-0.01, 0.68)
 
     ### The annotations for explanation
@@ -773,130 +959,179 @@ def make_figure_showing_Bradley2009_method(results_directory: Union[Path,str],
 
         im_index = np.where(nshm_im_levels == annotation_im)[0][0]
 
-        print(f"im index = {im_index}, im value = {annotation_im}, mean = {mean[im_index]:.1e}")
+        print(
+            f"im index = {im_index}, im value = {annotation_im}, mean = {mean[im_index]:.1e}"
+        )
 
         ### Draw vertical lines at IM values
-        axes[0].hlines(y=mean[im_index], xmin=nshm_im_levels[0]/10, xmax=annotation_im, color="black", linestyle="--")
-        axes[0].vlines(x=annotation_im, ymin=plot_ylims[0], ymax=mean[im_index], color="black", linestyle="--")
-        axes[0].vlines(x=annotation_im, ymin=mean[im_index], ymax=plot_ylims[1], color="tab:blue", linestyle="--")
+        axes[0].hlines(
+            y=mean[im_index],
+            xmin=nshm_im_levels[0] / 10,
+            xmax=annotation_im,
+            color="black",
+            linestyle="--",
+        )
+        axes[0].vlines(
+            x=annotation_im,
+            ymin=plot_ylims[0],
+            ymax=mean[im_index],
+            color="black",
+            linestyle="--",
+        )
+        axes[0].vlines(
+            x=annotation_im,
+            ymin=mean[im_index],
+            ymax=plot_ylims[1],
+            color="tab:blue",
+            linestyle="--",
+        )
 
         ### Draw the arrows
-        axes[0].plot(annotation_im, plot_ylims[1]-0.45,
-                     marker=r'$\uparrow$',
-                     markersize=20,
-                     color="tab:blue")
+        axes[0].plot(
+            annotation_im,
+            plot_ylims[1] - 0.45,
+            marker=r"$\uparrow$",
+            markersize=20,
+            color="tab:blue",
+        )
 
         ### Write the standard deviation value
-        axes[0].text(annotation_im,
-                     plot_ylims[1]+0.5,
-                     f"{std_ln[im_index]:.2f}",
-                     ha='center',
-                     va='center',
-                     color="black")
+        axes[0].text(
+            annotation_im,
+            plot_ylims[1] + 0.5,
+            f"{std_ln[im_index]:.2f}",
+            ha="center",
+            va="center",
+            color="black",
+        )
 
         ### Plot labels (A), (B), (C)
-        axes[0].text(annotation_im,
-                     plot_ylims[1]+2.0,
-                     f"{manually_matched_latex_strings[annotation_ims.index(annotation_im)]}",
-                     ha='center',
-                     va='center',
-                     color="black")
+        axes[0].text(
+            annotation_im,
+            plot_ylims[1] + 2.0,
+            f"{manually_matched_latex_strings[annotation_ims.index(annotation_im)]}",
+            ha="center",
+            va="center",
+            color="black",
+        )
 
         ### Draw the horizontal lines at the mean values
-        axes[1].hlines(y=mean[im_index],
-                       xmin=-0.01,
-                       xmax=std_ln[im_index],
-                       color="black", linestyle="--")
+        axes[1].hlines(
+            y=mean[im_index],
+            xmin=-0.01,
+            xmax=std_ln[im_index],
+            color="black",
+            linestyle="--",
+        )
 
         ### Draw the vertical lines at the standard deviation values
-        axes[1].vlines(x=std_ln[im_index],
-                       ymin=plot_ylims[0],
-                       ymax=plot_ylims[1],
-                       color="black", linestyle="--")
+        axes[1].vlines(
+            x=std_ln[im_index],
+            ymin=plot_ylims[0],
+            ymax=plot_ylims[1],
+            color="black",
+            linestyle="--",
+        )
 
         ### Plot labels (A), (B), (C)
-        axes[1].text(std_ln[im_index],
-                     plot_ylims[1]+0.5,
-                     f"({annotation_labels[annotation_ims.index(annotation_im)]})",
-                     ha='center',
-                     va='center',
-                     color="black")
+        axes[1].text(
+            std_ln[im_index],
+            plot_ylims[1] + 0.5,
+            f"({annotation_labels[annotation_ims.index(annotation_im)]})",
+            ha="center",
+            va="center",
+            color="black",
+        )
 
-    axes[0].set_xlabel(r'Peak ground acceleration (g)')
-    axes[0].set_ylabel(r'Annual hazard probability, $\mu_{P(PGA=pga)}$')
+    axes[0].set_xlabel(r"Peak ground acceleration (g)")
+    axes[0].set_ylabel(r"Annual hazard probability, $\mu_{P(PGA=pga)}$")
 
-    axes[1].set_ylabel(r'Mean annual hazard probability, $\mu_{P(PGA=pga)}$')
-    axes[1].set_xlabel(r'Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$')
+    axes[1].set_ylabel(r"Mean annual hazard probability, $\mu_{P(PGA=pga)}$")
+    axes[1].set_xlabel(r"Dispersion in hazard probability, $\sigma_{\ln P(PGA=pga)}$")
 
-    axes[0].text(1.25e-4,
-                 12,
-                 "Dispersion in hazard probability",
-                 ha='left',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        1.25e-4,
+        12,
+        "Dispersion in hazard probability",
+        ha="left",
+        va="center",
+        color="black",
+    )
 
-    text_row_2_height = plot_ylims[1]+5.0
+    text_row_2_height = plot_ylims[1] + 5.0
 
-    axes[0].text(6e-3,
-                 text_row_2_height,
-                 "Reference point:",
-                 ha='right',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        6e-3,
+        text_row_2_height,
+        "Reference point:",
+        ha="right",
+        va="center",
+        color="black",
+    )
 
-    axes[0].text(annotation_ims[0],
-                 text_row_2_height,
-                 "(A)",
-                 ha='center',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        annotation_ims[0],
+        text_row_2_height,
+        "(A)",
+        ha="center",
+        va="center",
+        color="black",
+    )
 
-    axes[0].text(annotation_ims[1],
-                 text_row_2_height,
-                 "(B)",
-                 ha='center',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        annotation_ims[1],
+        text_row_2_height,
+        "(B)",
+        ha="center",
+        va="center",
+        color="black",
+    )
 
-    axes[0].text(annotation_ims[2],
-                 text_row_2_height,
-                 "(C)",
-                 ha='center',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        annotation_ims[2],
+        text_row_2_height,
+        "(C)",
+        ha="center",
+        va="center",
+        color="black",
+    )
 
-    axes[0].text(8e-3,
-                 plot_ylims[1]+2.0,
-                 f"{im} =  ",
-                 ha='right',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        8e-3, plot_ylims[1] + 2.0, f"{im} =  ", ha="right", va="center", color="black"
+    )
 
-    axes[0].text(5.8e-3,
-                 plot_ylims[1]+0.5,
-                 rf"$\sigma_{{\ln P({im.upper()}={im.lower()})}} = $",
-                 ha='right',
-                 va='center',
-                 color="black")
+    axes[0].text(
+        5.8e-3,
+        plot_ylims[1] + 0.5,
+        rf"$\sigma_{{\ln P({im.upper()}={im.lower()})}} = $",
+        ha="right",
+        va="center",
+        color="black",
+    )
 
-    plt.subplots_adjust(bottom=0.1, top=0.81,left=0.085, right=0.99,wspace=0.23)
+    plt.subplots_adjust(bottom=0.1, top=0.81, left=0.085, right=0.99, wspace=0.23)
 
-    plt.savefig(plot_output_directory / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png", dpi=plot_dpi)
+    plt.savefig(
+        plot_output_directory
+        / f"{gmcm_name}_{location_short_name}_predictions_and_aggregate_stats.png",
+        dpi=plot_dpi,
+    )
 
 
-def make_figure_of_gmm_dispersion_ranges(results_directory: Union[Path, str],
-                         plot_output_directory: Union[Path, str],
-                         locations : list[str] = ["AKL", "WLG", "CHC"],
-                         filter_strs: list[str] = ["CRU", "HIK_and_PUY", "SLAB"],
-                         vs30: int = 400,
-                         im:str = "PGA",
-                         plot_dpi=500,
-                         num_interp_mean_points = 1000,
-                         min_log10_mean_for_interp = -6,
-                         max_log10_mean_for_interp = -2,
-                         plot_interpolations=False,
-                         min_mean_value_for_interp_plots = 1e-9):
-
+def make_figure_of_gmm_dispersion_ranges(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    locations: list[str] = ["AKL", "WLG", "CHC"],
+    filter_strs: list[str] = ["CRU", "HIK_and_PUY", "SLAB"],
+    vs30: int = 400,
+    im: str = "PGA",
+    plot_dpi=500,
+    num_interp_mean_points=1000,
+    min_log10_mean_for_interp=-6,
+    max_log10_mean_for_interp=-2,
+    plot_interpolations=False,
+    min_mean_value_for_interp_plots=1e-9,
+):
     """
     Generate a figure showing the dispersion ranges of ground motion models (GMMs) for specified locations.
 
@@ -938,70 +1173,79 @@ def make_figure_of_gmm_dispersion_ranges(results_directory: Union[Path, str],
         plot_output_directory = Path(plot_output_directory)
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-
     dispersion_range_dict = plotting_helpers.get_interpolated_gmms(
         results_directory=results_directory,
-        locations=              locations,
-        filter_strs =                filter_strs,
-        vs30 =                 vs30,
-        im =                   im,
+        locations=locations,
+        filter_strs=filter_strs,
+        vs30=vs30,
+        im=im,
         num_interp_mean_points=num_interp_mean_points,
-    min_log10_mean_for_interp= min_log10_mean_for_interp,
-    max_log10_mean_for_interp= max_log10_mean_for_interp,
-        plot_interpolations =                  plot_interpolations,
-        min_mean_value_for_interp_plots =    min_mean_value_for_interp_plots)
+        min_log10_mean_for_interp=min_log10_mean_for_interp,
+        max_log10_mean_for_interp=max_log10_mean_for_interp,
+        plot_interpolations=plot_interpolations,
+        min_mean_value_for_interp_plots=min_mean_value_for_interp_plots,
+    )
 
+    linestyle_lookup_dict = {"CRU": "--", "HIK_and_PUY": "-.", "SLAB": ":"}
 
-    linestyle_lookup_dict = {"CRU":"--",
-                             "HIK_and_PUY":"-.",
-                             "SLAB":":"}
-
-    color_lookup_dict = {"AKL":"blue",
-                         "WLG":"orange",
-                         "CHC":"red"}
+    color_lookup_dict = {"AKL": "blue", "WLG": "orange", "CHC": "red"}
 
     plt.figure()
 
-
-    mean_interpolation_points = np.logspace(min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points)
+    mean_interpolation_points = np.logspace(
+        min_log10_mean_for_interp, max_log10_mean_for_interp, num_interp_mean_points
+    )
 
     for location in locations:
 
-            for filter_str in filter_strs:
+        for filter_str in filter_strs:
 
-                if filter_str == "HIK_and_PUY":
+            if filter_str == "HIK_and_PUY":
 
-                    plt.semilogy(dispersion_range_dict[location][filter_str],
+                plt.semilogy(
+                    dispersion_range_dict[location][filter_str],
                     mean_interpolation_points,
                     label=f"{location} INTER",
                     linestyle=linestyle_lookup_dict[filter_str],
-                    color=color_lookup_dict[location])
+                    color=color_lookup_dict[location],
+                )
 
-                else:
+            else:
 
-                    plt.semilogy(dispersion_range_dict[location][filter_str],
+                plt.semilogy(
+                    dispersion_range_dict[location][filter_str],
                     mean_interpolation_points,
                     label=f"{location} {filter_str}",
                     linestyle=linestyle_lookup_dict[filter_str],
-                    color=color_lookup_dict[location])
+                    color=color_lookup_dict[location],
+                )
 
     plt.legend()
-    plt.ylabel(rf'Mean annual hazard probability, $\mu_{{P({im.upper()}={im.lower()})}}$')
-    plt.xlabel(rf'Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$')
-    plt.grid(linestyle='--')
-    plt.savefig(plot_output_directory / f"dispersion_ranges_from_dir_{results_directory.name}.png", dpi=plot_dpi)
+    plt.ylabel(
+        rf"Mean annual hazard probability, $\mu_{{P({im.upper()}={im.lower()})}}$"
+    )
+    plt.xlabel(
+        rf"Range in dispersion in hazard probability, $\sigma_{{\ln P({im.upper()}={im.lower()})}}$"
+    )
+    plt.grid(linestyle="--")
+    plt.savefig(
+        plot_output_directory
+        / f"dispersion_ranges_from_dir_{results_directory.name}.png",
+        dpi=plot_dpi,
+    )
 
 
-def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_index_dir:Union[Path, str],
-                                                plot_output_directory:Union[Path, str],
-                                                locations: list[str] = ["AKL", "WLG", "CHC"],
-                                                im: str = "PGA",
-                                                vs30: int = 400,
-                                                im_xlims:tuple = (9e-5, 5),
-                                                poe_min_plot:float = 1e-5,
-                                                ybuffer_absmax_over_val:float = 10.0,
-                                                plot_dpi: int = 500):
-
+def make_figures_of_individual_realizations_for_a_single_logic_tree(
+    logic_tree_index_dir: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    locations: list[str] = ["AKL", "WLG", "CHC"],
+    im: str = "PGA",
+    vs30: int = 400,
+    im_xlims: tuple = (9e-5, 5),
+    poe_min_plot: float = 1e-5,
+    ybuffer_absmax_over_val: float = 10.0,
+    plot_dpi: int = 500,
+):
     """
     Generate figures of individual realizations for a single logic tree.
 
@@ -1035,11 +1279,13 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
     None
     """
 
-    locations_nloc_dict = toml.load('resources/location_code_to_nloc_str.toml')
-    model_name_to_plot_format = toml.load('resources/model_name_lookup_for_plot.toml')
+    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    model_name_to_plot_format = toml.load("resources/model_name_lookup_for_plot.toml")
     nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
 
-    needed_im_level_indices = np.where((nshm_im_levels >= im_xlims[0]) & (nshm_im_levels <= im_xlims[1]))[0]
+    needed_im_level_indices = np.where(
+        (nshm_im_levels >= im_xlims[0]) & (nshm_im_levels <= im_xlims[1])
+    )[0]
 
     if isinstance(logic_tree_index_dir, str):
         logic_tree_index_dir = Path(logic_tree_index_dir)
@@ -1049,8 +1295,13 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
     if not plot_output_directory.exists():
         plot_output_directory.mkdir(parents=True)
 
-    individual_realization_df = ds.dataset(source=logic_tree_index_dir / "individual_realizations",
-                                           format="parquet").to_table().to_pandas()
+    individual_realization_df = (
+        ds.dataset(
+            source=logic_tree_index_dir / "individual_realizations", format="parquet"
+        )
+        .to_table()
+        .to_pandas()
+    )
 
     output_notes = toml.load(logic_tree_index_dir / "notes.toml")
 
@@ -1058,30 +1309,39 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
         model_name_short = "full"
         model_name_long = model_name_short
 
-    if output_notes["slt_note"] == "full > 1 (nth) h.w.b. > " and output_notes["slt_note"] == "full > ":
+    if (
+        output_notes["slt_note"] == "full > 1 (nth) h.w.b. > "
+        and output_notes["slt_note"] == "full > "
+    ):
         model_name_short = "all_srm"
         model_name_long = model_name_short
 
-    if output_notes["slt_note"] == "full > " and output_notes["slt_note"] == "full > 1 (nth) h.w.b. > ":
+    if (
+        output_notes["slt_note"] == "full > "
+        and output_notes["slt_note"] == "full > 1 (nth) h.w.b. > "
+    ):
         model_name_short = "all_gmcm"
         model_name_long = model_name_short
 
     ### The GMCM logic tree was reduced to the single highest weighted branch so we can use the SRM model components
     if "1 (nth) h.w.b." in output_notes["glt_note"]:
-        model_name_short = output_notes['slt_note'].split(">")[1].split("[")[1].strip("[ ] ") + \
-                            "_" + \
-                           output_notes['slt_note'].split(">")[-2].strip()
+        model_name_short = (
+            output_notes["slt_note"].split(">")[1].split("[")[1].strip("[ ] ")
+            + "_"
+            + output_notes["slt_note"].split(">")[-2].strip()
+        )
         model_name_long = model_name_to_plot_format[model_name_short]
-
 
     ### The source logic tree was reduced to the single highest weighted branch so we can use the gmcm models
     if "1 (nth) h.w.b." in output_notes["slt_note"]:
-        model_name_short = output_notes["glt_note"].split(">")[-2].split("*")[0].strip(" [ ]")
+        model_name_short = (
+            output_notes["glt_note"].split(">")[-2].split("*")[0].strip(" [ ]")
+        )
         model_name_long = model_name_to_plot_format[model_name_short]
 
     plt.close("all")
 
-    fig, axes = plt.subplots(2, len(locations),figsize=(3*len(locations), 6))
+    fig, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
 
     poe_maxs = []
     ln_resid_mins = []
@@ -1091,53 +1351,75 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
 
         nloc_001_str = locations_nloc_dict[location]
 
-        individual_realizations_needed_indices = (individual_realization_df["hazard_model_id"] == logic_tree_index_dir.name) & \
-             (individual_realization_df["nloc_001"] == nloc_001_str) & \
-             (individual_realization_df["vs30"] == vs30) & \
-             (individual_realization_df["imt"] == im)
+        individual_realizations_needed_indices = (
+            (individual_realization_df["hazard_model_id"] == logic_tree_index_dir.name)
+            & (individual_realization_df["nloc_001"] == nloc_001_str)
+            & (individual_realization_df["vs30"] == vs30)
+            & (individual_realization_df["imt"] == im)
+        )
 
-        filtered_individual_realization_df = individual_realization_df[individual_realizations_needed_indices]
+        filtered_individual_realization_df = individual_realization_df[
+            individual_realizations_needed_indices
+        ]
 
-        hazard_rate_array = np.zeros((len(filtered_individual_realization_df),44))
+        hazard_rate_array = np.zeros((len(filtered_individual_realization_df), 44))
         for realization_index in range(len(filtered_individual_realization_df)):
-            hazard_rate_array[realization_index,:] = filtered_individual_realization_df.iloc[realization_index]["branches_hazard_rates"]
+            hazard_rate_array[realization_index, :] = (
+                filtered_individual_realization_df.iloc[realization_index][
+                    "branches_hazard_rates"
+                ]
+            )
 
         ### Convert the rate to annual probability of exceedance
         hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
-        ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(hazard_prob_of_exceedance[0])
+        ln_resid_poe = np.log(hazard_prob_of_exceedance) - np.log(
+            hazard_prob_of_exceedance[0]
+        )
 
         ### Plot the individual realizations in a loop
         for realization_index in range(len(filtered_individual_realization_df)):
 
-            poe_maxs.append(np.nanmax(hazard_prob_of_exceedance[realization_index][needed_im_level_indices]))
-            axes[0,location_idx].loglog(nshm_im_levels[needed_im_level_indices], hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
-                           label=model_name_short)
+            poe_maxs.append(
+                np.nanmax(
+                    hazard_prob_of_exceedance[realization_index][
+                        needed_im_level_indices
+                    ]
+                )
+            )
+            axes[0, location_idx].loglog(
+                nshm_im_levels[needed_im_level_indices],
+                hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
+                label=model_name_short,
+            )
 
-            ln_resid_mins.append(np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices]))
-            ln_resid_maxs.append(np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices]))
-            axes[1,location_idx].semilogx(nshm_im_levels[needed_im_level_indices], ln_resid_poe[realization_index][needed_im_level_indices],
-                           label=model_name_short)
+            ln_resid_mins.append(
+                np.nanmin(ln_resid_poe[realization_index][needed_im_level_indices])
+            )
+            ln_resid_maxs.append(
+                np.nanmax(ln_resid_poe[realization_index][needed_im_level_indices])
+            )
+            axes[1, location_idx].semilogx(
+                nshm_im_levels[needed_im_level_indices],
+                ln_resid_poe[realization_index][needed_im_level_indices],
+                label=model_name_short,
+            )
 
         axes[0, location_idx].set_xlim(im_xlims)
-        axes[0, location_idx].grid(which='major',
-                    linestyle='--',
-                    linewidth='0.5',
-                    color='black',
-                    alpha=0.5)
+        axes[0, location_idx].grid(
+            which="major", linestyle="--", linewidth="0.5", color="black", alpha=0.5
+        )
 
         axes[0, location_idx].set_title(location)
-        axes[0, location_idx].legend(loc="lower left",prop={'size': 5})
+        axes[0, location_idx].legend(loc="lower left", prop={"size": 5})
 
         axes[1, location_idx].set_xlim(im_xlims)
 
-        axes[1, location_idx].grid(which='major',
-                    linestyle='--',
-                    linewidth='0.5',
-                    color='black',
-                    alpha=0.5)
+        axes[1, location_idx].grid(
+            which="major", linestyle="--", linewidth="0.5", color="black", alpha=0.5
+        )
 
-        axes[1, location_idx].legend(loc="lower left",prop={'size': 5})
+        axes[1, location_idx].legend(loc="lower left", prop={"size": 5})
 
         if location_idx > 0:
             axes[0, location_idx].set_yticklabels([])
@@ -1155,14 +1437,19 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
     abs_max = np.nanmax(np.hstack((np.abs(finite_ln_resid_mins), finite_ln_resid_maxs)))
 
     for location_idx in range(len(locations)):
-        axes[0, location_idx].set_ylim(poe_min_plot, np.nanmax(poe_maxs)+np.nanmax(poe_maxs)/ybuffer_absmax_over_val)
-        axes[1, location_idx].set_ylim(np.min(finite_ln_resid_mins)-abs_max/ybuffer_absmax_over_val,
-                                       np.max(finite_ln_resid_maxs)+abs_max/ybuffer_absmax_over_val)
+        axes[0, location_idx].set_ylim(
+            poe_min_plot,
+            np.nanmax(poe_maxs) + np.nanmax(poe_maxs) / ybuffer_absmax_over_val,
+        )
+        axes[1, location_idx].set_ylim(
+            np.min(finite_ln_resid_mins) - abs_max / ybuffer_absmax_over_val,
+            np.max(finite_ln_resid_maxs) + abs_max / ybuffer_absmax_over_val,
+        )
 
-    axes[0, 0].set_ylabel('Annual probability of exceedance')
+    axes[0, 0].set_ylabel("Annual probability of exceedance")
     axes[1, 0].set_ylabel(r"$\ln$(APoE$_n$)-$\ln$(APoE$_0$)")
 
-    axes[1, 1].set_xlabel(f'{im} level')
+    axes[1, 1].set_xlabel(f"{im} level")
 
     plt.suptitle(model_name_long)
 
@@ -1170,21 +1457,23 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(logic_tree_i
 
     plt.savefig(
         plot_output_directory / f"{model_name_short}_individual_realizations.png",
-        dpi=plot_dpi)
+        dpi=plot_dpi,
+    )
 
 
-def make_figures_of_several_individual_realizations(results_directory: Union[Path, str],
-                                                plot_output_directory: Union[Path, str],
-                                                locations: list[str] = ["AKL", "WLG", "CHC"],
-                                                im: str = "PGA",
-                                                vs30: int = 400,
-                                                im_xlims: tuple = (9e-5, 5),
-                                                poe_min_plot: float = 1e-5,
-                                                ybuffer_absmax_over_val: float = 10.0,
-                                                selected_subduction_interface="INTER_HIK_and_PUY",
-                                                plot_dpi: int = 500,
-                                                notes_to_exclude=[]):
-
+def make_figures_of_several_individual_realizations(
+    results_directory: Union[Path, str],
+    plot_output_directory: Union[Path, str],
+    locations: list[str] = ["AKL", "WLG", "CHC"],
+    im: str = "PGA",
+    vs30: int = 400,
+    im_xlims: tuple = (9e-5, 5),
+    poe_min_plot: float = 1e-5,
+    ybuffer_absmax_over_val: float = 10.0,
+    selected_subduction_interface="INTER_HIK_and_PUY",
+    plot_dpi: int = 500,
+    notes_to_exclude=[],
+):
     """
     Generate figures of individual realizations for several logic trees.
 
@@ -1222,7 +1511,6 @@ def make_figures_of_several_individual_realizations(results_directory: Union[Pat
     None
     """
 
-
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
     if isinstance(plot_output_directory, str):
@@ -1233,19 +1521,28 @@ def make_figures_of_several_individual_realizations(results_directory: Union[Pat
 
     logic_tree_indices_to_skip = []
 
-    aggregate_stats_results = plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(results_directory)
+    aggregate_stats_results = (
+        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory
+        )
+    )
     collated_notes_df = aggregate_stats_results.collated_notes_df
 
     ## exclude the specified logic tree indices
     for slt_note, glt_note in notes_to_exclude:
 
-        exclude_bool_idx = (collated_notes_df['slt_note'] == slt_note) & (collated_notes_df['glt_note'] == glt_note)
-        logic_tree_indices_to_skip.append(collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0])
+        exclude_bool_idx = (collated_notes_df["slt_note"] == slt_note) & (
+            collated_notes_df["glt_note"] == glt_note
+        )
+        logic_tree_indices_to_skip.append(
+            collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0]
+        )
 
     ### Skip the interface branches that are not the selected one
     interface_logic_tree_indices = collated_notes_df["slt_note"].str.contains("INTER")
-    interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices]["slt_note"].str.contains(
-        selected_subduction_interface)
+    interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices][
+        "slt_note"
+    ].str.contains(selected_subduction_interface)
     logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
 
     for logic_tree_index_dir in natsort.natsorted(results_directory.iterdir()):
@@ -1269,4 +1566,5 @@ def make_figures_of_several_individual_realizations(results_directory: Union[Pat
                 im_xlims=im_xlims,
                 poe_min_plot=poe_min_plot,
                 ybuffer_absmax_over_val=ybuffer_absmax_over_val,
-                plot_dpi=plot_dpi)
+                plot_dpi=plot_dpi,
+            )
