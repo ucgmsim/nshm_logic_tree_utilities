@@ -13,5 +13,7 @@ pyarrow
 ## format: git+https://github.com/username/repo_name.git@branch_or_tag#egg=package_name
 git+https://github.com/GNS-Science/nzshm-common-py.git@pre-release#egg=nzshm_common_py
 git+https://github.com/GNS-Science/nzshm-model.git@srm-trt-merge-digest#egg=nzshm_model
-git+https://github.com/GNS-Science/toshi-hazard-post.git@feature/documentation-v2#egg=toshi_hazard_post
-git+https://github.com/GNS-Science/toshi-hazard-store.git@pre-release#egg=toshi_hazard_store
+
+## modified GNS packages
+git+https://github.com/ucgmsim/toshi-hazard-post.git@feature/documentation-v2_get_realizations#egg=toshi_hazard_post
+git+https://github.com/ucgmsim/toshi-hazard-store.git@pre-release_get_realizations#egg=toshi_hazard_store
