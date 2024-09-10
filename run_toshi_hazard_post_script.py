@@ -6,7 +6,9 @@ import time
 from pathlib import Path
 
 import pandas as pd
-from toshi_hazard_post.aggregation_args import AggregationArgs
+from toshi_hazard_post.aggregation_args import (
+    AggregationArgs,
+)
 
 import config as cfg
 import logic_tree_tools

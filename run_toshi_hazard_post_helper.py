@@ -21,10 +21,14 @@ from typing import Optional
 
 import pandas as pd
 import toml
-from nzshm_model.logic_tree import GMCMLogicTree, SourceLogicTree
-
+from nzshm_model.logic_tree import (
+    GMCMLogicTree,
+    SourceLogicTree,
+)
 from toshi_hazard_post.aggregation import run_aggregation
-from toshi_hazard_post.aggregation_args import AggregationArgs
+from toshi_hazard_post.aggregation_args import (
+    AggregationArgs,
+)
 
 import logic_tree_tools
 
