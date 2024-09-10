@@ -1,10 +1,11 @@
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 class Config:
     _instance = None
-    #config_path = file_structure.get_data_dir() / "config.yaml"
+    # config_path = file_structure.get_data_dir() / "config.yaml"
     config_path = Path(__file__).parent.resolve() / "config.yaml"
 
     def __new__(cls, *args, **kwargs):
