@@ -7,7 +7,8 @@ plot the results. It depends on several packages developed by [GNS Science](http
 are mentioned in `requirements.txt`. To extract individual realizations from logic tree branches, modified versions of 
 [toshi-hazard-post](https://github.com/ucgmsim/toshi-hazard-post) and 
 [toshi-hazard-store](https://github.com/ucgmsim/toshi-hazard-store) are needed from forks on 
-[ucgmsim's GitHub account](https://github.com/ucgmsim). 
+[ucgmsim's GitHub account](https://github.com/ucgmsim). For usage examples, see `run_toshi_hazard_post_script.py` and
+`plotting_script.py`.
 
 ### Background
 
