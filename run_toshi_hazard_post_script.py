@@ -53,11 +53,11 @@ args = AggregationArgs(initial_input_file)
 args.output_individual_realizations = config.get_value("output_individual_realizations")
 
 ### An initial pair of source and ground motion logic trees
-full_lt_set = logic_tree_tools.CustomLogicTreePair(
-    slt=copy.deepcopy(args.srm_logic_tree),
-    glt=copy.deepcopy(args.gmcm_logic_tree),
-    slt_note="full > ",
-    glt_note="full > ",
+full_logic_tree_pair = logic_tree_tools.CustomLogicTreePair(
+    source_logic_tree=copy.deepcopy(args.srm_logic_tree),
+    ground_motion_logic_tree=copy.deepcopy(args.gmcm_logic_tree),
+    source_logic_tree_note="full > ",
+    ground_motion_logic_tree_note="full > ",
 )
 
 ## This script will iterate over the CustomLogicTreePair objects in logic_tree_pair_list
@@ -72,12 +72,16 @@ full_lt_set = logic_tree_tools.CustomLogicTreePair(
 ## Index 2: The full source logic tree and only the highest weighted branch of the ground motion logic tree
 
 logic_tree_pair_list1 = [
-    full_lt_set,
-    logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
-        full_lt_set, slt_nth_highest=1, glt_nth_highest=None
+    full_logic_tree_pair,
+    logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
+        full_logic_tree_pair,
+        source_logic_tree_nth_highest=1,
+        ground_motion_logic_tree_nth_highest=None,
     ),
-    logic_tree_tools.reduce_lt_set_to_nth_highest_branches(
-        full_lt_set, slt_nth_highest=None, glt_nth_highest=1
+    logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
+        full_logic_tree_pair,
+        source_logic_tree_nth_highest=None,
+        ground_motion_logic_tree_nth_highest=1,
     ),
 ]
 
@@ -87,8 +91,8 @@ logic_tree_pair_list1 = [
 ### paired with the highest weighted branch of the source logic tree
 
 logic_tree_pair_list2 = (
-    logic_tree_tools.get_logic_tree_sets_for_individual_ground_motion_models(
-        initial_logic_tree_set=full_lt_set,
+    logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
+        initial_logic_tree_set=full_logic_tree_pair,
         tectonic_region_type_sets=[
             ["Active Shallow Crust"],
             ["Subduction Interface"],
@@ -104,8 +108,8 @@ logic_tree_pair_list2 = (
 ### paired with the highest weighted branch of the ground motion models logic tree
 
 logic_tree_pair_list3 = (
-    logic_tree_tools.get_logic_tree_sets_for_individual_source_models(
-        initial_logic_tree_set=full_lt_set,
+    logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
+        initial_logic_tree_set=full_logic_tree_pair,
         tectonic_region_type_sets=[
             ["Active Shallow Crust"],
             ["Subduction Interface"],
@@ -123,7 +127,7 @@ logic_tree_pair_list = (
 # logic_tree_pair_list = logic_tree_pair_list2
 
 ### Print info about the logic trees
-logic_tree_tools.print_info_about_logic_tree_sets(logic_tree_pair_list)
+logic_tree_tools.print_info_about_logic_tree_pairs(logic_tree_pair_list)
 
 ## Write notes about the modified logic trees
 collated_notes_df = pd.DataFrame()

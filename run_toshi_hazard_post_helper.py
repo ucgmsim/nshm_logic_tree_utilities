@@ -41,29 +41,29 @@ class CustomLogicTreePair:
     The pair must consist of one SourceLogicTree for the seismicity rate model (SRM) and one GMCMLogicTree
     for the ground motion characterization model (GMCM).
 
-    slt: SourceLogicTree, optional
+    source_logic_tree: SourceLogicTree, optional
         The seismicity rate model (SRM) logic tree to be used in the run.
-    glt: GMCMLogicTree, optional
+    ground_motion_logic_tree: GMCMLogicTree, optional
         The ground motion characterization model (GMCM) logic tree to be used in the run
-    slt_note: str, optional
+    source_logic_tree_note: str, optional
         A human-readable note describing changes to the SourceLogicTree.
-    glt_note: str, optional
+    ground_motion_logic_tree_note: str, optional
         A human-readable note describing changes to the GMCMLogicTree.
     other_notes: str, optional
         Any other notes that are relevant.
     """
 
-    slt: Optional[SourceLogicTree] = None
-    glt: Optional[GMCMLogicTree] = None
+    source_logic_tree: Optional[SourceLogicTree] = None
+    ground_motion_logic_tree: Optional[GMCMLogicTree] = None
 
-    slt_note: Optional[str] = ""
-    glt_note: Optional[str] = ""
+    source_logic_tree_note: Optional[str] = ""
+    ground_motion_logic_tree_note: Optional[str] = ""
     other_notes: Optional[str] = ""
 
     def notes_to_toml(self, path: Path):
         data = {
-            "slt_note": self.slt_note,
-            "glt_note": self.glt_note,
+            "source_logic_tree_note": self.source_logic_tree_note,
+            "ground_motion_logic_tree_note": self.ground_motion_logic_tree_note,
             "other_notes": self.other_notes,
         }
         with path.open("w") as f:
@@ -71,8 +71,8 @@ class CustomLogicTreePair:
 
     def notes_to_pandas_df(self):
         data = {
-            "slt_note": self.slt_note,
-            "glt_note": self.glt_note,
+            "source_logic_tree_note": self.source_logic_tree_note,
+            "ground_motion_logic_tree_note": self.ground_motion_logic_tree_note,
             "other_notes": self.other_notes,
         }
         return pd.DataFrame(data, index=[0])
@@ -108,18 +108,24 @@ def run_with_modified_logic_trees(
 
     run_start_time = time.time()
 
-    modified_slt = copy.deepcopy(custom_logic_tree_pair.slt)
-    modified_glt = copy.deepcopy(custom_logic_tree_pair.glt)
+    modified_source_logic_tree = copy.deepcopy(custom_logic_tree_pair.source_logic_tree)
+    modified_ground_motion_logic_tree = copy.deepcopy(
+        custom_logic_tree_pair.ground_motion_logic_tree
+    )
 
-    logic_tree_tools.print_info_about_logic_tree_sets(custom_logic_tree_pair)
+    logic_tree_tools.print_info_about_logic_tree_pairs(custom_logic_tree_pair)
 
     # check the validity of the weights
-    logic_tree_tools.check_weight_validity(custom_logic_tree_pair.slt)
-    logic_tree_tools.check_weight_validity(custom_logic_tree_pair.glt)
+    logic_tree_tools.check_weight_validity(custom_logic_tree_pair.source_logic_tree)
+    logic_tree_tools.check_weight_validity(
+        custom_logic_tree_pair.ground_motion_logic_tree
+    )
 
     ### Save a copy of the logic trees for later inspection
-    modified_slt.to_json(output_staging_dir / f"srm_logic_tree.json")
-    modified_glt.to_json(output_staging_dir / f"gmcm_logic_tree.json")
+    modified_source_logic_tree.to_json(output_staging_dir / f"srm_logic_tree.json")
+    modified_ground_motion_logic_tree.to_json(
+        output_staging_dir / f"gmcm_logic_tree.json"
+    )
 
     ### Save human-readable notes describing the changes to the logic tree
     custom_logic_tree_pair.notes_to_toml(output_staging_dir / f"notes.toml")
@@ -134,8 +140,8 @@ def run_with_modified_logic_trees(
         args.locations = [location]
         args.hazard_model_id = f"logic_tree_index_{logic_tree_index}"
 
-        args.srm_logic_tree = modified_slt
-        args.gmcm_logic_tree = modified_glt
+        args.srm_logic_tree = modified_source_logic_tree
+        args.gmcm_logic_tree = modified_ground_motion_logic_tree
 
         run_aggregation(args)
 
