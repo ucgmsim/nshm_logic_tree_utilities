@@ -11,7 +11,7 @@ locations : ["AKL","WLG","CHC"]
 #locations : ["WLG"]
 
 ## Output information
-output_directory : "/home/arr65/data/nshm/output_all_in_one"
+output_directory : "/home/arr65/data/nshm/output"
 collated_notes_file_name : "collated_notes.csv"
 
 
