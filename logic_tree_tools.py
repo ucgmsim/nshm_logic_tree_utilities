@@ -196,18 +196,18 @@ def check_weight_validity(logic_tree: Union[SourceLogicTree, GMCMLogicTree]) -> 
     return True
 
 
-def transpose_lists(lists):
+def transpose_lists(lists: list[list]) -> list[list]:
     """
     Transpose a list of lists.
 
     Parameters
     ----------
-    lists : list of list
+    lists : list of lists
         A list containing sublists to be transposed.
 
     Returns
     -------
-    transposed : list of list
+    transposed : list of lists
         A list of lists where the rows and columns are swapped.
 
     Examples
@@ -221,7 +221,9 @@ def transpose_lists(lists):
     return transposed
 
 
-def get_source_branch_parameters(logic_tree):
+def get_source_branch_parameters(
+    logic_tree: Union[SourceLogicTree, GMCMLogicTree]
+) -> dict:
     """
     Extracts and processes the branch parameters from a logic tree.
 
@@ -273,46 +275,11 @@ def get_source_branch_parameters(logic_tree):
     return unique_values_dict
 
 
-def get_params_with_num_options(logic_tree, num_options):
-    """
-    Extracts parameters from a logic tree that have a specific number of unique options.
-
-    This function processes the branch parameters of a given logic tree and identifies
-    parameters that have exactly the specified number of unique values.
-
-    Parameters
-    ----------
-    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
-        The logic tree from which to extract branch parameters.
-    num_options : int
-        The number of unique options to filter the parameters by.
-
-    Returns
-    -------
-    dict_n_unique_vals : dict
-        A dictionary where keys are branch set short names and values are lists of unique parameter values
-        that have exactly `num_options` unique values.
-    """
-
-    unique_values_dict = get_source_branch_parameters(logic_tree)
-
-    dict_n_unique_vals = {}
-    for key, item in unique_values_dict.items():
-        dict_n_unique_vals[key] = []
-
-    for key, item in unique_values_dict.items():
-        for unique_val_idx, unique_values in enumerate(item):
-            if len(unique_values) == num_options:
-                dict_n_unique_vals[key].append(unique_values)
-
-    return dict_n_unique_vals
-
-
 def select_branch_sets_given_tectonic_region_type(
     logic_tree: Union[SourceLogicTree, GMCMLogicTree],
     tectonic_region_types: Union[list[str], str],
     which_interface: str = "HIK_and_PUY",
-):
+) -> Union[SourceLogicTree, GMCMLogicTree]:
     """
     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
 
@@ -389,7 +356,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_types: list,
     which_interface: Optional[str] = None,
-):
+) -> list[CustomLogicTreePair]:
     """
     Modifies a logic tree pair to only include branch sets that correspond to the selected tectonic region types.
 
@@ -414,9 +381,9 @@ def logic_tree_pair_with_selected_tectonic_region_types(
 
     Returns
     -------
-    modified_logic_tree : SourceLogicTree or GMCMLogicTree
-        The modified logic tree that only includes branch sets corresponding
-        to the selected tectonic region type.
+    modified_logic_tree_pairs : list[CustomLogicTreePair]
+        The modified logic tree pairs that only include branch sets corresponding
+        to the selected tectonic region types.
     """
 
     trt_short_lookup_dict = {
@@ -474,7 +441,15 @@ def logic_tree_pair_with_selected_tectonic_region_types(
 
 def print_info_about_logic_tree(logic_tree: Union[SourceLogicTree, GMCMLogicTree]):
     """
-    Print information about a logic tree.
+    Prints information about a logic tree.
+
+    This function prints details about the type of logic tree (SourceLogicTree or GMCMLogicTree),
+    the number of branch sets it contains, and information about each branch set.
+
+    Parameters
+    ----------
+    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
+        The logic tree for which information is to be printed.
     """
 
     print("")  # Add a blank line for readability
@@ -552,7 +527,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
          [["Active Shallow Crust", "Subduction Interface"], ["Subduction Intraslab"]]
          ["Subduction Interface"]
 
-    which_interface : str, default = "HIK_and_PUY"
+    which_interfaces : str, default = "HIK_and_PUY"
         Which subduction interfaces to include.
         Valid options are:
            "HIK_and_PUY" which includes HIK_and_PUY the Hikurangi–Kermadec (only_HIK) and Puysegur (only_PUY) subduction zones
@@ -576,7 +551,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
                 logic_tree_pair_for_trts = (
                     logic_tree_pair_with_selected_tectonic_region_types(
                         initial_logic_tree_pair,
-                        tectonic_region_type_set=tectonic_region_type_set,
+                        tectonic_region_types=tectonic_region_type_set,
                         which_interface=which_interface,
                     )[0]
                 )
@@ -588,7 +563,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
             logic_tree_pair_for_trts = (
                 logic_tree_pair_with_selected_tectonic_region_types(
                     initial_logic_tree_pair,
-                    tectonic_region_type_set=tectonic_region_type_set,
+                    tectonic_region_types=tectonic_region_type_set,
                     which_interface=None,
                 )[0]
             )
@@ -621,7 +596,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         Examples:
          [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
 
-    which_interface : str, default = "HIK_and_PUY"
+    which_interfaces : str, default = "HIK_and_PUY"
         Which subduction interfaces to include.
         Valid options are:
            "HIK_and_PUY" which includes both the Hikurangi–Kermadec and Puysegur subduction zones
@@ -743,7 +718,7 @@ def get_logic_tree_pairs_for_individual_source_models(
         Examples:
          [["Active Shallow Crust"], ["Subduction Interface"], ["Subduction Intraslab"]]
 
-    which_interface : str, default = "HIK_and_PUY"
+    which_interfaces : str, default = "HIK_and_PUY"
         Which subduction interfaces to include.
         Valid options are:
            "HIK_and_PUY" which includes both the Hikurangi–Kermadec and Puysegur subduction zones
@@ -771,9 +746,6 @@ def get_logic_tree_pairs_for_individual_source_models(
         ground_motion_logic_tree_nth_highest=1,
     )
 
-    ## print a blank line for clarity
-    print()
-
     input_logic_tree_pair_list = get_logic_tree_pairs_for_tectonic_selection(
         initial_logic_tree_pair=initial_logic_tree_pair,
         tectonic_region_type_sets=tectonic_region_type_sets,
@@ -782,17 +754,9 @@ def get_logic_tree_pairs_for_individual_source_models(
 
     print_info_about_logic_tree_pairs(input_logic_tree_pair_list)
 
-    ## print a blank line for clarity
-    print()
-
-    # print_info_about_logic_tree_pairs(input_logic_tree_pair_list)
-
     new_logic_tree_pairs = []
 
     for logic_tree_pair in input_logic_tree_pair_list:
-
-        ## print a blank line for clarity
-        print()
 
         source_branch_set_short_name_to_index = {
             branch_set.short_name: branch_set_index
@@ -800,8 +764,6 @@ def get_logic_tree_pairs_for_individual_source_models(
                 logic_tree_pair.source_logic_tree.branch_sets
             )
         }
-        ## print a blank line for clarity
-        print()
 
         print_info_about_logic_tree_pairs(logic_tree_pair)
 
@@ -953,7 +915,6 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
             possible_values_for_this_param_index = source_logic_tree_branch_params[
                 branch_set.short_name
             ][branch_param_idx]
-            print()
 
             if len(possible_values_for_this_param_index) == 1:
                 continue
@@ -1003,149 +964,3 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
             ] = selected_branches_per_param
 
     return results
-
-
-def make_srm_model_branch_groups(
-    source_logic_tree: SourceLogicTree, branch_set_idx_to_do: int
-) -> list:
-    """
-    Creates SRM model branch groups by modifying the source logic tree.
-
-    Parameters
-    ----------
-    source_logic_tree : SourceLogicTree
-        The source logic tree to be modified.
-
-    branch_set_idx_to_do : int
-        The index of the branch set to be processed in the source logic tree.
-
-    Returns
-    -------
-    logic_tree_pair_list : list
-        A list of CustomLogicTreePair instances, each containing a modified source logic tree.
-    """
-
-    branch_param_index_to_description = {
-        0: "deformation model",
-        1: "time dependence",
-        2: "MFD",
-        4: "moment rate scaling",
-    }
-
-    # Get the needed source branches and their parameters
-    branch_param_index_list, all_branch_groups = get_needed_source_branches(
-        source_logic_tree, branch_set_idx_to_do
-    )
-
-    assert len(branch_param_index_list) == len(all_branch_groups)
-
-    logic_tree_pair_list = []
-
-    # Iterate through each branch group
-    for branch_group_idx in range(len(all_branch_groups)):
-
-        modified_source_logic_tree = copy.deepcopy(source_logic_tree)
-
-        selected_branches = all_branch_groups[branch_group_idx]
-
-        # Scale the weights of the selected branches so the total weight of the branches in the branch_set is 1.0
-        total_weight_selected_branches = sum(
-            [branch.weight for branch in selected_branches]
-        )
-        needed_scaling_factor = 1.0 / total_weight_selected_branches
-
-        for branch in selected_branches:
-            branch.weight *= needed_scaling_factor
-
-        print(f"branch_set_idx_to_do {branch_set_idx_to_do}")
-
-        modified_source_logic_tree.branch_sets[branch_set_idx_to_do].branches = (
-            selected_branches
-        )
-
-        # Only keep the needed branch set
-        modified_source_logic_tree.branch_sets = [
-            copy.deepcopy(modified_source_logic_tree.branch_sets[branch_set_idx_to_do])
-        ]
-
-        modified_source_logic_tree_note = f"{branch_param_index_to_description[branch_param_index_list[branch_group_idx]]} > "
-
-        # This will only work if subduction interface (INTER) tectonic region types (TRTs) are not in the logic tree
-        modified_source_logic_tree.correlations = LogicTreeCorrelations()
-        custom_logic_tree_entry = CustomLogicTreePair(
-            source_logic_tree=modified_source_logic_tree,
-            source_logic_tree_note=modified_source_logic_tree_note,
-        )
-
-        logic_tree_pair_list.append(custom_logic_tree_entry)
-
-    return logic_tree_pair_list
-
-
-def make_logic_tree_pairs_for_srm_models(
-    source_logic_tree: SourceLogicTree,
-    ground_motion_logic_tree_matching_branch_set: GMCMLogicTree,
-    branch_set_idx_to_do: int,
-) -> list[CustomLogicTreePair]:
-    """
-    Creates logic tree pairs for SRM models by combining a source logic tree with a ground motion logic tree.
-
-    Parameters
-    ----------
-    source_logic_tree : SourceLogicTree
-        The source logic tree to be used in the logic tree pairs.
-
-    ground_motion_logic_tree_matching_branch_set : GMCMLogicTree
-        The ground motion logic tree with matching branch sets to be used in the logic tree pairs.
-
-    branch_set_idx_to_do : int
-        The index of the branch set to be processed in the source logic tree.
-
-    Returns
-    -------
-    logic_tree_pair_list : list[CustomLogicTreePair]
-        A list of CustomLogicTreePair instances, each containing a modified source logic tree and ground motion logic tree.
-    """
-
-    # Create a deep copy of the ground motion logic tree
-    modified_ground_motion_logic_tree = copy.deepcopy(
-        ground_motion_logic_tree_matching_branch_set
-    )
-
-    # Reduce the ground motion logic tree to the highest weighted branch
-    ground_motion_logic_tree_hwb = reduce_logic_tree_to_nth_highest_weighted_branch(
-        ground_motion_logic_tree_matching_branch_set, 1
-    )
-
-    # Update the branch sets of the modified ground motion logic tree to only include the highest weighted branch
-    modified_ground_motion_logic_tree.branch_sets = [
-        copy.deepcopy(
-            ground_motion_logic_tree_hwb[0].ground_motion_logic_tree.branch_sets[0]
-        )
-    ]
-
-    # Generate logic tree pairs with only the source logic tree
-    logic_tree_pair_with_only_source_logic_tree = make_srm_model_branch_groups(
-        source_logic_tree, branch_set_idx_to_do
-    )
-
-    logic_tree_pair_list = []
-
-    # Combine the source logic tree and ground motion logic tree to create new logic tree pairs
-    for logic_tree_pair in logic_tree_pair_with_only_source_logic_tree:
-
-        new_logic_tree_pair = CustomLogicTreePair(
-            source_logic_tree=copy.deepcopy(logic_tree_pair.source_logic_tree),
-            source_logic_tree_note=copy.deepcopy(
-                logic_tree_pair.source_logic_tree_note
-            ),
-            ground_motion_logic_tree=copy.deepcopy(modified_ground_motion_logic_tree),
-            ground_motion_logic_tree_note=ground_motion_logic_tree_hwb[
-                0
-            ].ground_motion_logic_tree_note
-            + " manually selected CRU branch_set >",
-        )
-
-        logic_tree_pair_list.append(new_logic_tree_pair)
-
-    return logic_tree_pair_list

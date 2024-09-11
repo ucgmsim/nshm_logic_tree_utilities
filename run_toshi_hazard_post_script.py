@@ -92,7 +92,7 @@ logic_tree_pair_list1 = [
 
 logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
-        initial_logic_tree_set=full_logic_tree_pair,
+        initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
             ["Active Shallow Crust"],
             ["Subduction Interface"],
@@ -109,7 +109,7 @@ logic_tree_pair_list2 = (
 
 logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
-        initial_logic_tree_set=full_logic_tree_pair,
+        initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
             ["Active Shallow Crust"],
             ["Subduction Interface"],
