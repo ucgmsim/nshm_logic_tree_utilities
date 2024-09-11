@@ -319,9 +319,9 @@ def select_branch_sets_given_tectonic_region_type(
         if isinstance(logic_tree, SourceLogicTree):
 
             ## even though each branch_set corresponds to one tectonic region type,
-            ## branch_set.tectonic_region_type_set returns a list of one tectonic region
+            ## branch_set.tectonic_region_types returns a list of one tectonic region
             # type which is accessed with the for loop
-            for tectonic_region_type in branch_set.tectonic_region_type_set:
+            for tectonic_region_type in branch_set.tectonic_region_types:
                 if tectonic_region_type in tectonic_region_type_set:
                     if tectonic_region_type == "Subduction Interface":
                         if which_interface == "HIK_and_PUY":
