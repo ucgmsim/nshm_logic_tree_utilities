@@ -428,8 +428,8 @@ def sort_logic_tree_index_by_gmcm_model_name(
     for logic_tree_index in concatenated_notes_df["logic_tree_index"]:
 
         # Extract the slt_note and glt_note for the current logic tree index
-        slt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
-        glt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["glt_note"].values[0]}"
+        slt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
+        glt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
         # Isolate the useful parts of the notes
         trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
@@ -538,7 +538,7 @@ def get_interpolated_gmms(
     for filter_str in filter_strs:
 
         filtered_run_notes_df = collated_notes_df[
-            collated_notes_df["slt_note"].str.contains(filter_str)
+            collated_notes_df["source_logic_tree_note"].str.contains(filter_str)
         ]
 
         logic_tree_names = [

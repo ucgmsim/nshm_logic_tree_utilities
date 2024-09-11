@@ -277,7 +277,7 @@ def get_source_branch_parameters(
 
 def select_branch_sets_given_tectonic_region_type(
     logic_tree: Union[SourceLogicTree, GMCMLogicTree],
-    tectonic_region_types: Union[list[str], str],
+    tectonic_region_type_set: Union[list[str], str],
     which_interface: str = "HIK_and_PUY",
 ) -> Union[SourceLogicTree, GMCMLogicTree]:
     """
@@ -288,7 +288,7 @@ def select_branch_sets_given_tectonic_region_type(
     logic_tree : SourceLogicTree or GMCMLogicTree
         The logic tree to modify.
 
-    tectonic_region_types : list[str] or str
+    tectonic_region_type_set : list[str] or str
         A list of the selected tectonic region types.
         If selecting only a single tectonic region type, can be a string.
         Valid tectonic region types are:
@@ -310,8 +310,8 @@ def select_branch_sets_given_tectonic_region_type(
         to the selected tectonic region type.
     """
 
-    if isinstance(tectonic_region_types, str):
-        tectonic_region_types = [tectonic_region_types]
+    if isinstance(tectonic_region_type_set, str):
+        tectonic_region_type_set = [tectonic_region_type_set]
 
     modified_logic_tree = copy.deepcopy(logic_tree)
     new_branch_sets = []
@@ -319,10 +319,10 @@ def select_branch_sets_given_tectonic_region_type(
         if isinstance(logic_tree, SourceLogicTree):
 
             ## even though each branch_set corresponds to one tectonic region type,
-            ## branch_set.tectonic_region_types returns a list of one tectonic region
+            ## branch_set.tectonic_region_type_set returns a list of one tectonic region
             # type which is accessed with the for loop
-            for tectonic_region_type in branch_set.tectonic_region_types:
-                if tectonic_region_type in tectonic_region_types:
+            for tectonic_region_type in branch_set.tectonic_region_type_set:
+                if tectonic_region_type in tectonic_region_type_set:
                     if tectonic_region_type == "Subduction Interface":
                         if which_interface == "HIK_and_PUY":
                             new_branch_sets.append(copy.deepcopy(branch_set))
@@ -337,7 +337,7 @@ def select_branch_sets_given_tectonic_region_type(
                         new_branch_sets.append(copy.deepcopy(branch_set))
 
         if isinstance(logic_tree, GMCMLogicTree):
-            if branch_set.tectonic_region_type in tectonic_region_types:
+            if branch_set.tectonic_region_type in tectonic_region_type_set:
                 new_branch_sets.append(copy.deepcopy(branch_set))
 
     modified_logic_tree.branch_sets = new_branch_sets
@@ -354,7 +354,7 @@ def select_branch_sets_given_tectonic_region_type(
 
 def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_types: list,
+    tectonic_region_type_set: list,
     which_interface: Optional[str] = None,
 ) -> list[CustomLogicTreePair]:
     """
@@ -365,7 +365,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair : CustomLogicTreePair
         The initial logic tree pair to modify.
 
-    tectonic_region_types : list[str]
+    tectonic_region_type_set : list[str]
         A list of the selected tectonic region types.
         Valid tectonic region types are:
             "Active Shallow Crust",
@@ -402,7 +402,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     modified_logic_tree_pair = copy.deepcopy(initial_logic_tree_pair)
 
     short_tectonic_region_types_for_ground_motion_logic_tree_note = [
-        trt_short_lookup_dict[trt] for trt in tectonic_region_types
+        trt_short_lookup_dict[trt] for trt in tectonic_region_type_set
     ]
     short_tectonic_region_types_for_source_logic_tree_note = copy.deepcopy(
         short_tectonic_region_types_for_ground_motion_logic_tree_note
@@ -417,15 +417,15 @@ def logic_tree_pair_with_selected_tectonic_region_types(
             )
 
     modified_source_logic_tree = select_branch_sets_given_tectonic_region_type(
-        source_logic_tree, tectonic_region_types, which_interface
+        source_logic_tree, tectonic_region_type_set, which_interface
     )
     modified_ground_motion_logic_tree = select_branch_sets_given_tectonic_region_type(
-        ground_motion_logic_tree, tectonic_region_types
+        ground_motion_logic_tree, tectonic_region_type_set
     )
 
-    modified_logic_tree_pair.source_logic_tree_note += f"tectonic_region_types:[{' '.join(short_tectonic_region_types_for_source_logic_tree_note)}] > "
+    modified_logic_tree_pair.source_logic_tree_note += f"tectonic_region_type_set:[{' '.join(short_tectonic_region_types_for_source_logic_tree_note)}] > "
 
-    modified_logic_tree_pair.ground_motion_logic_tree_note += f"tectonic_region_types:[{' '.join(short_tectonic_region_types_for_ground_motion_logic_tree_note)}] > "
+    modified_logic_tree_pair.ground_motion_logic_tree_note += f"tectonic_region_type_set:[{' '.join(short_tectonic_region_types_for_ground_motion_logic_tree_note)}] > "
 
     modified_logic_tree_pair.source_logic_tree = copy.deepcopy(
         modified_source_logic_tree
@@ -551,7 +551,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
                 logic_tree_pair_for_trts = (
                     logic_tree_pair_with_selected_tectonic_region_types(
                         initial_logic_tree_pair,
-                        tectonic_region_types=tectonic_region_type_set,
+                        tectonic_region_type_set=tectonic_region_type_set,
                         which_interface=which_interface,
                     )[0]
                 )
@@ -563,7 +563,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
             logic_tree_pair_for_trts = (
                 logic_tree_pair_with_selected_tectonic_region_types(
                     initial_logic_tree_pair,
-                    tectonic_region_types=tectonic_region_type_set,
+                    tectonic_region_type_set=tectonic_region_type_set,
                     which_interface=None,
                 )[0]
             )

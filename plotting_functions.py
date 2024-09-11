@@ -90,12 +90,12 @@ def make_figure_of_coefficient_of_variation(
     collated_notes_df = resulting_hazard_curves.collated_notes_df
 
     ### Identify the outputs that are needed
-    slt_note_condition_idx = (collated_notes_df["slt_note"] == "full > ") | (
-        collated_notes_df["slt_note"] == "full > 1 (nth) h.w.b. > "
+    slt_note_condition_idx = (collated_notes_df["source_logic_tree_note"] == "full > ") | (
+        collated_notes_df["source_logic_tree_note"] == "full > 1 (nth) h.w.b. > "
     )
 
-    glt_note_condition_idx = (collated_notes_df["glt_note"] == "full > ") | (
-        collated_notes_df["glt_note"] == "full > 1 (nth) h.w.b. > "
+    glt_note_condition_idx = (collated_notes_df["ground_motion_logic_tree_note"] == "full > ") | (
+        collated_notes_df["ground_motion_logic_tree_note"] == "full > 1 (nth) h.w.b. > "
     )
 
     collated_notes_df = collated_notes_df[
@@ -213,12 +213,12 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     #### Isolate the results for the ground motion models
     ## Filter to only include isolated ground motion models
     gmcm_filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("*", regex=False)
+        collated_notes_df["ground_motion_logic_tree_note"].str.contains("*", regex=False)
     ]
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
     gmcm_filtered_collated_notes_df = gmcm_filtered_collated_notes_df[
-        ~gmcm_filtered_collated_notes_df["slt_note"].str.contains("only")
+        ~gmcm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
     sorted_gmm_logic_tree_indices = (
         plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(
@@ -229,13 +229,13 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     #### Isolate the results for the seismicity rate model components
     ## filter to only include the SRM components
     srm_filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("h.w.b. > t")
+        collated_notes_df["ground_motion_logic_tree_note"].str.contains("h.w.b. > t")
     ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
     srm_filtered_collated_notes_df = srm_filtered_collated_notes_df[
-        ~srm_filtered_collated_notes_df["slt_note"].str.contains("only")
+        ~srm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
 
     ### For each row of the subplot, identify the logic_tree_indices (output directories) that will
@@ -247,17 +247,17 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     for row_index in range(3):
         if row_index == 0:
             plot_row_to_logic_tree_index[row_index] = gmcm_filtered_collated_notes_df[
-                gmcm_filtered_collated_notes_df["slt_note"].str.contains("CRU")
+                gmcm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("CRU")
             ]["logic_tree_index"]
         if row_index == 1:
             plot_row_to_logic_tree_index[row_index] = gmcm_filtered_collated_notes_df[
-                gmcm_filtered_collated_notes_df["slt_note"].str.contains(
+                gmcm_filtered_collated_notes_df["source_logic_tree_note"].str.contains(
                     "INTER_HIK_and_PUY|SLAB"
                 )
             ]["logic_tree_index"]
         if row_index == 2:
             plot_row_to_logic_tree_index[row_index] = srm_filtered_collated_notes_df[
-                srm_filtered_collated_notes_df["slt_note"].str.contains(
+                srm_filtered_collated_notes_df["source_logic_tree_note"].str.contains(
                     "CRU|INTER_HIK_and_PUY"
                 )
             ]["logic_tree_index"]
@@ -296,7 +296,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
                         run_note = gmcm_filtered_collated_notes_df[
                             gmcm_filtered_collated_notes_df["logic_tree_index"]
                             == sorted_logic_tree_index
-                        ]["glt_note"].values[0]
+                        ]["ground_motion_logic_tree_note"].values[0]
                         short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
                         plot_label = model_to_plot_label[short_note]
 
@@ -304,7 +304,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
                         run_note = srm_filtered_collated_notes_df[
                             srm_filtered_collated_notes_df["logic_tree_index"]
                             == sorted_logic_tree_index
-                        ]["slt_note"].values[0]
+                        ]["source_logic_tree_note"].values[0]
                         short_note = (
                             run_note.split(">")[1].split(":")[-1].strip(" []")
                             + "_"
@@ -503,13 +503,13 @@ def make_figure_of_srm_model_components(
 
     ## filter to only include the SRM components
     filtered_logic_tree_name_notes_df = logic_tree_name_notes_df[
-        logic_tree_name_notes_df["glt_note"].str.contains("h.w.b. > t")
+        logic_tree_name_notes_df["ground_motion_logic_tree_note"].str.contains("h.w.b. > t")
     ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
     filtered_logic_tree_name_notes_df = filtered_logic_tree_name_notes_df[
-        ~filtered_logic_tree_name_notes_df["slt_note"].str.contains("only")
+        ~filtered_logic_tree_name_notes_df["source_logic_tree_note"].str.contains("only")
     ]
 
     logic_tree_name_strs = [
@@ -547,7 +547,7 @@ def make_figure_of_srm_model_components(
             mean = mean[needed_idx]
             std_ln = std_ln[needed_idx]
 
-            slt_note = f"{logic_tree_name_notes_df[logic_tree_name_notes_df["logic_tree_index"] == int(logic_tree_name.split("_")[-1])]["slt_note"].values[0]}"
+            slt_note = f"{logic_tree_name_notes_df[logic_tree_name_notes_df["logic_tree_index"] == int(logic_tree_name.split("_")[-1])]["source_logic_tree_note"].values[0]}"
 
             tectonic_region_type = slt_note.split(">")[1].strip(" ]'").split("[")[-1]
 
@@ -658,13 +658,13 @@ def make_figure_of_gmcms(
 
     ## Filter to only include isolated ground motion models
     filtered_collated_notes_df = collated_notes_df[
-        collated_notes_df["glt_note"].str.contains("*", regex=False)
+        collated_notes_df["ground_motion_logic_tree_note"].str.contains("*", regex=False)
     ]
 
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
     # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
     filtered_collated_notes_df = filtered_collated_notes_df[
-        ~filtered_collated_notes_df["slt_note"].str.contains("only")
+        ~filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
 
     sorted_logic_tree_indices = (
@@ -709,8 +709,8 @@ def make_figure_of_gmcms(
             mean_list.append(mean)
             std_ln_list.append(std_ln)
             non_zero_run_list.append(logic_tree_name_str)
-            slt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["slt_note"].values[0]}"
-            glt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["glt_note"].values[0]}"
+            slt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
+            glt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
             trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
             glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
@@ -1315,37 +1315,37 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
     output_notes = toml.load(logic_tree_index_dir / "notes.toml")
 
-    if output_notes["slt_note"] == "full > " and output_notes["glt_note"] == "full > ":
+    if output_notes["source_logic_tree_note"] == "full > " and output_notes["ground_motion_logic_tree_note"] == "full > ":
         model_name_short = "full"
         model_name_long = model_name_short
 
     if (
-        output_notes["slt_note"] == "full > 1 (nth) h.w.b. > "
-        and output_notes["slt_note"] == "full > "
+        output_notes["source_logic_tree_note"] == "full > 1 (nth) h.w.b. > "
+        and output_notes["source_logic_tree_note"] == "full > "
     ):
         model_name_short = "all_srm"
         model_name_long = model_name_short
 
     if (
-        output_notes["slt_note"] == "full > "
-        and output_notes["slt_note"] == "full > 1 (nth) h.w.b. > "
+        output_notes["source_logic_tree_note"] == "full > "
+        and output_notes["source_logic_tree_note"] == "full > 1 (nth) h.w.b. > "
     ):
         model_name_short = "all_gmcm"
         model_name_long = model_name_short
 
     ### The GMCM logic tree was reduced to the single highest weighted branch so we can use the SRM model components
-    if "1 (nth) h.w.b." in output_notes["glt_note"]:
+    if "1 (nth) h.w.b." in output_notes["ground_motion_logic_tree_note"]:
         model_name_short = (
-            output_notes["slt_note"].split(">")[1].split("[")[1].strip("[ ] ")
+            output_notes["source_logic_tree_note"].split(">")[1].split("[")[1].strip("[ ] ")
             + "_"
-            + output_notes["slt_note"].split(">")[-2].strip()
+            + output_notes["source_logic_tree_note"].split(">")[-2].strip()
         )
         model_name_long = model_name_to_plot_format[model_name_short]
 
     ### The source logic tree was reduced to the single highest weighted branch so we can use the gmcm models
-    if "1 (nth) h.w.b." in output_notes["slt_note"]:
+    if "1 (nth) h.w.b." in output_notes["source_logic_tree_note"]:
         model_name_short = (
-            output_notes["glt_note"].split(">")[-2].split("*")[0].strip(" [ ]")
+            output_notes["ground_motion_logic_tree_note"].split(">")[-2].split("*")[0].strip(" [ ]")
         )
         model_name_long = model_name_to_plot_format[model_name_short]
 
@@ -1539,17 +1539,21 @@ def make_figures_of_several_individual_realizations(
     ## exclude the specified logic tree indices
     for slt_note, glt_note in notes_to_exclude:
 
-        exclude_bool_idx = (collated_notes_df["slt_note"] == slt_note) & (
-            collated_notes_df["glt_note"] == glt_note
+        print(slt_note, glt_note)
+
+        exclude_bool_idx = (collated_notes_df["source_logic_tree_note"] == slt_note) & (
+            collated_notes_df["ground_motion_logic_tree_note"] == glt_note
         )
         logic_tree_indices_to_skip.append(
             collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0]
         )
 
+    print()
+
     ### Skip the interface branches that are not the selected one
-    interface_logic_tree_indices = collated_notes_df["slt_note"].str.contains("INTER")
+    interface_logic_tree_indices = collated_notes_df["source_logic_tree_note"].str.contains("INTER")
     interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices][
-        "slt_note"
+        "source_logic_tree_note"
     ].str.contains(selected_subduction_interface)
     logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
 
