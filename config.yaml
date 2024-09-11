@@ -6,9 +6,7 @@ output_individual_realizations : True
 input_directory : "input_files"
 env_file_name : ".env_home"
 initial_input_file_name : "simple_input.toml"
-
 locations : ["AKL","WLG","CHC"]
-#locations : ["WLG"]
 
 ## Output information
 output_directory : "/home/arr65/data/nshm/output"

@@ -47,7 +47,7 @@ class LoadedResults:
     ----------
     data_df : pd.DataFrame
         A DataFrame containing the data.
-    run_notes_df : pd.DataFrame
+    collated_notes_df : pd.DataFrame
         A DataFrame containing notes about
         the run that generated these results.
     """
@@ -123,7 +123,7 @@ def convert_edge_margin_in_pixels_to_fraction(
 
 
 def remove_special_characters(
-    s: str, chars_to_remove: list[str] = ["'", "[", "]", '"']
+    s: str, chars_to_remove: tuple[str] = ("'", "[", "]", '"')
 ) -> str:
     """
     Remove specified special characters from a string.
@@ -132,8 +132,8 @@ def remove_special_characters(
     ----------
     s : str
         The input string from which to remove characters.
-    chars_to_remove : list of str, optional
-        A list of characters to remove from the input string. Default is ["'", "[", "]", '"'].
+    chars_to_remove : tuple[str], optional
+        Characters to remove from the input string. Default is ("'", "[", "]", '"').
 
     Returns
     -------
@@ -185,6 +185,7 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
     if location == "AKL":
         nloc_str = "nloc_0=-37.0~175.0"
 
+    # noinspection PyUnboundLocalVariable
     results_dir = results_dir_for_one_logic_tree / nloc_str
 
     for index, file in enumerate(results_dir.glob("*.parquet")):
@@ -197,7 +198,7 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
 
 
 def load_aggregate_stats_for_one_logic_tree_several_locations(
-    results_dir_for_one_logic_tree: Union[Path, str], locations: list[str]
+    results_dir_for_one_logic_tree: Union[Path, str], locations: tuple[str]
 ) -> pd.DataFrame:
     """
     Load aggregate statistics results for several locations.
@@ -208,9 +209,8 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(
         The directory containing the results of a run of run_toshi_hazard_post_script.py for a single logic tree. This directory has a
         name like logic_tree_index_0. This directory should contain location subdirectories.
 
-    locations : list[str]
-        A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"].
-
+    locations : tuple[str]
+        Location codes to load. Valid location codes are "AKL", "WLG", "CHC".
     Returns
     -------
     LoadedResults
@@ -237,7 +237,7 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(
 
 
 def load_aggregate_stats_for_all_logic_trees_in_directory(
-    results_directory: Union[Path, str], locations: list[str] = ["AKL", "WLG", "CHC"]
+    results_directory: Union[Path, str], locations: tuple[str] = ("AKL", "WLG", "CHC")
 ) -> LoadedResults:
     """
     Load aggregate statistics for all logic trees in the results_directory.
@@ -247,8 +247,8 @@ def load_aggregate_stats_for_all_logic_trees_in_directory(
     results_directory : Union[Path, str]
         The directory containing the results of one or more logic trees.
         Should contain directories named like logic_tree_index_0, logic_tree_index_0 etc.
-    locations : list of str, optional
-        A list of location codes, each of which must be one of ["AKL", "WLG", "CHC"]. Default is ["AKL", "WLG", "CHC"].
+    locations : tuple[str], optional
+        The locations to plot. Default is ("AKL", "WLG", "CHC").
 
     Returns
     -------
@@ -340,8 +340,9 @@ def lookup_realization_name_from_hash(
     Parameters
     ----------
     individual_realization_df : pd.DataFrame
-        Dataframe containing the individual realizations
-        (produced by the modified version of toshi_hazard_post with output_individual_realizations == True).
+        Contains the individual realizations that are produced by the modified version
+        of toshi_hazard_post with output_individual_realizations == True.
+
     registry_directory : Union[Path, str]
         The directory containing the branch registry files that come with the GNS package nshm-model.
 
@@ -427,22 +428,34 @@ def sort_logic_tree_index_by_gmcm_model_name(
     # Iterate over each logic tree index
     for logic_tree_index in concatenated_notes_df["logic_tree_index"]:
 
-        # Extract the slt_note and glt_note for the current logic tree index
-        slt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
-        glt_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
+        # Extract the source_logic_tree_note and ground_motion_logic_tree_note for the current logic tree index
+        # noinspection DuplicatedCode
+        source_logic_tree_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
+        ground_motion_logic_tree_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
         # Isolate the useful parts of the notes
-        trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-        glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
-        glt_model = glt_model_and_weight_str.split("*")[0]
+        tectonic_region_type_set_from_note = (
+            source_logic_tree_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+        )
+        ground_motion_logic_tree_model_and_weight_str = (
+            ground_motion_logic_tree_note.split(">")[-2].strip(" []")
+        )
+        ground_motion_logic_tree_model = (
+            ground_motion_logic_tree_model_and_weight_str.split("*")[0]
+        )
 
         # Handling special cases with the NZNSHM2022_ prefix
-        if "NZNSHM2022_" in glt_model:
-            glt_model = glt_model.split("NZNSHM2022_")[1]
+        if "NZNSHM2022_" in ground_motion_logic_tree_model:
+            ground_motion_logic_tree_model = ground_motion_logic_tree_model.split(
+                "NZNSHM2022_"
+            )[1]
 
         # Get tuples of (logic_tree_index, corresponding model name)
         run_list_label_tuple_list.append(
-            (logic_tree_index, f"{trts_from_note}_{glt_model}")
+            (
+                logic_tree_index,
+                f"{tectonic_region_type_set_from_note}_{ground_motion_logic_tree_model}",
+            )
         )
 
     # Sort the list of tuples based on the model names
@@ -471,7 +484,7 @@ def remove_duplicates_in_x(x: np.ndarray, y: np.ndarray) -> tuple:
         A tuple containing two arrays: the filtered x and y arrays.
     """
     # Find unique values in x and their indices
-    unique_x, indices = np.unique(x, return_index=True)
+    unique_x, indices = np.unique(x, return_index=True)  # noqa: F841
 
     # Use indices to filter both x and y
     filtered_x = x[indices]
@@ -482,8 +495,8 @@ def remove_duplicates_in_x(x: np.ndarray, y: np.ndarray) -> tuple:
 
 def get_interpolated_gmms(
     results_directory: Union[Path, str],
-    locations: list[str],
-    filter_strs: list[str],
+    locations: tuple[str],
+    filter_strs: tuple[str],
     vs30: int,
     im: str,
     num_interp_mean_points: int,
@@ -499,10 +512,10 @@ def get_interpolated_gmms(
     ----------
     results_directory : Union[Path, str]
         The directory containing the results data.
-    locations : list of str
-        A list of location codes to include in the interpolation.
-    filter_strs : list of str
-        A list of filter strings to apply to the data.
+    locations : tuple[str]
+        The locations to include in the interpolation.
+    filter_strs : tuple[str]
+        The filter strings needed to select the desired data.
     vs30 : int
         The Vs30 value to use in the interpolation.
     im : str
@@ -550,18 +563,16 @@ def get_interpolated_gmms(
 
         for location in locations:
 
-            mean_interpolation_points, interp_disp_array = (
-                interpolate_ground_motion_models(
-                    filtered_data_df,
-                    location,
-                    vs30,
-                    im,
-                    num_interp_mean_points,
-                    min_log10_mean_for_interp,
-                    max_log10_mean_for_interp,
-                    plot_interpolations,
-                    min_mean_value_for_interp_plots,
-                )
+            _, interp_disp_array = interpolate_ground_motion_models(
+                filtered_data_df,
+                location,
+                vs30,
+                im,
+                num_interp_mean_points,
+                min_log10_mean_for_interp,
+                max_log10_mean_for_interp,
+                plot_interpolations,
+                min_mean_value_for_interp_plots,
             )
 
             dispersion_range_dict[location][filter_str] = np.nanmax(
@@ -621,6 +632,7 @@ def interpolate_ground_motion_models(
     ### Gather the data for the interpolation
     for logic_tree_name in natsort.natsorted(data_df["hazard_model_id"].unique()):
 
+        # noinspection DuplicatedCode
         nloc_001_str = locations_nloc_dict[location]
 
         mean = data_df[
@@ -631,6 +643,7 @@ def interpolate_ground_motion_models(
             & (data_df["nloc_001"] == nloc_001_str)
         ]["values"].values[0]
 
+        # noinspection DuplicatedCode
         mean_max = np.max(mean)
         print(f"logic_tree_name {logic_tree_name} max mean: {mean_max}")
 

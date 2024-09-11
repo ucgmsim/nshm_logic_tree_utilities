@@ -20,13 +20,13 @@ def make_figure_of_coefficient_of_variation(
     plot_output_directory: Union[Path, str],
     plot_dpi: int = 500,
     plot_fontsize: float = 12.0,
-    plot_lineweight=5,
+    plot_lineweight: float = 5.0,
     location: str = "WLG",
     im: str = "PGA",
     vs30: int = 400,
-    xlims: tuple = (1e-2, 5),
-    ylims: tuple = (0.05, 0.8),
-    figsize: tuple = (7.3, 4.62),
+    xlims: tuple[float, float] = (1e-2, 5),
+    ylims: tuple[float, float] = (0.05, 0.8),
+    figsize: tuple[float, float] = (7.3, 4.62),
 ):
     """
     Generates a figure showing the coefficient of variation of model predictions
@@ -90,18 +90,19 @@ def make_figure_of_coefficient_of_variation(
     collated_notes_df = resulting_hazard_curves.collated_notes_df
 
     ### Identify the outputs that are needed
-    slt_note_condition_idx = (
+    source_logic_tree_note_condition_idx = (
         collated_notes_df["source_logic_tree_note"] == "full > "
     ) | (collated_notes_df["source_logic_tree_note"] == "full > 1 (nth) h.w.b. > ")
 
-    glt_note_condition_idx = (
+    ground_motion_logic_tree_note_condition_idx = (
         collated_notes_df["ground_motion_logic_tree_note"] == "full > "
     ) | (
         collated_notes_df["ground_motion_logic_tree_note"] == "full > 1 (nth) h.w.b. > "
     )
 
     collated_notes_df = collated_notes_df[
-        slt_note_condition_idx & glt_note_condition_idx
+        source_logic_tree_note_condition_idx
+        & ground_motion_logic_tree_note_condition_idx
     ]
 
     logic_tree_index_list = [
@@ -169,14 +170,15 @@ def make_figure_of_coefficient_of_variation(
     plt.rcParams.update({"font.size": original_fontsize})
 
 
+# noinspection PyUnboundLocalVariable
 def make_figure_of_srm_and_gmcm_model_dispersions(
-    locations: list[str],
+    locations: tuple[str],
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     vs30: int = 400,
     im: str = "PGA",
     plot_title_font_size: float = 12,
-    plot_dpi=500,
+    plot_dpi: int = 500,
 ):
     """
     Make a figure containing subplots of mean prediction on the vertical axis and the dispersion in
@@ -189,6 +191,28 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     and the bottom row shows the seismicity rate model (SRM) components.
 
     Note that the data that this function uses is loaded from the output of run_toshi_hazard_post_script.py so that needs to be run first.
+
+    Parameters
+    ----------
+    locations : tuple[str]
+        The locations to plot.
+    results_directory : Union[Path, str]
+        The directory containing the data. This directory should contain subdirectories
+        named as logic_tree_index_[x] where [x] is the index the logic_tree_set had in the input list.
+    plot_output_directory : Union[Path, str]
+        The directory where the plot will be saved.
+    vs30 : int, optional
+        The Vs30 value (default is 400).
+    im : str, optional
+        The intensity measure (default is "PGA").
+    plot_title_font_size : float, optional
+        The font size of the plot titles (default is 12).
+    plot_dpi : int, optional
+        The resolution of the plot in dots per inch (default is 500).
+
+    Returns
+    -------
+    None
     """
 
     if isinstance(results_directory, str):
@@ -202,7 +226,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
     location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
     model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
-    glt_model_color = toml.load("resources/model_plot_colors.toml")
+    ground_motion_logic_tree_model_color = toml.load("resources/model_plot_colors.toml")
 
     loaded_results = (
         plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
@@ -220,7 +244,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         )
     ]
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
-    # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
+    # (identified by "only" in the source_logic_tree_note reading "INTER_only_HIK" or "INTER_only_PUY")
     gmcm_filtered_collated_notes_df = gmcm_filtered_collated_notes_df[
         ~gmcm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
@@ -237,7 +261,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
-    # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
+    # (identified by "only" in the source_logic_tree_note reading "INTER_only_HIK" or "INTER_only_PUY")
     srm_filtered_collated_notes_df = srm_filtered_collated_notes_df[
         ~srm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
@@ -299,22 +323,24 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
                     logic_tree_name_str = f"logic_tree_index_{sorted_logic_tree_index}"
 
                     if row_index in [0, 1]:
-                        run_note = gmcm_filtered_collated_notes_df[
+                        logic_tree_note = gmcm_filtered_collated_notes_df[
                             gmcm_filtered_collated_notes_df["logic_tree_index"]
                             == sorted_logic_tree_index
                         ]["ground_motion_logic_tree_note"].values[0]
-                        short_note = run_note.split(">")[-2].split("*")[-2].strip(" [")
+                        short_note = (
+                            logic_tree_note.split(">")[-2].split("*")[-2].strip(" [")
+                        )
                         plot_label = model_to_plot_label[short_note]
 
                     if row_index == 2:
-                        run_note = srm_filtered_collated_notes_df[
+                        logic_tree_note = srm_filtered_collated_notes_df[
                             srm_filtered_collated_notes_df["logic_tree_index"]
                             == sorted_logic_tree_index
                         ]["source_logic_tree_note"].values[0]
                         short_note = (
-                            run_note.split(">")[1].split(":")[-1].strip(" []")
+                            logic_tree_note.split(">")[1].split(":")[-1].strip(" []")
                             + "_"
-                            + run_note.split(">")[2].strip()
+                            + logic_tree_note.split(">")[2].strip()
                         )
 
                         plot_label = model_to_plot_label[short_note]
@@ -336,24 +362,24 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
                     ]["values"].values[0]
 
                     if row_index != 2:
-                        if "CRU" in run_note:
+                        if "CRU" in logic_tree_note:
                             plot_linestyle = "--"
-                        if "INTER" in run_note:
+                        if "INTER" in logic_tree_note:
                             plot_linestyle = "--"
-                        if "SLAB" in run_note:
+                        if "SLAB" in logic_tree_note:
                             plot_linestyle = "-."
 
                     elif row_index == 2:
-                        if "CRU" in run_note:
+                        if "CRU" in logic_tree_note:
                             plot_linestyle = "--"
-                        if "INTER" in run_note:
+                        if "INTER" in logic_tree_note:
                             plot_linestyle = "-."
 
                     axes[row_index, column_index].semilogy(
                         std_ln,
                         mean,
                         label=plot_label,
-                        color=glt_model_color[short_note],
+                        color=ground_motion_logic_tree_model_color[short_note],
                         linestyle=plot_linestyle,
                     )
 
@@ -452,7 +478,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: list[str] = ["AKL", "WLG", "CHC"],
+    locations: tuple[str] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     plot_dpi: int = 500,
@@ -467,8 +493,8 @@ def make_figure_of_srm_model_components(
         named as logic_tree_index_[x] where [x] is the index the logic_tree_set had in the input list.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : list[str], optional
-        The locations to plot (default is ["AKL", "WLG", "CHC"]).
+    locations : tuple[str], optional
+        The locations to plot. Default is ("AKL", "WLG", "CHC").
     im : str, optional
         The intensity measure (default is "PGA").
     vs30 : int, optional
@@ -515,7 +541,7 @@ def make_figure_of_srm_model_components(
     ]
 
     ## In remaining SRM component models, filter out runs with only one of HIK or PUY subduction zone
-    # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
+    # (identified by "only" in the source_logic_tree_note reading "INTER_only_HIK" or "INTER_only_PUY")
     filtered_logic_tree_name_notes_df = filtered_logic_tree_name_notes_df[
         ~filtered_logic_tree_name_notes_df["source_logic_tree_note"].str.contains(
             "only"
@@ -527,7 +553,9 @@ def make_figure_of_srm_model_components(
         for x in filtered_logic_tree_name_notes_df["logic_tree_index"].values
     ]
 
-    fig, axes = plt.subplots(1, len(locations), figsize=(2.7 * len(locations), 4))
+    fig, axes = plt.subplots(
+        1, len(locations), figsize=(2.7 * len(locations), 4)
+    )  # noqa: F841
 
     linestyle_lookup_dict = {"CRU": "-", "INTER": "--"}
 
@@ -535,6 +563,7 @@ def make_figure_of_srm_model_components(
 
         for logic_tree_name in logic_tree_name_strs:
 
+            # noinspection DuplicatedCode
             nloc_001_str = locations_nloc_dict[location]
 
             mean = data_df[
@@ -557,14 +586,16 @@ def make_figure_of_srm_model_components(
             mean = mean[needed_idx]
             std_ln = std_ln[needed_idx]
 
-            slt_note = f"{logic_tree_name_notes_df[logic_tree_name_notes_df["logic_tree_index"] == int(logic_tree_name.split("_")[-1])]["source_logic_tree_note"].values[0]}"
+            source_logic_tree_note = f"{logic_tree_name_notes_df[logic_tree_name_notes_df["logic_tree_index"] == int(logic_tree_name.split("_")[-1])]["source_logic_tree_note"].values[0]}"
 
-            tectonic_region_type = slt_note.split(">")[1].strip(" ]'").split("[")[-1]
+            tectonic_region_type = (
+                source_logic_tree_note.split(">")[1].strip(" ]'").split("[")[-1]
+            )
 
             if "INTER" in tectonic_region_type:
                 tectonic_region_type = "INTER"
 
-            model_name = slt_note.split(">")[-2].strip(" ")
+            model_name = source_logic_tree_note.split(">")[-2].strip(" ")
 
             note = f"{trt_short_to_long[tectonic_region_type]} {model_name_short_to_long[model_name]}"
 
@@ -614,10 +645,10 @@ def make_figure_of_srm_model_components(
 def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: list[str] = ["AKL", "WLG", "CHC"],
+    locations: tuple[str] = ("AKL", "WLG", "CHC"),
     vs30: int = 400,
     im: str = "PGA",
-    plot_dpi=500,
+    plot_dpi: int = 500,
 ):
     """
     Generate a figure of ground motion characterization models (GMCMs) for specified locations.
@@ -628,8 +659,8 @@ def make_figure_of_gmcms(
         The directory containing the results to plot.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : list of str, optional
-        A list of location codes to include in the plot. Default is ["AKL", "WLG", "CHC"].
+    locations : tuple of str, optional
+        The locations to plot. Default is ("AKL", "WLG", "CHC").
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
     im : str, optional
@@ -648,7 +679,7 @@ def make_figure_of_gmcms(
     )
     location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
     model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
-    glt_model_color = toml.load("resources/model_plot_colors.toml")
+    ground_motion_logic_tree_model_color = toml.load("resources/model_plot_colors.toml")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -663,6 +694,7 @@ def make_figure_of_gmcms(
             results_directory, locations
         )
     )
+    # noinspection DuplicatedCode
     data_df = loaded_results.data_df
     collated_notes_df = loaded_results.collated_notes_df
 
@@ -674,7 +706,7 @@ def make_figure_of_gmcms(
     ]
 
     ## In the remaining SRM component notes, filter out runs with only one of HIK or PUY subduction zone
-    # (identified by "only" in the slt_note reading "INTER_only_HIK" or "INTER_only_PUY")
+    # (identified by "only" in the source_logic_tree_note reading "INTER_only_HIK" or "INTER_only_PUY")
     filtered_collated_notes_df = filtered_collated_notes_df[
         ~filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
@@ -685,7 +717,7 @@ def make_figure_of_gmcms(
         )
     )
 
-    fig, axes = plt.subplots(3, 3, figsize=(6, 9))
+    fig, axes = plt.subplots(3, 3, figsize=(6, 9))  # noqa: F841
 
     for location_row_idx, location in enumerate(locations):
 
@@ -699,6 +731,7 @@ def make_figure_of_gmcms(
 
             logic_tree_name_str = f"logic_tree_index_{logic_tree_index}"
 
+            # noinspection DuplicatedCode
             mean = data_df[
                 (data_df["agg"] == "mean")
                 & (data_df["vs30"] == vs30)
@@ -721,33 +754,43 @@ def make_figure_of_gmcms(
             mean_list.append(mean)
             std_ln_list.append(std_ln)
             non_zero_run_list.append(logic_tree_name_str)
-            slt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
-            glt_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
+            # noinspection DuplicatedCode
+            source_logic_tree_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
+            ground_motion_logic_tree_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
-            trts_from_note = slt_note.split(">")[-2].strip().split(":")[-1].strip("[]")
-            glt_model_and_weight_str = glt_note.split(">")[-2].strip(" []")
-            glt_model = glt_model_and_weight_str.split("*")[0]
+            tectonic_region_type_set_from_note = (
+                source_logic_tree_note.split(">")[-2].strip().split(":")[-1].strip("[]")
+            )
+            ground_motion_logic_tree_model_and_weight_str = (
+                ground_motion_logic_tree_note.split(">")[-2].strip(" []")
+            )
+            ground_motion_logic_tree_model = (
+                ground_motion_logic_tree_model_and_weight_str.split("*")[0]
+            )
 
-            linestyle = tectonic_type_to_linestyle[trts_from_note]
+            linestyle = tectonic_type_to_linestyle[tectonic_region_type_set_from_note]
 
-            if trts_from_note == "INTER_only_HIK":
+            if tectonic_region_type_set_from_note == "INTER_only_HIK":
                 continue
-            if trts_from_note == "INTER_only_PUY":
+            if tectonic_region_type_set_from_note == "INTER_only_PUY":
                 continue
 
-            if "CRU" in trts_from_note:
+            if "CRU" in tectonic_region_type_set_from_note:
                 subplot_idx = 0
-            if "INTER" in trts_from_note:
+            if "INTER" in tectonic_region_type_set_from_note:
                 subplot_idx = 1
-            if "SLAB" in trts_from_note:
+            if "SLAB" in tectonic_region_type_set_from_note:
                 subplot_idx = 2
 
+            # noinspection PyUnboundLocalVariable
             axes[location_row_idx, subplot_idx].semilogy(
                 std_ln,
                 mean,
-                label=model_to_plot_label[glt_model],
+                label=model_to_plot_label[ground_motion_logic_tree_model],
                 linestyle=linestyle,
-                color=glt_model_color[glt_model],
+                color=ground_motion_logic_tree_model_color[
+                    ground_motion_logic_tree_model
+                ],
             )
 
             axes[location_row_idx, subplot_idx].text(
@@ -804,7 +847,7 @@ def make_figure_of_gmcms(
     )
 
 
-def make_figure_showing_Bradley2009_method(
+def make_figure_showing_bradley2009_method(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     registry_directory: Union[Path, str],
@@ -924,7 +967,7 @@ def make_figure_showing_Bradley2009_method(
     ]["values"].values[0]
 
     plot_ylims = (1e-5, 1)
-    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(8, 5))  # noqa: F841
 
     for realization_index in range(len(hazard_prob_of_exceedance)):
         gmcm_name_with_branch = realization_names[
@@ -947,6 +990,7 @@ def make_figure_showing_Bradley2009_method(
         )
 
     # Customize the second subplot
+    # noinspection PyUnboundLocalVariable
     if gmcm_name in gmcm_name_formatting_lookup.keys():
         gmcm_name_label = gmcm_name_formatting_lookup[gmcm_name]
     else:
@@ -1143,16 +1187,16 @@ def make_figure_showing_Bradley2009_method(
 def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: list[str] = ["AKL", "WLG", "CHC"],
-    filter_strs: list[str] = ["CRU", "HIK_and_PUY", "SLAB"],
+    locations: tuple[str] = ("AKL", "WLG", "CHC"),
+    filter_strs: tuple[str] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
     im: str = "PGA",
-    plot_dpi=500,
-    num_interp_mean_points=1000,
-    min_log10_mean_for_interp=-6,
-    max_log10_mean_for_interp=-2,
-    plot_interpolations=False,
-    min_mean_value_for_interp_plots=1e-9,
+    plot_dpi: int = 500,
+    num_interp_mean_points: int = 1000,
+    min_log10_mean_for_interp: int = -6,
+    max_log10_mean_for_interp: int = -2,
+    plot_interpolations: bool = False,
+    min_mean_value_for_interp_plots: float = 1e-9,
 ):
     """
     Generate a figure showing the dispersion ranges of ground motion models (GMMs) for specified locations.
@@ -1163,10 +1207,10 @@ def make_figure_of_gmm_dispersion_ranges(
         The directory containing the results data.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : list of str, optional
-        A list of location codes to include in the plot. Default is ["AKL", "WLG", "CHC"].
-    filter_strs : list of str, optional
-        A list of filter strings to select the needed data. Default is ["CRU", "HIK_and_PUY", "SLAB"].
+    locations : tuple[str], optional
+        The locations to plot. Default is ("AKL", "WLG", "CHC").
+    filter_strs : tuple[str], optional
+        The filter strings needed to select the desired data. Default is ("CRU", "HIK_and_PUY", "SLAB").
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
     im : str, optional
@@ -1260,7 +1304,7 @@ def make_figure_of_gmm_dispersion_ranges(
 def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: list[str] = ["AKL", "WLG", "CHC"],
+    locations: tuple[str] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
@@ -1280,8 +1324,8 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         Directory containing the logic tree index.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : list of str, optional
-        List of location codes to generate plots for. Default is ["AKL", "WLG", "CHC"].
+    locations : Tuple of str, optional
+        Tuple of location codes to generate plots for. Default is ("AKL", "WLG", "CHC").
     im : str, optional
         Intensity measure to be used in the plots. Default is "PGA".
     vs30 : int, optional
@@ -1370,7 +1414,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         )
         model_name_long = model_name_to_plot_format[model_name_short]
 
-    fig, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
+    fig, axes = plt.subplots(
+        2, len(locations), figsize=(3 * len(locations), 6)
+    )  # noqa: F841
 
     poe_maxs = []
     ln_resid_mins = []
@@ -1416,6 +1462,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
                     ]
                 )
             )
+            # noinspection PyUnboundLocalVariable
             axes[0, location_idx].loglog(
                 nshm_im_levels[needed_im_level_indices],
                 hazard_prob_of_exceedance[realization_index][needed_im_level_indices],
@@ -1480,6 +1527,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
     axes[1, 1].set_xlabel(f"{im} level")
 
+    # noinspection PyUnboundLocalVariable
     plt.suptitle(model_name_long)
 
     plt.subplots_adjust(left=0.10, right=0.99, bottom=0.1, wspace=0.0, hspace=0.0)
@@ -1493,15 +1541,15 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: list[str] = ["AKL", "WLG", "CHC"],
+    locations: tuple[str] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
     poe_min_plot: float = 1e-5,
     ybuffer_absmax_over_val: float = 10.0,
-    selected_subduction_interface="INTER_HIK_and_PUY",
+    selected_subduction_interface: str = "INTER_HIK_and_PUY",
     plot_dpi: int = 500,
-    notes_to_exclude=[],
+    notes_to_exclude: tuple = (),
 ):
     """
     Generate figures of individual realizations for several logic trees.
@@ -1515,8 +1563,8 @@ def make_figures_of_several_individual_realizations(
         Directory containing the results of the logic tree realizations.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : list of str, optional
-        List of location codes to generate plots for. Default is ["AKL", "WLG", "CHC"].
+    locations : tuple of str, optional
+        The locations to plot. Default is ("AKL", "WLG", "CHC").
     im : str, optional
         Intensity measure to be used in the plots. Default is "PGA".
     vs30 : int, optional
@@ -1532,8 +1580,9 @@ def make_figures_of_several_individual_realizations(
         Subduction interface to be selected. Default is "INTER_HIK_and_PUY".
     plot_dpi : int, optional
         DPI for the generated plots. Default is 500.
-    notes_to_exclude : list, optional
-        List of notes to exclude from the plots. Default is an empty list.
+    notes_to_exclude : tuple, optional
+        Notes for results to exclude from the plots in the form of
+        (source_logic_tree_note, ground_motion_logic_tree_note). Default is an empty tuple.
 
     Returns
     -------
@@ -1558,12 +1607,15 @@ def make_figures_of_several_individual_realizations(
     collated_notes_df = aggregate_stats_results.collated_notes_df
 
     ## exclude the specified logic tree indices
-    for slt_note, glt_note in notes_to_exclude:
+    for source_logic_tree_note, ground_motion_logic_tree_note in notes_to_exclude:
 
-        print(slt_note, glt_note)
+        print(source_logic_tree_note, ground_motion_logic_tree_note)
 
-        exclude_bool_idx = (collated_notes_df["source_logic_tree_note"] == slt_note) & (
-            collated_notes_df["ground_motion_logic_tree_note"] == glt_note
+        exclude_bool_idx = (
+            collated_notes_df["source_logic_tree_note"] == source_logic_tree_note
+        ) & (
+            collated_notes_df["ground_motion_logic_tree_note"]
+            == ground_motion_logic_tree_note
         )
         logic_tree_indices_to_skip.append(
             collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0]

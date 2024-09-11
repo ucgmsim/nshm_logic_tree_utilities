@@ -61,6 +61,15 @@ class CustomLogicTreePair:
     other_notes: Optional[str] = ""
 
     def notes_to_toml(self, path: Path):
+        """
+        Save the notes of the CustomLogicTreePair to a TOML file.
+
+        Parameters
+        ----------
+        path : Path
+            The file path where the TOML file will be saved.
+        """
+
         data = {
             "source_logic_tree_note": self.source_logic_tree_note,
             "ground_motion_logic_tree_note": self.ground_motion_logic_tree_note,
@@ -70,6 +79,18 @@ class CustomLogicTreePair:
             toml.dump(data, f)
 
     def notes_to_pandas_df(self):
+        """
+        Converts the notes of the CustomLogicTreePair to a pandas DataFrame.
+
+        This function creates a pandas DataFrame containing the notes from the CustomLogicTreePair instance.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with a single row containing the source logic tree note, ground motion logic tree note,
+            and any other notes.
+        """
+
         data = {
             "source_logic_tree_note": self.source_logic_tree_note,
             "ground_motion_logic_tree_note": self.ground_motion_logic_tree_note,
@@ -122,13 +143,13 @@ def run_with_modified_logic_trees(
     )
 
     ### Save a copy of the logic trees for later inspection
-    modified_source_logic_tree.to_json(output_staging_dir / f"srm_logic_tree.json")
+    modified_source_logic_tree.to_json(output_staging_dir / "srm_logic_tree.json")
     modified_ground_motion_logic_tree.to_json(
-        output_staging_dir / f"gmcm_logic_tree.json"
+        output_staging_dir / "gmcm_logic_tree.json"
     )
 
     ### Save human-readable notes describing the changes to the logic tree
-    custom_logic_tree_pair.notes_to_toml(output_staging_dir / f"notes.toml")
+    custom_logic_tree_pair.notes_to_toml(output_staging_dir / "notes.toml")
 
     ### While several locations can be passed into the same toshi_hazard_post run,
     ### this requires more memory than is available in a typical desktop workstation.

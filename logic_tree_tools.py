@@ -23,12 +23,16 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
     """
     Reduce a logic tree to only the nth highest weighted branch in each branch set.
     The highest weighted branch is the 1st highest weighted branch (nth_highest = 1).
-    The second highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
+    The second-highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
 
     Parameters
     ----------
     logic_tree : SourceLogicTree or GMCMLogicTree
         The logic tree to be modified.
+
+    nth_highest : int
+        The nth highest weighted branch to reduce the logic tree to. For example, if n = 1, the logic tree is reduced
+        to the first highest weighted branch. If n = 2, it is reduced to the second-highest weighted branch, etc.
 
     Returns
     -------
@@ -97,7 +101,7 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
     branch in each branch set.
 
     The highest weighted branch is the 1st highest weighted branch (nth_highest = 1).
-    The second highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
+    The second-highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
 
     Parameters
     ----------
@@ -212,12 +216,12 @@ def transpose_lists(lists: list[list]) -> list[list]:
 
     Examples
     --------
-    >>> lists = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    >>> transpose_lists(lists)
+    >>> example_lists = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    >>> transpose_lists(example_lists)
     [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
     """
 
-    transposed = list(map(list, zip(*lists)))
+    transposed = list(map(lambda x: list(x), zip(*lists)))
     return transposed
 
 
@@ -337,7 +341,7 @@ def select_branch_sets_given_tectonic_region_type(
                         new_branch_sets.append(copy.deepcopy(branch_set))
 
         if isinstance(logic_tree, GMCMLogicTree):
-            if branch_set.tectonic_region_type in tectonic_region_type_set:
+            if branch_set.tectonic_region_types in tectonic_region_type_set:
                 new_branch_sets.append(copy.deepcopy(branch_set))
 
     modified_logic_tree.branch_sets = new_branch_sets
@@ -455,10 +459,10 @@ def print_info_about_logic_tree(logic_tree: Union[SourceLogicTree, GMCMLogicTree
     print("")  # Add a blank line for readability
 
     if isinstance(logic_tree, SourceLogicTree):
-        print(f"Logic tree is a SourceLogicTree")
+        print("Logic tree is a SourceLogicTree")
 
     if isinstance(logic_tree, GMCMLogicTree):
-        print(f"Logic tree is a GMCMLogicTree")
+        print("Logic tree is a GMCMLogicTree")
 
     print(f"Logic tree has {len(logic_tree.branch_sets)} branch sets")
 
@@ -506,7 +510,7 @@ def print_info_about_logic_tree_pairs(
 def get_logic_tree_pairs_for_tectonic_selection(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_sets: list[list[str]],
-    which_interfaces,
+    which_interfaces: list[str],
 ) -> list[CustomLogicTreePair]:
     """
     Produces a list of logic tree pairs with the selected tectonic region types.
@@ -527,9 +531,9 @@ def get_logic_tree_pairs_for_tectonic_selection(
          [["Active Shallow Crust", "Subduction Interface"], ["Subduction Intraslab"]]
          ["Subduction Interface"]
 
-    which_interfaces : str, default = "HIK_and_PUY"
-        Which subduction interfaces to include.
-        Valid options are:
+    which_interfaces : list[str]
+        A list of which subduction interfaces to include.
+        Valid options for subduction interfaces are:
            "HIK_and_PUY" which includes HIK_and_PUY the Hikurangi–Kermadec (only_HIK) and Puysegur (only_PUY) subduction zones
            "only_HIK" which includes only the Hikurangi–Kermadec (only_HIK) subduction zone
            "only_PUY" which includes only the Puysegur (only_PUY) subduction zone.
@@ -548,7 +552,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
 
             for which_interface in which_interfaces:
 
-                logic_tree_pair_for_trts = (
+                logic_tree_pair_for_tectonic_region_type_set = (
                     logic_tree_pair_with_selected_tectonic_region_types(
                         initial_logic_tree_pair,
                         tectonic_region_type_set=tectonic_region_type_set,
@@ -556,11 +560,13 @@ def get_logic_tree_pairs_for_tectonic_selection(
                     )[0]
                 )
 
-                logic_tree_pair_list.append(logic_tree_pair_for_trts)
+                logic_tree_pair_list.append(
+                    logic_tree_pair_for_tectonic_region_type_set
+                )
 
         else:
 
-            logic_tree_pair_for_trts = (
+            logic_tree_pair_for_tectonic_region_type_set = (
                 logic_tree_pair_with_selected_tectonic_region_types(
                     initial_logic_tree_pair,
                     tectonic_region_type_set=tectonic_region_type_set,
@@ -568,7 +574,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
                 )[0]
             )
 
-            logic_tree_pair_list.append(logic_tree_pair_for_trts)
+            logic_tree_pair_list.append(logic_tree_pair_for_tectonic_region_type_set)
 
     return logic_tree_pair_list
 
@@ -831,8 +837,8 @@ def remove_single_quotes(input_string: str) -> str:
 
     Examples
     --------
-    >>> input_string = "It's a test string."
-    >>> remove_single_quotes(input_string)
+    >>> example_input_string = "It's a test string."
+    >>> remove_single_quotes(example_input_string)
     'Its a test string.'
     """
     modified_string = input_string.replace("'", "")
