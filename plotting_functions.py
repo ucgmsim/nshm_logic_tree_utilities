@@ -172,7 +172,7 @@ def make_figure_of_coefficient_of_variation(
 
 # noinspection PyUnboundLocalVariable
 def make_figure_of_srm_and_gmcm_model_dispersions(
-    locations: tuple[str],
+    locations: tuple[str, ...],
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     vs30: int = 400,
@@ -478,7 +478,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str] = ("AKL", "WLG", "CHC"),
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     plot_dpi: int = 500,
@@ -553,9 +553,7 @@ def make_figure_of_srm_model_components(
         for x in filtered_logic_tree_name_notes_df["logic_tree_index"].values
     ]
 
-    fig, axes = plt.subplots(
-        1, len(locations), figsize=(2.7 * len(locations), 4)
-    )  # noqa: F841
+    _, axes = plt.subplots(1, len(locations), figsize=(2.7 * len(locations), 4))
 
     linestyle_lookup_dict = {"CRU": "-", "INTER": "--"}
 
@@ -645,7 +643,7 @@ def make_figure_of_srm_model_components(
 def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str] = ("AKL", "WLG", "CHC"),
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
     vs30: int = 400,
     im: str = "PGA",
     plot_dpi: int = 500,
@@ -717,7 +715,7 @@ def make_figure_of_gmcms(
         )
     )
 
-    fig, axes = plt.subplots(3, 3, figsize=(6, 9))  # noqa: F841
+    _, axes = plt.subplots(3, 3, figsize=(6, 9))
 
     for location_row_idx, location in enumerate(locations):
 
@@ -967,7 +965,7 @@ def make_figure_showing_bradley2009_method(
     ]["values"].values[0]
 
     plot_ylims = (1e-5, 1)
-    fig, axes = plt.subplots(1, 2, figsize=(8, 5))  # noqa: F841
+    _, axes = plt.subplots(1, 2, figsize=(8, 5))
 
     for realization_index in range(len(hazard_prob_of_exceedance)):
         gmcm_name_with_branch = realization_names[
@@ -1187,8 +1185,8 @@ def make_figure_showing_bradley2009_method(
 def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str] = ("AKL", "WLG", "CHC"),
-    filter_strs: tuple[str] = ("CRU", "HIK_and_PUY", "SLAB"),
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
+    filter_strs: tuple[str, ...] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
     im: str = "PGA",
     plot_dpi: int = 500,
@@ -1304,7 +1302,7 @@ def make_figure_of_gmm_dispersion_ranges(
 def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str] = ("AKL", "WLG", "CHC"),
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
@@ -1414,9 +1412,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         )
         model_name_long = model_name_to_plot_format[model_name_short]
 
-    fig, axes = plt.subplots(
-        2, len(locations), figsize=(3 * len(locations), 6)
-    )  # noqa: F841
+    _, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
 
     poe_maxs = []
     ln_resid_mins = []
@@ -1541,7 +1537,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str] = ("AKL", "WLG", "CHC"),
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
     im: str = "PGA",
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
@@ -1549,7 +1545,7 @@ def make_figures_of_several_individual_realizations(
     ybuffer_absmax_over_val: float = 10.0,
     selected_subduction_interface: str = "INTER_HIK_and_PUY",
     plot_dpi: int = 500,
-    notes_to_exclude: tuple = (),
+    notes_to_exclude: Union[tuple[tuple[str, str]], tuple] = (),
 ):
     """
     Generate figures of individual realizations for several logic trees.

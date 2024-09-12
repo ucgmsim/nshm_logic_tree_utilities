@@ -198,7 +198,7 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
 
 
 def load_aggregate_stats_for_one_logic_tree_several_locations(
-    results_dir_for_one_logic_tree: Union[Path, str], locations: tuple[str]
+    results_dir_for_one_logic_tree: Union[Path, str], locations: tuple[str, ...]
 ) -> pd.DataFrame:
     """
     Load aggregate statistics results for several locations.
@@ -237,7 +237,8 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(
 
 
 def load_aggregate_stats_for_all_logic_trees_in_directory(
-    results_directory: Union[Path, str], locations: tuple[str] = ("AKL", "WLG", "CHC")
+    results_directory: Union[Path, str],
+    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
 ) -> LoadedResults:
     """
     Load aggregate statistics for all logic trees in the results_directory.
@@ -495,8 +496,8 @@ def remove_duplicates_in_x(x: np.ndarray, y: np.ndarray) -> tuple:
 
 def get_interpolated_gmms(
     results_directory: Union[Path, str],
-    locations: tuple[str],
-    filter_strs: tuple[str],
+    locations: tuple[str, ...],
+    filter_strs: tuple[str, ...],
     vs30: int,
     im: str,
     num_interp_mean_points: int,

@@ -1,3 +1,8 @@
+"""
+This script modifies the logic tree used in the 2022 revision of New Zealand's National Seismic Hazard Model (NZNSHM)
+and generates hazard curves using the modified logic trees.
+"""
+
 import copy
 import logging
 import os
@@ -123,8 +128,6 @@ logic_tree_pair_list3 = (
 logic_tree_pair_list = (
     logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
 )
-
-# logic_tree_pair_list = logic_tree_pair_list2
 
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_pairs(logic_tree_pair_list)

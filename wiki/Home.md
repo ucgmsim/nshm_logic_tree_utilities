@@ -2,13 +2,39 @@
 
 This package has utilities for working with the logic tree used in [New Zealand's National Seismic Hazard Model 
 (NSHM) 2022](https://www.gns.cri.nz/research-projects/national-seismic-hazard-model/). 
-With this package, you can create modified logic trees, use them to calculate new hazard curves, and
-plot the results. It depends on several packages developed by [GNS Science](https://github.com/GNS-Science) that 
-are mentioned in `requirements.txt`. To extract individual realizations from logic tree branches, modified versions of 
-[toshi-hazard-post](https://github.com/ucgmsim/toshi-hazard-post) and 
-[toshi-hazard-store](https://github.com/ucgmsim/toshi-hazard-store) are needed from forks on 
-[ucgmsim's GitHub account](https://github.com/ucgmsim). For usage examples, see `run_toshi_hazard_post_script.py` and
-`plotting_script.py`.
+With this package, you can create modified logic trees and use them to calculate new hazard curves.
+
+### Installation
+1. Clone the repository. One way to do this is to open a terminal and run the following command: 
+    
+   1. `git clone git@github.com:ucgmsim/nshm_logic_tree_utilities.git`
+
+2. Navigate to the repository directory and create a virtual environment. One way to do this is to run the following 
+   commands in the terminal:
+
+   1. `cd nshm_logic_tree_utilities`
+   2. `mkdir .venv`
+   3. `python -m venv .venv`
+
+3. Activate the new virtual environment by running the following command in the terminal:
+   1. `source .venv/bin/activate`
+
+4. Install the required packages by running the following command in the terminal:
+   1. `pip install -r requirements.txt`
+
+### Usage
+
+1. To modify the standard NZ NSHM 2022 logic tree and generate hazard curves:
+   1. Open `config.yaml`
+   2. Modify the line containing `output_directory : "/home/arr65/data/nshm/output"` to use your directory
+   3. Run the code with `python run_toshi_hazard_post_script.py`
+
+2. To plot the results:
+   1. Run `python plotting_script.py`
+
+Note that the examples provided in `run_toshi_hazard_post_script.py` and `plotting_script.py`
+can be modified for your purposes.
+
 
 ### Background
 
@@ -23,9 +49,10 @@ which branches contribute the most to the hazard and uncertainty. However, this 
 directions, making it highly valuable. Therefore, we systematically removed parts of the NSHM 2022 logic tree and 
 re-computed the hazard curves.
 
-### Code purpose & use
+### Code purpose
 
-GNS Science implemented the NSHM 2022 logic tree using pre-computed components that can be combined in different ways 
+[GNS Science](https://github.com/GNS-Science) implemented the NSHM 2022 logic tree using pre-computed components that can 
+be combined in different ways 
 ([DiCaprio et al. 2024](https://pubs.geoscienceworld.org/ssa/srl/article/95/1/125/628895/Calculation-of-National-Seismic-Hazard-Models-with)).
 We downloaded approximately 500 GB of pre-computed components 
 (private communication with Christopher J. DiCaprio), and utilized GNS Science’s open-source Python-based software to 

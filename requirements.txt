@@ -8,12 +8,5 @@ toml
 scipy
 pyarrow
 
-
-## modified GNS packages
-#git+https://github.com/ucgmsim/toshi-hazard-store.git@pre-release_get_realizations
 git+https://github.com/ucgmsim/toshi-hazard-post.git@feature/documentation-v2_get_realizations
-
-## GNS Science packages from GitHub
-## format: git+https://github.com/username/repo_name.git@branch_or_tag#egg=package_name
-#git+https://github.com/GNS-Science/nzshm-common-py.git@pre-release
 git+https://github.com/ucgmsim/nzshm-model.git@srm-trt-merge-digest_version_hack
