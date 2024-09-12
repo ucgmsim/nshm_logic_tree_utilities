@@ -341,7 +341,7 @@ def select_branch_sets_given_tectonic_region_type(
                         new_branch_sets.append(copy.deepcopy(branch_set))
 
         if isinstance(logic_tree, GMCMLogicTree):
-            if branch_set.tectonic_region_types in tectonic_region_type_set:
+            if branch_set.tectonic_region_type in tectonic_region_type_set:
                 new_branch_sets.append(copy.deepcopy(branch_set))
 
     modified_logic_tree.branch_sets = new_branch_sets
