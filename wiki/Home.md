@@ -47,9 +47,7 @@ A mean hazard model is produced by combining the individual branches based on th
 The NSHM 2022 logic tree consists of approximately one million branches, making it challenging to intuitively understand 
 which branches contribute the most to the hazard and uncertainty. However, this information could inform future research 
 directions, making it highly valuable. Therefore, we systematically removed parts of the NSHM 2022 logic tree and 
-re-computed the hazard curves.
-
-### Code purpose
+re-computed the hazard curves.  
 
 [GNS Science](https://github.com/GNS-Science) implemented the NSHM 2022 logic tree using pre-computed components that can 
 be combined in different ways 
@@ -57,6 +55,8 @@ be combined in different ways
 We downloaded approximately 500 GB of pre-computed components 
 (private communication with Christopher J. DiCaprio), and utilized GNS Science’s open-source Python-based software to 
 generate hazard curves from modified logic trees.
+
+### Code purpose
 
 With this code, we systematically isolated parts of the logic tree and examined the resulting hazard and epistemic 
 uncertainty. We generated hazard curves for a range of intensity measures in the locations of Wellington, 
@@ -71,7 +71,7 @@ trees for crustal tectonic region type is shown in Figure 1.
 model (GMCM) logic tree (right). Each branch in the crustal SRM contains all lower branches (adapted
 from [DiCaprio et al., 2024](https://pubs.geoscienceworld.org/ssa/srl/article/95/1/125/628895/Calculation-of-National-Seismic-Hazard-Models-with) 
 and 
-[Gerstenberger et al., 2024](https://pubs.geoscienceworld.org/ssa/bssa/article/114/1/7/631699))*
+[Gerstenberger et al., 2024](https://pubs.geoscienceworld.org/ssa/bssa/article/114/1/7/631699))*.
 
 
 We determined the epistemic uncertainty contributions of the component logic trees by reducing one to the single 
@@ -85,7 +85,7 @@ the dispersion in predictions for each intensity measure level, as demonstrated 
 ![Figure 2](images/Stafford2022_WLG_predictions_and_aggregate_stats.png)
 *Figure 2: Left: Hazard curves showing the upper, central, and lower branches of the Stafford (2022) crust model. 
 Right: Epistemic uncertainty, showing references  to the corresponding points in  the hazard curves (left). This figure 
-was created with the function `make_figure_showing_Bradley2009_method` in `plotting_functions.py`* 
+was created with the function `make_figure_showing_bradley2009_method` in `plotting_functions.py`*.
 
 ### Code output and results
 
@@ -98,10 +98,13 @@ on GMCMs.
 ![Figure 3](images/coefficient_of_variation.png)
 *Figure 3: Modelling uncertainty in Wellington, shown by the coefficient of variation
 (standard deviation /mean) of model predictions for annual probability of exceedance. This figure was created with the
-function `make_figure_of_coefficient_of_variation` in `plotting_functions.py`* 
+function `make_figure_of_coefficient_of_variation` in `plotting_functions.py`*. 
 
 The epistemic uncertainties for individual models are shown in Figure 4 a & b. We found that the
-crustal Stafford (2022) and Atkinson (2022) GMCMs have higher epistemic uncertainties
+crustal [Stafford (2022)](https://nshm-static-reports.gns.cri.nz/NSHM/ScienceReports/SR2022-15%20NSHM%20Response%20Spectral%20Ordinates%20Model_FINAL.pdf) 
+and 
+[Atkinson (2022)](https://nshm-static-reports.gns.cri.nz/NSHM/ScienceReports/SR2022-11%20NSHM%20Backbone%20Ground-Motion%20Models_FINAL.pdf) 
+GMCMs have higher epistemic uncertainties
 than the other GMCMs. This is likely due to these models attempting to account for
 epistemic uncertainty in a region-specific manner. For the SRM, the magnitude-frequency
 distribution and moment rate scaling parameters for subduction interface sources produce
@@ -113,13 +116,13 @@ The next highest contribution is from the crustal moment rate scaling parameter.
 *Figure 4a: Epistemic uncertainty contributions from individual models for Wellington (left) and
 Christchurch (right). The rows show the crustal GMCMs (top), subduction interface and intraslab
 GMCMs (middle), and SRM components (bottom). This figure was made with the function 
-`make_figure_of_srm_and_gmcm_model_dispersions` in `plotting_functions.py`* 
+`make_figure_of_srm_and_gmcm_model_dispersions` in `plotting_functions.py`*. 
 
 ![Figure 4b](images/WLG_CHC_AKL_dispersion_poster_plot.png)
 *Figure 4b: Epistemic uncertainty contributions from individual models for Wellington (left) and
 Christchurch (middle), and Auckland (right). The rows show the crustal GMCMs (top), subduction interface and intraslab
 GMCMs (middle), and SRM components (bottom). This figure was made with the function 
-`make_figure_of_srm_and_gmcm_model_dispersions` in `plotting_functions.py`*
+`make_figure_of_srm_and_gmcm_model_dispersions` in `plotting_functions.py`*.
 
 Figures 5 and 6 are similar and show the epistemic uncertainty contributions of only seismicity rate model (SRM) 
 components and only ground motion characterization models (GMCMs), respectively. They can be generated with functions
@@ -128,18 +131,18 @@ respectively.
 
 ![Figure 5](images/srm_dispersions_WLG_CHC_AKL.png)
 *Figure 5: Epistemic uncertainty contributions from seismicity rate model (SRM) components. This figure was generated
-with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*
+with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
 
 ![Figure 6](images/gmcms_PGA_AKL_WLG_CHC.png)
 *Figure 6: Epistemic uncertainty contributions ground motion characterization models (GMCMs) components. 
-This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*
+This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
 
 Figure 7 shows the range of dispersions among ground motion characterization models (GMCMs) can be generated with
 the function `plotting_functions.make_figure_of_gmcm_model_dispersions`.
 
 ![Figure 7](images/gmcm_models_dispersion_ranges.png)
 *Figure 7: Epistemic uncertainty contributions ground motion characterization models (GMCMs) components. 
-This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*
+This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
 
 ### Figures of individual hazard curve realizations
 
