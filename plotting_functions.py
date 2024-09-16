@@ -207,9 +207,6 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     plot_dpi : int, optional
         The resolution of the plot in dots per inch (default is 500).
 
-    Returns
-    -------
-    None
     """
 
     if isinstance(results_directory, str):
