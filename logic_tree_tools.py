@@ -196,7 +196,6 @@ def check_weight_validity(logic_tree: Union[SourceLogicTree, GMCMLogicTree]) -> 
             f"The weights of branches in each branch_set do not sum to 1.0.\nThe summed weights for each branch_set are {branch_set_summed_weights}."
         )
 
-    return True
 
 
 def transpose_lists(lists: list[list]) -> list[list]:
