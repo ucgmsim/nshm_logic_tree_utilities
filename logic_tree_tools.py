@@ -37,7 +37,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
     Returns
     -------
     modified_logic_tree : SourceLogicTree or GMCMLogicTree
-        The logic tree after being reduced only consisting of the nth highest branch in each branch_set.
+        The logic tree reduced to the nth highest branch in each branch_set.
 
     Raises
     ------
