@@ -42,8 +42,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
     Raises
     ------
     ValueError
-        If the branches in the modified_logic_tree do not have valid weights.
-        That is its branches in each branch_set do not sum to 1.0.
+        If the branches in each branch set modified_logic_tree do not sum to 1.0.
 
     IndexError
         If the nth_highest is greater than the number of branches in any branch_set
