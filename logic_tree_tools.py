@@ -72,7 +72,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
             selected_branch = copy.deepcopy(reverse_sorted_branches[0])
         elif nth_highest > len(reverse_sorted_branches):
             selected_branch = copy.deepcopy(
-                reverse_sorted_branches[len(reverse_sorted_branches) - 1]
+                reverse_sorted_branches[-1]
             )
             print(
                 f"Branch set {branch_set.long_name} ({branch_set.short_name}) has fewer than {nth_highest} "
