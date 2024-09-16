@@ -28,7 +28,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
 
     Parameters
     ----------
-    logic_tree : SourceLogicTree or GMCMLogicTree
+    logic_tree : LogicTree
         The logic tree to be modified.
 
     nth_highest : int
@@ -37,13 +37,13 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
 
     Returns
     -------
-    modified_logic_tree : SourceLogicTree or GMCMLogicTree
-        The logic tree reduced to the nth highest branch in each branch_set.
+    modified_logic_tree : LogicTree
+        The logic tree reduced to the nth highest weighted branch in each branch_set.
 
     Raises
     ------
     ValueError
-        If the branches in each branch set modified_logic_tree do not sum to 1.0.
+        If the branches in each branch_set of modified_logic_tree do not sum to 1.0.
 
     IndexError
         If the nth_highest is greater than the number of branches in any branch_set
@@ -67,7 +67,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         )
         if len(reverse_sorted_branches) == 1:
             print(
-                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to nth highest branch."
+                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to nth highest weighted branch."
                 f" Leaving this branch_set unchanged."
             )
             selected_branch = copy.deepcopy(reverse_sorted_branches[0])
@@ -100,8 +100,8 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
     Reduce one or both of the logic trees in a logic tree pair to only the nth highest weighted
     branch in each branch set.
 
-    The highest weighted branch is the 1st highest weighted branch (nth_highest = 1).
-    The second-highest weighted branch is the 2nd highest weighted branch (nth_highest = 2) etc.
+    The highest weighted branch corresponds to nth_highest = 1.
+    The second-highest weighted branch corresponds to nth_highest = 2 etc.
 
     Parameters
     ----------
@@ -109,15 +109,15 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
         The initial logic tree pair to be modified.
 
     source_logic_tree_nth_highest : int, optional
-        The nth highest branch to reduce the SourceLogicTree to.
+        The nth highest weighted branch to reduce the SourceLogicTree to.
 
     ground_motion_logic_tree_nth_highest : int, optional
-        The nth highest branch to reduce the GMCMLogicTree to.
+        The nth highest weighted branch to reduce the GMCMLogicTree to.
 
     Returns
     -------
     modified_logic_tree_pair : CustomLogicTreePair
-        The logic tree pair after being reduced to only consist of the nth highest branch in each branch_set.
+        The logic tree pair after being reduced to only consist of the nth highest weighted branch in each branch_set.
 
     Raises
     ------
@@ -166,7 +166,7 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
 
     Parameters
     ----------
-    logic_tree : SourceLogicTree or GMCMLogicTree
+    logic_tree : LogicTree
         The logic tree to check.
 
     Returns
@@ -288,7 +288,7 @@ def select_branch_sets_given_tectonic_region_type(
 
     Parameters
     ----------
-    logic_tree : SourceLogicTree or GMCMLogicTree
+    logic_tree : LogicTree
         The logic tree to modify.
 
     tectonic_region_type_set : list[str] or str
@@ -308,7 +308,7 @@ def select_branch_sets_given_tectonic_region_type(
 
     Returns
     -------
-    modified_logic_tree : SourceLogicTree or GMCMLogicTree
+    modified_logic_tree : LogicTree
         The modified logic tree that only includes branch sets corresponding
         to the selected tectonic region type.
     """
