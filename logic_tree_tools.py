@@ -171,8 +171,7 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
 
     Returns
     -------
-    True : bool
-        Returns True if the weights of branches in each branch_set sum to 1.0.
+    None
 
     Raises
     ------
