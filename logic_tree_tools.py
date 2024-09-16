@@ -52,7 +52,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
 
     # find the maximum number of branches in any branch set
     max_num_branches = max(
-        [len(branch_set.branches) for branch_set in logic_tree.branch_sets]
+        len(branch_set.branches) for branch_set in logic_tree.branch_sets
     )
     if nth_highest > max_num_branches:
         raise ValueError(
