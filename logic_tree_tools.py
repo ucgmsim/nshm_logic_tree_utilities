@@ -159,7 +159,7 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
     return modified_logic_tree_pair
 
 
-def check_weight_validity(logic_tree: Union[SourceLogicTree, GMCMLogicTree]) -> bool:
+def check_weight_validity(logic_tree: Union[SourceLogicTree, GMCMLogicTree]) -> None:
     """
     Check that the weights of branches in each branch_set sum to 1.0.
 
