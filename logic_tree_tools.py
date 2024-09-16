@@ -32,7 +32,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
 
     nth_highest : int
         The nth highest weighted branch to reduce the logic tree to. For example, if n = 1, the logic tree is reduced
-        to the first highest weighted branch. If n = 2, it is reduced to the second-highest weighted branch, etc.
+        to the highest weighted branch. If n = 2, it is reduced to the second-highest weighted branch, etc.
 
     Returns
     -------
