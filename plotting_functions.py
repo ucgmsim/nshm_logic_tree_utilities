@@ -60,9 +60,6 @@ def make_figure_of_coefficient_of_variation(
         The default size was used for the poster and size of
         (5.12,4.62) was used for the poster showcase slide.
 
-    Returns
-    -------
-    None
     """
 
     nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
