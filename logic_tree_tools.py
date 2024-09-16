@@ -16,10 +16,11 @@ from nzshm_model.logic_tree.correlation import (
 
 from run_toshi_hazard_post_helper import CustomLogicTreePair
 
+LogicTree = Union[SourceLogicTree, GMCMLogicTree]
 
 def reduce_logic_tree_to_nth_highest_weighted_branch(
-    logic_tree: Union[SourceLogicTree, GMCMLogicTree], nth_highest: int
-) -> Union[SourceLogicTree, GMCMLogicTree]:
+    logic_tree: LogicTree, nth_highest: int
+) -> LogicTree:
     """
     Reduce a logic tree to only the nth highest weighted branch in each branch set.
     The highest weighted branch is the 1st highest weighted branch (nth_highest = 1).
@@ -159,7 +160,7 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
     return modified_logic_tree_pair
 
 
-def check_weight_validity(logic_tree: Union[SourceLogicTree, GMCMLogicTree]) -> None:
+def check_weight_validity(logic_tree: LogicTree) -> None:
     """
     Check that the weights of branches in each branch_set sum to 1.0.
 
@@ -224,7 +225,7 @@ def transpose_lists(lists: list[list]) -> list[list]:
 
 
 def get_source_branch_parameters(
-    logic_tree: Union[SourceLogicTree, GMCMLogicTree]
+    logic_tree: LogicTree
 ) -> dict:
     """
     Extracts and processes the branch parameters from a logic tree.
@@ -235,7 +236,7 @@ def get_source_branch_parameters(
 
     Parameters
     ----------
-    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
+    logic_tree : LogicTree
         The logic tree from which to extract branch parameters.
 
     Returns
@@ -278,10 +279,10 @@ def get_source_branch_parameters(
 
 
 def select_branch_sets_given_tectonic_region_type(
-    logic_tree: Union[SourceLogicTree, GMCMLogicTree],
+    logic_tree: LogicTree,
     tectonic_region_type_set: Union[list[str], str],
     which_interface: str = "HIK_and_PUY",
-) -> Union[SourceLogicTree, GMCMLogicTree]:
+) -> LogicTree:
     """
     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
 
@@ -441,7 +442,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     return modified_logic_tree_pairs
 
 
-def print_info_about_logic_tree(logic_tree: Union[SourceLogicTree, GMCMLogicTree]):
+def print_info_about_logic_tree(logic_tree: LogicTree):
     """
     Prints information about a logic tree.
 
@@ -450,7 +451,7 @@ def print_info_about_logic_tree(logic_tree: Union[SourceLogicTree, GMCMLogicTree
 
     Parameters
     ----------
-    logic_tree : Union[SourceLogicTree, GMCMLogicTree]
+    logic_tree : LogicTree
         The logic tree for which information is to be printed.
     """
 
