@@ -67,8 +67,8 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         )
         if len(reverse_sorted_branches) == 1:
             print(
-                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to nth highest weighted branch."
-                f" Leaving this branch_set unchanged."
+                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to"
+                f"nth highest weighted branch. Leaving this branch_set unchanged."
             )
             selected_branch = copy.deepcopy(reverse_sorted_branches[0])
         elif nth_highest > len(reverse_sorted_branches):
@@ -181,21 +181,12 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
 
     logic_tree = copy.deepcopy(logic_tree)
 
-    branch_set_summed_weights = []
-    for branch_set in logic_tree.branch_sets:
-
-        branch_set_running_sum = 0.0
-
-        for branch in branch_set.branches:
-            branch_set_running_sum += branch.weight
-
-        branch_set_summed_weights.append(branch_set_running_sum)
-
-    if not all(np.isclose(np.array(branch_set_summed_weights), 1.0, rtol=1e-15)):
+    if not np.allclose([np.sum(np.array([branch.weight for branch in branch_set.branches])) for branch_set in
+            logic_tree.branch_sets], 1.0):
         raise ValueError(
-            f"The weights of branches in each branch_set do not sum to 1.0.\nThe summed weights for each branch_set are {branch_set_summed_weights}."
+            "The weights of branches in each branch_set do not sum to 1.0.\n" +\
+            "The summed weights for each branch_set are {branch_set_summed_weights}."
         )
-
 
 
 def transpose_lists(lists: list[list]) -> list[list]:
