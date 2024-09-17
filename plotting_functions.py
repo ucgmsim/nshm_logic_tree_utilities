@@ -2,6 +2,7 @@
 This file contains functions to generate figures of the logic tree investigation results.
 """
 
+import re
 from pathlib import Path
 from typing import Union
 
@@ -1386,26 +1387,24 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
     ### The GMCM logic tree was reduced to the single highest weighted branch so we can use the SRM model components
     if "1 (nth) h.w.b." in output_notes["ground_motion_logic_tree_note"]:
-        model_name_short = (
-            output_notes["source_logic_tree_note"]
-            .split(">")[1]
-            .split("[")[1]
-            .strip("[ ] ")
-            + "_"
-            + output_notes["source_logic_tree_note"].split(">")[-2].strip()
-        )
+
+        ### Extract the short source model name from its position between the last two ">" characters
+        ### in a source_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > deformation_model > '
+
+        last_part = re.search(r"(?<=\> )[^>]+(?= \>\s$)", output_notes["source_logic_tree_note"]).group()
+        tectonic_region_type_part = re.search(r"\[([^\]]+)\]", output_notes["source_logic_tree_note"]).group(1)
+        model_name_short = f"{tectonic_region_type_part}_{last_part}"
         model_name_long = model_name_to_plot_format[model_name_short]
 
     ### The source logic tree was reduced to the single highest weighted branch so we can use the gmcm models
     if "1 (nth) h.w.b." in output_notes["source_logic_tree_note"]:
-        model_name_short = (
-            output_notes["ground_motion_logic_tree_note"]
-            .split(">")[-2]
-            .split("*")[0]
-            .strip(" [ ]")
-        )
-        model_name_long = model_name_to_plot_format[model_name_short]
 
+        ### Extract the ground model name from its position between the second "[" character and the "*" character.
+        ### in a ground_motion_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > [Bradley2013*15.15] > '
+
+        model_name_short = re.search(r"\[([^\[*]+)\*", output_notes["ground_motion_logic_tree_note"]).group(1)
+        model_name_long = model_name_to_plot_format[model_name_short]
+        
     _, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
 
     poe_maxs = []
