@@ -912,7 +912,7 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
                 branch_values_to_find[branch_param_idx] = possible_param_value
 
                 # This is needed as some string conversions return the text of interest surrounded by ' '
-                search_str = remove_single_quotes(str(branch_values_to_find))
+                search_str = str(branch_values_to_find).replace("'", "")
 
                 for branch in branch_set.branches:
 
