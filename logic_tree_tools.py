@@ -189,50 +189,44 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
         )
 
 
-def transpose_lists(lists: list[list]) -> list[list]:
-    """
-    Transpose a list of lists.
-
-    Parameters
-    ----------
-    lists : list of lists
-        A list containing sublists to be transposed.
-
-    Returns
-    -------
-    transposed : list of lists
-        A list of lists where the rows and columns are swapped.
-
-    Examples
-    --------
-    >>> example_lists = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    >>> transpose_lists(example_lists)
-    [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
-    """
-
-    transposed = list(map(lambda x: list(x), zip(*lists)))
-    return transposed
-
-
-def get_source_branch_parameters(
-    logic_tree: LogicTree
+def get_source_branch_parameters_and_values(
+    logic_tree: SourceLogicTree
 ) -> dict:
     """
-    Extracts and processes the branch parameters from a logic tree.
 
-    This function iterates through the branch sets of a given logic tree,
-    converts the branch values to strings, transposes the lists of values,
-    and identifies unique values for each parameter.
+    Gets the parameters that define source branches, and the allowed values for each parameter.
+
+    This function's output is a dictionary where keys are source branch_set short names which indicate the
+    tectonic region type and are as follows:
+        CRU : active shallow crust
+        HIK :  Hikurangi–Kermadec subduction interface
+        PUY : Puysegur subduction interface
+        SLAB : subduction intraslab
+
+    The values are lists of lists where the outer list represents the number of parameters needed to define a source
+    branch and the inner list contains the allowed values for each parameter.
+
+    For example, this function produces the following dictionary for the standard NSHM 2022 source logic tree:
+
+    {'PUY': [['dm0.7'], ['bN[0.902, 4.6]'], ['C4.0'], ['s0.28', 's1.0', 's1.72']],
+    'HIK': [['dmTL'], ['bN[0.95, 16.5]', 'bN[1.097, 21.5]', 'bN[1.241, 27.9]'], ['C4.0'], ['s0.42', 's1.0', 's1.58']],
+    'CRU': [['dmgeodetic', 'dmgeologic'], ['tdFalse', 'tdTrue'], ['bN[0.823, 2.7]', 'bN[0.959, 3.4]', 'bN[1.089, 4.6]'], ['C4.2'], ['s0.66', 's1.0', 's1.41']],
+    'SLAB': [['runiform'], ['d1']]}
+
+    Which indicates, for example, that each branch in the CRU branch set has 7 parameters, where the first parameter can
+    have values 'dmgeodetic', 'dmgeologic' and the last parameter can have values 's0.66', 's1.0', 's1.41'.
 
     Parameters
     ----------
-    logic_tree : LogicTree
-        The logic tree from which to extract branch parameters.
+    logic_tree : SourceLogicTree
+        The source logic tree from which to extract branch parameters.
 
     Returns
     -------
     unique_values_dict : dict
-        A dictionary where keys are branch set short names and values are lists of unique parameter values.
+        A dictionary where keys are source branch_set short names and values are lists of lists where the outer list
+        represents the number of parameters needed to define the source branch and the inner list contains the
+        allowed values for each parameter.
     """
 
     values_dict = {}
@@ -248,22 +242,10 @@ def get_source_branch_parameters(
             values_list.append(values_as_str)
 
         # Store the list of string values in the dictionary with the branch set short name as the key
-        values_dict[branch_set.short_name] = values_list
+        values_dict[branch_set.short_name] = np.array(values_list)
 
-    # Create a deep copy of the values dictionary for transposition
-    transpose_dict = copy.deepcopy(values_dict)
-
-    # Transpose the lists of values
-    for key, value in values_dict.items():
-        transpose_dict[key] = transpose_lists(value)
-
-    # Create a deep copy of the transposed dictionary to store unique values
-    unique_values_dict = copy.deepcopy(transpose_dict)
-
-    # Identify unique values for each parameter in the transposed lists
-    for branch_set_index, list_of_branch_values in transpose_dict.items():
-        for value_idx, values in enumerate(list_of_branch_values):
-            unique_values_dict[branch_set_index][value_idx] = list(set(values))
+    unique_values_dict = {key: [sorted(np.unique(value[:, i]).tolist()) for i in range(value.shape[1])]
+                          for key, value in values_dict.items()}
 
     return unique_values_dict
 
@@ -867,7 +849,7 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
     results = {}
 
     # Get the branch parameters for the source logic tree
-    source_logic_tree_branch_params = get_source_branch_parameters(
+    source_logic_tree_branch_params = get_source_branch_parameters_and_values(
         logic_tree_pair.source_logic_tree
     )
 
