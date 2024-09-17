@@ -1010,7 +1010,7 @@ def make_figure_showing_bradley2009_method(
     ### latex formatted strings corresponding to the annotation_ims.
     ### These could be generated automatically from the annotation_ims
     ### but they are just hard coded for simplicity.
-    manually_matched_latex_strings = [r"10$^{-2}$", r"10$^{-1}$", r"10$^{0}$"]
+    manually_matched_latex_strings = ["$10^{-2}$", "$10^{-1}$","$10^{0}$"]
     annotation_labels = ["A", "B", "C"]
 
     for annotation_im in annotation_ims:
