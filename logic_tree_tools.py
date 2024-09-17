@@ -3,6 +3,7 @@ Contains functions to modify logic trees.
 """
 
 import copy
+import enum
 from typing import Optional, Union
 
 import numpy as np
@@ -17,6 +18,16 @@ from nzshm_model.logic_tree.correlation import (
 from run_toshi_hazard_post_helper import CustomLogicTreePair
 
 LogicTree = Union[SourceLogicTree, GMCMLogicTree]
+
+
+class SubductionInterface(enum.Flag):
+    """
+    The valid values for the subduction interface to include in the logic tree.
+    Note that the HIK and PUY subduction interfaces can both be included with HIK|PUY.
+    """
+
+    HIK = enum.auto() ## only Hikurangi–Kermadec subduction interface
+    PUY = enum.auto()  ## only Puysegur subduction interface
 
 
 def reduce_logic_tree_to_nth_highest_weighted_branch(
@@ -187,7 +198,9 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
         ],
         1.0,
     ):
-        raise ValueError("The weights of branches in each branch_set do not sum to 1.0.")
+        raise ValueError(
+            "The weights of branches in each branch_set do not sum to 1.0."
+        )
 
 
 def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict:
@@ -254,7 +267,7 @@ def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict
 def select_branch_sets_given_tectonic_region_type(
     logic_tree: LogicTree,
     tectonic_region_type_set: Union[list[str], str],
-    which_interface: str = "HIK_and_PUY",
+    which_interface: SubductionInterface = SubductionInterface.HIK | SubductionInterface.PUY,
 ) -> LogicTree:
     """
     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
@@ -272,12 +285,8 @@ def select_branch_sets_given_tectonic_region_type(
             "Subduction Interface",
             "Subduction Intraslab".
 
-    which_interface : str, default = "HIK_and_PUY"
+    which_interface : SubductionInterface, default = SubductionInterface.HIK | SubductionInterface.PUY
         Which subduction interfaces to include.
-        Valid options are:
-           "HIK_and_PUY" which includes HIK_and_PUY the Hikurangi–Kermadec (only_HIK) and Puysegur (only_PUY) subduction zones
-           "only_HIK" which includes only the Hikurangi–Kermadec (only_HIK) subduction zone
-           "only_PUY" which includes only the Puysegur (only_PUY) subduction zone.
 
     Returns
     -------
@@ -288,6 +297,8 @@ def select_branch_sets_given_tectonic_region_type(
 
     if isinstance(tectonic_region_type_set, str):
         tectonic_region_type_set = [tectonic_region_type_set]
+
+    print()
 
     modified_logic_tree = copy.deepcopy(logic_tree)
     new_branch_sets = []
@@ -331,7 +342,7 @@ def select_branch_sets_given_tectonic_region_type(
 def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_set: list,
-    which_interface: Optional[str] = None,
+    which_interface: Optional[SubductionInterface] = None,
 ) -> list[CustomLogicTreePair]:
     """
     Modifies a logic tree pair to only include branch sets that correspond to the selected tectonic region types.
@@ -482,7 +493,7 @@ def print_info_about_logic_tree_pairs(
 def get_logic_tree_pairs_for_tectonic_selection(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_sets: list[list[str]],
-    which_interfaces: list[str],
+    which_interfaces: list[SubductionInterface],
 ) -> list[CustomLogicTreePair]:
     """
     Produces a list of logic tree pairs with the selected tectonic region types.
@@ -524,6 +535,8 @@ def get_logic_tree_pairs_for_tectonic_selection(
 
             for which_interface in which_interfaces:
 
+                print()
+
                 logic_tree_pair_for_tectonic_region_type_set = (
                     logic_tree_pair_with_selected_tectonic_region_types(
                         initial_logic_tree_pair,
@@ -554,7 +567,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
 def get_logic_tree_pairs_for_individual_ground_motion_models(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_sets: list[list[str]],
-    which_interfaces: list[str],
+    which_interfaces: list[SubductionInterface],
 ) -> list[CustomLogicTreePair]:
     """
     Creates a list of logic tree pairs with all individual ground motion models within the selected tectonic region types.
@@ -592,10 +605,12 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         If more than one tectonic_region_type is included in any tectonic_region_type_set.
     """
 
-    if len(tectonic_region_type_sets[0]) == 1:
-        raise ValueError(
-            "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
-        )
+    print()
+
+    # if len(tectonic_region_type_sets[0]) == 1:
+    #     raise ValueError(
+    #         "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
+    #     )
 
     initial_logic_tree_pair = reduce_logic_tree_pair_to_nth_highest_branches(
         initial_logic_tree_pair,
@@ -677,7 +692,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
 def get_logic_tree_pairs_for_individual_source_models(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_sets: list[list[str]],
-    which_interfaces: list[str],
+    which_interfaces: list[SubductionInterface],
 ) -> list[CustomLogicTreePair]:
     """
     Creates a list of logic tree pairs with all individual ground motion models within the selected tectonic region types.
