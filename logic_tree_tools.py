@@ -18,6 +18,7 @@ from run_toshi_hazard_post_helper import CustomLogicTreePair
 
 LogicTree = Union[SourceLogicTree, GMCMLogicTree]
 
+
 def reduce_logic_tree_to_nth_highest_weighted_branch(
     logic_tree: LogicTree, nth_highest: int
 ) -> LogicTree:
@@ -72,9 +73,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
             )
             selected_branch = copy.deepcopy(reverse_sorted_branches[0])
         elif nth_highest > len(reverse_sorted_branches):
-            selected_branch = copy.deepcopy(
-                reverse_sorted_branches[-1]
-            )
+            selected_branch = copy.deepcopy(reverse_sorted_branches[-1])
             print(
                 f"Branch set {branch_set.long_name} ({branch_set.short_name}) has fewer than {nth_highest} "
                 f"branches so reducing to its lowest weighted branch (branch {len(reverse_sorted_branches)} of {len(reverse_sorted_branches)})."
@@ -181,17 +180,20 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
 
     logic_tree = copy.deepcopy(logic_tree)
 
-    if not np.allclose([np.sum(np.array([branch.weight for branch in branch_set.branches])) for branch_set in
-            logic_tree.branch_sets], 1.0):
+    if not np.allclose(
+        [
+            np.sum(np.array([branch.weight for branch in branch_set.branches]))
+            for branch_set in logic_tree.branch_sets
+        ],
+        1.0,
+    ):
         raise ValueError(
-            "The weights of branches in each branch_set do not sum to 1.0.\n" +\
-            "The summed weights for each branch_set are {branch_set_summed_weights}."
+            "The weights of branches in each branch_set do not sum to 1.0.\n"
+            + "The summed weights for each branch_set are {branch_set_summed_weights}."
         )
 
 
-def get_source_branch_parameters_and_values(
-    logic_tree: SourceLogicTree
-) -> dict:
+def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict:
     """
 
     Gets the parameters that define source branches, and the allowed values for each parameter.
@@ -244,8 +246,10 @@ def get_source_branch_parameters_and_values(
         # Store the list of string values in the dictionary with the branch set short name as the key
         values_dict[branch_set.short_name] = np.array(values_list)
 
-    unique_values_dict = {key: [sorted(np.unique(value[:, i]).tolist()) for i in range(value.shape[1])]
-                          for key, value in values_dict.items()}
+    unique_values_dict = {
+        key: [sorted(np.unique(value[:, i]).tolist()) for i in range(value.shape[1])]
+        for key, value in values_dict.items()
+    }
 
     return unique_values_dict
 
@@ -591,9 +595,10 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         If more than one tectonic_region_type is included in any tectonic_region_type_set.
     """
 
-    assert (
-        len(tectonic_region_type_sets[0]) == 1
-    ), "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
+    if len(tectonic_region_type_sets[0]) == 1:
+        raise ValueError(
+            "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
+        )
 
     initial_logic_tree_pair = reduce_logic_tree_pair_to_nth_highest_branches(
         initial_logic_tree_pair,
@@ -906,9 +911,8 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
             for branch in selected_branches_per_param:
                 branch.weight *= needed_scaling_factor
 
-            assert sum(
-                [branch.weight for branch in selected_branches_per_param]
-            ), "Scaled weights of branches do not sum to 1.0"
+            if sum([branch.weight for branch in selected_branches_per_param]) != 1.0:
+                raise ValueError("Scaled weights of branches do not sum to 1.0")
 
             results[branch_set.short_name][
                 branch_param_index_to_description[branch_set.short_name][
