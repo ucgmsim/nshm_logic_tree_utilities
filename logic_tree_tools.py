@@ -792,30 +792,6 @@ def get_logic_tree_pairs_for_individual_source_models(
     return new_logic_tree_pairs
 
 
-def remove_single_quotes(input_string: str) -> str:
-    """
-    Remove all occurrences of the single quote character from a string.
-
-    Parameters
-    ----------
-    input_string : str
-        The input string from which single quotes will be removed.
-
-    Returns
-    -------
-    modified_string : str
-        The modified string with all single quotes removed.
-
-    Examples
-    --------
-    >>> example_input_string = "It's a test string."
-    >>> remove_single_quotes(example_input_string)
-    'Its a test string.'
-    """
-    modified_string = input_string.replace("'", "")
-    return modified_string
-
-
 def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
     """
     Extracts the necessary source branches from a logic tree pair.
