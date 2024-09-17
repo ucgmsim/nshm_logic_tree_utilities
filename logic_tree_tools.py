@@ -187,10 +187,7 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
         ],
         1.0,
     ):
-        raise ValueError(
-            "The weights of branches in each branch_set do not sum to 1.0.\n"
-            + "The summed weights for each branch_set are {branch_set_summed_weights}."
-        )
+        raise ValueError("The weights of branches in each branch_set do not sum to 1.0.")
 
 
 def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict:
