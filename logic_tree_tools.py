@@ -607,10 +607,10 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
 
     print()
 
-    # if len(tectonic_region_type_sets[0]) == 1:
-    #     raise ValueError(
-    #         "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
-    #     )
+    if len(tectonic_region_type_sets[0]) > 1:
+        raise ValueError(
+            "Only one tectonic_region_type can be included in each tectonic_region_type_set passed to this function."
+        )
 
     initial_logic_tree_pair = reduce_logic_tree_pair_to_nth_highest_branches(
         initial_logic_tree_pair,
