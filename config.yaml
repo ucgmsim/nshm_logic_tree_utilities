@@ -1,5 +1,5 @@
 ## Optional settings for the run
-overwrite_if_output_directory_exists : False
+overwrite_if_output_directory_exists : True
 output_individual_realizations : True
 
 ## Input information

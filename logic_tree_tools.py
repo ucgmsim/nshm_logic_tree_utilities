@@ -3,6 +3,7 @@ Contains functions to modify logic trees.
 """
 
 import copy
+import enum
 from typing import Optional, Union
 
 import numpy as np
@@ -17,6 +18,28 @@ from nzshm_model.logic_tree.correlation import (
 from run_toshi_hazard_post_helper import CustomLogicTreePair
 
 LogicTree = Union[SourceLogicTree, GMCMLogicTree]
+
+
+class InterfaceName(enum.StrEnum):
+
+    """
+    The options for which subduction interfaces to include in a logic tree.
+    """
+
+    only_HIK = "only_HIK" # Hikurangi–Kermadec subduction interface
+    only_PUY = "only_PUY" # Puysegur subduction interface
+    HIK_and_PUY = "HIK_and_PUY" # Hikurangi–Kermadec and Puysegur subduction interfaces
+
+
+class TectonicRegionTypeName(enum.StrEnum):
+
+    """
+    The options for tectonic region types in a logic tree.
+    """
+
+    Active_Shallow_Crust = "Active Shallow Crust"
+    Subduction_Interface = "Subduction Interface"
+    Subduction_Intraslab = "Subduction Intraslab"
 
 
 def reduce_logic_tree_to_nth_highest_weighted_branch(
@@ -187,7 +210,9 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
         ],
         1.0,
     ):
-        raise ValueError("The weights of branches in each branch_set do not sum to 1.0.")
+        raise ValueError(
+            "The weights of branches in each branch_set do not sum to 1.0."
+        )
 
 
 def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict:
@@ -222,13 +247,13 @@ def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict
 
     Returns
     -------
-    unique_values_dict : dict
+    unique_source_branch_parameters_and_values : dict
         A dictionary where keys are source branch_set short names and values are lists of lists where the outer list
         represents the number of parameters needed to define the source branch and the inner list contains the
         allowed values for each parameter.
     """
 
-    values_dict = {}
+    source_branch_parameters_and_values = {}
 
     # Iterate through each branch set in the logic tree
     for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
@@ -241,20 +266,20 @@ def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict
             values_list.append(values_as_str)
 
         # Store the list of string values in the dictionary with the branch set short name as the key
-        values_dict[branch_set.short_name] = np.array(values_list)
+        source_branch_parameters_and_values[branch_set.short_name] = np.array(values_list)
 
-    unique_values_dict = {
+    unique_source_branch_parameters_and_values = {
         key: [sorted(np.unique(value[:, i]).tolist()) for i in range(value.shape[1])]
-        for key, value in values_dict.items()
+        for key, value in source_branch_parameters_and_values.items()
     }
 
-    return unique_values_dict
+    return unique_source_branch_parameters_and_values
 
 
 def select_branch_sets_given_tectonic_region_type(
     logic_tree: LogicTree,
     tectonic_region_type_set: Union[list[str], str],
-    which_interface: str = "HIK_and_PUY",
+    which_interface: InterfaceName = InterfaceName.HIK_and_PUY,
 ) -> LogicTree:
     """
     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
@@ -272,12 +297,8 @@ def select_branch_sets_given_tectonic_region_type(
             "Subduction Interface",
             "Subduction Intraslab".
 
-    which_interface : str, default = "HIK_and_PUY"
+    which_interface : InterfaceName, default = InterfaceName.HIK_and_PUY
         Which subduction interfaces to include.
-        Valid options are:
-           "HIK_and_PUY" which includes HIK_and_PUY the Hikurangi–Kermadec (only_HIK) and Puysegur (only_PUY) subduction zones
-           "only_HIK" which includes only the Hikurangi–Kermadec (only_HIK) subduction zone
-           "only_PUY" which includes only the Puysegur (only_PUY) subduction zone.
 
     Returns
     -------
@@ -376,7 +397,6 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     )
 
     modified_logic_tree_pair = copy.deepcopy(initial_logic_tree_pair)
-
     short_tectonic_region_types_for_ground_motion_logic_tree_note = [
         trt_short_lookup_dict[trt] for trt in tectonic_region_type_set
     ]

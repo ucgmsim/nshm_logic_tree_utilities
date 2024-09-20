@@ -99,11 +99,15 @@ logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            ["Active Shallow Crust"],
-            ["Subduction Interface"],
-            ["Subduction Intraslab"],
+            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
         ],
-        which_interfaces=["only_HIK", "only_PUY", "HIK_and_PUY"],
+        which_interfaces=[
+            logic_tree_tools.InterfaceName.only_HIK,
+            logic_tree_tools.InterfaceName.only_PUY,
+            logic_tree_tools.InterfaceName.HIK_and_PUY,
+        ],
     )
 )
 
@@ -116,11 +120,15 @@ logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            ["Active Shallow Crust"],
-            ["Subduction Interface"],
-            ["Subduction Intraslab"],
+            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
         ],
-        which_interfaces=["only_HIK", "only_PUY", "HIK_and_PUY"],
+        which_interfaces=[
+            logic_tree_tools.InterfaceName.only_HIK,
+            logic_tree_tools.InterfaceName.only_PUY,
+            logic_tree_tools.InterfaceName.HIK_and_PUY,
+        ],
     )
 )
 
@@ -144,6 +152,8 @@ collated_notes_df.insert(
     0, "logic_tree_index", collated_notes_df.pop("logic_tree_index")
 )
 collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
+
+print()
 
 ## Run toshi_hazard_post with the modified logic trees
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
