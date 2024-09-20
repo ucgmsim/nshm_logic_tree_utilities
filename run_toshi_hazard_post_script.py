@@ -18,7 +18,6 @@ from toshi_hazard_post.aggregation_args import (
 import config as cfg
 import logic_tree_tools
 import run_toshi_hazard_post_helper
-from logic_tree_tools import SubductionInterface
 
 config = cfg.Config()
 
@@ -77,19 +76,19 @@ full_logic_tree_pair = logic_tree_tools.CustomLogicTreePair(
 ## Index 1: Only the highest weighted branch of the source logic tree and the full ground motion logic tree
 ## Index 2: The full source logic tree and only the highest weighted branch of the ground motion logic tree
 
-# logic_tree_pair_list1 = [
-#     full_logic_tree_pair,
-#     logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
-#         full_logic_tree_pair,
-#         source_logic_tree_nth_highest=1,
-#         ground_motion_logic_tree_nth_highest=None,
-#     ),
-#     logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
-#         full_logic_tree_pair,
-#         source_logic_tree_nth_highest=None,
-#         ground_motion_logic_tree_nth_highest=1,
-#     ),
-# ]
+logic_tree_pair_list1 = [
+    full_logic_tree_pair,
+    logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
+        full_logic_tree_pair,
+        source_logic_tree_nth_highest=1,
+        ground_motion_logic_tree_nth_highest=None,
+    ),
+    logic_tree_tools.reduce_logic_tree_pair_to_nth_highest_branches(
+        full_logic_tree_pair,
+        source_logic_tree_nth_highest=None,
+        ground_motion_logic_tree_nth_highest=1,
+    ),
+]
 
 #### Example 2 ####
 
@@ -100,11 +99,15 @@ logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            ["Active Shallow Crust"],
-            ["Subduction Interface"],
-            ["Subduction Intraslab"],
+            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
         ],
-        which_interfaces=[SubductionInterface.HIK, SubductionInterface.PUY, SubductionInterface.HIK|SubductionInterface.PUY],
+        which_interfaces=[
+            logic_tree_tools.InterfaceName.only_HIK,
+            logic_tree_tools.InterfaceName.only_PUY,
+            logic_tree_tools.InterfaceName.HIK_and_PUY,
+        ],
     )
 )
 
@@ -117,24 +120,22 @@ logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            ["Active Shallow Crust"],
-            ["Subduction Interface"],
-            ["Subduction Intraslab"],
+            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
+            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
         ],
-        which_interfaces=[SubductionInterface.HIK, SubductionInterface.PUY, SubductionInterface.HIK|SubductionInterface.PUY],
+        which_interfaces=[
+            logic_tree_tools.InterfaceName.only_HIK,
+            logic_tree_tools.InterfaceName.only_PUY,
+            logic_tree_tools.InterfaceName.HIK_and_PUY,
+        ],
     )
 )
 
 ### concatenate the logic_tree_pair_lists
-# logic_tree_pair_list = (
-#     logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
-# )
-
 logic_tree_pair_list = (
-    logic_tree_pair_list2 + logic_tree_pair_list3
+    logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
 )
-
-print()
 
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_pairs(logic_tree_pair_list)
@@ -151,6 +152,8 @@ collated_notes_df.insert(
     0, "logic_tree_index", collated_notes_df.pop("logic_tree_index")
 )
 collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
+
+print()
 
 ## Run toshi_hazard_post with the modified logic trees
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
