@@ -13,6 +13,7 @@ import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
+import param_options
 import plotting_helpers
 
 
@@ -22,8 +23,8 @@ def make_figure_of_coefficient_of_variation(
     plot_dpi: int = 500,
     plot_fontsize: float = 12.0,
     plot_lineweight: float = 5.0,
-    location: str = "WLG",
-    im: str = "PGA",
+    location: param_options.LocationCode = param_options.LocationCode.WLG,
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
     xlims: tuple[float, float] = (1e-2, 5),
     ylims: tuple[float, float] = (0.05, 0.8),
@@ -46,10 +47,10 @@ def make_figure_of_coefficient_of_variation(
         The font size used in the plot (default is 12.0).
     plot_lineweight : int, optional
         The line weight used in the plot (default is 5).
-    location : str, optional
-        The location code (default is "WLG").
-    im : str, optional
-        The intensity measure (default is "PGA").
+    location : param_options.LocationCode, optional
+        The location code (default is param_options.LocationCode.WLG).
+    im : param_options.IntensityMeasure, optional
+        The intensity measure (default is param_options.IntensityMeasure.PGA).
     vs30 : int, optional
         The Vs30 value (default is 400).
     xlims : tuple, optional
@@ -170,11 +171,11 @@ def make_figure_of_coefficient_of_variation(
 
 # noinspection PyUnboundLocalVariable
 def make_figure_of_srm_and_gmcm_model_dispersions(
-    locations: tuple[str, ...],
+    locations: tuple[param_options.LocationCode, ...],
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     vs30: int = 400,
-    im: str = "PGA",
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     plot_title_font_size: float = 12,
     plot_dpi: int = 500,
 ):
@@ -192,7 +193,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 
     Parameters
     ----------
-    locations : tuple[str]
+    locations : tuple[param_options.LocationCode]
         The locations to plot.
     results_directory : Union[Path, str]
         The directory containing the data. This directory should contain subdirectories
@@ -201,8 +202,8 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         The directory where the plot will be saved.
     vs30 : int, optional
         The Vs30 value (default is 400).
-    im : str, optional
-        The intensity measure (default is "PGA").
+    im : param_options.IntensityMeasure, optional
+        The intensity measure (default is param_options.IntensityMeasure.PGA).
     plot_title_font_size : float, optional
         The font size of the plot titles (default is 12).
     plot_dpi : int, optional
@@ -473,8 +474,12 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
-    im: str = "PGA",
+    locations: tuple[param_options.LocationCode, ...] = (
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
+    ),
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
     plot_dpi: int = 500,
 ):
@@ -488,10 +493,10 @@ def make_figure_of_srm_model_components(
         named as logic_tree_index_[x] where [x] is the index the logic_tree_set had in the input list.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : tuple[str], optional
-        The locations to plot. Default is ("AKL", "WLG", "CHC").
-    im : str, optional
-        The intensity measure (default is "PGA").
+    locations : tuple[LocationCode], optional
+        The locations to plot. Default is (LocationCode.AKL, LocationCode.WLG, LocationCode.CHC).
+    im : param_options.IntensityMeasure, optional
+        The intensity measure (default is param_options.IntensityMeasure.PGA).
     vs30 : int, optional
         The Vs30 value (default is 400).
     plot_dpi : int, optional
@@ -638,9 +643,13 @@ def make_figure_of_srm_model_components(
 def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
+    locations: tuple[param_options.LocationCode, ...] = (
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
+    ),
     vs30: int = 400,
-    im: str = "PGA",
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     plot_dpi: int = 500,
 ):
     """
@@ -652,12 +661,14 @@ def make_figure_of_gmcms(
         The directory containing the results to plot.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : tuple of str, optional
-        The locations to plot. Default is ("AKL", "WLG", "CHC").
+    locations : tuple[param_options.LocationCode], optional
+        The locations to plot. Default is (param_options.LocationCode.AKL,
+                                           param_options.LocationCode.WLG,
+                                           param_options.LocationCode.CHC).
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
-    im : str, optional
-        The intensity measure to use in the plot. Default is "PGA".
+    im : param_options.IntensityMeasure, optional
+        The intensity measure to use in the plot. Default is param_options.IntensityMeasure.PGA.
     plot_dpi : int, optional
         The resolution of the plot in dots per inch. Default is 500.
 
@@ -844,9 +855,9 @@ def make_figure_showing_bradley2009_method(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     registry_directory: Union[Path, str],
-    location_short_name: str = "WLG",
+    location_short_name: param_options.LocationCode = param_options.LocationCode.WLG,
     vs30: int = 400,
-    im: str = "PGA",
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     plot_dpi: int = 500,
 ):
     """
@@ -862,12 +873,12 @@ def make_figure_showing_bradley2009_method(
         The directory where the plot will be saved.
     registry_directory : Union[Path, str]
         The directory containing the branch registry files that come with the GNS package nshm-model.
-    location_short_name : str, optional
-        The location code (default is "WLG").
+    location_short_name : param_options.LocationCode, optional
+        The location code (default is param_options.LocationCode.WLG).
     vs30 : int, optional
         The Vs30 value (default is 400).
-    im : str, optional
-        The intensity measure (default is "PGA").
+    im : param_options.IntensityMeasure, optional
+        The intensity measure (default is param_options.IntensityMeasure.PGA).
     plot_dpi : int, optional
         The resolution of the plot in dots per inch (default is 500).
 
@@ -1011,7 +1022,7 @@ def make_figure_showing_bradley2009_method(
     ### latex formatted strings corresponding to the annotation_ims.
     ### These could be generated automatically from the annotation_ims
     ### but they are just hard coded for simplicity.
-    manually_matched_latex_strings = ["$10^{-2}$", "$10^{-1}$","$10^{0}$"]
+    manually_matched_latex_strings = ["$10^{-2}$", "$10^{-1}$", "$10^{0}$"]
     annotation_labels = ["A", "B", "C"]
 
     for annotation_im in annotation_ims:
@@ -1180,10 +1191,14 @@ def make_figure_showing_bradley2009_method(
 def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
+    locations: tuple[param_options.LocationCode, ...] = (
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
+    ),
     filter_strs: tuple[str, ...] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
-    im: str = "PGA",
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     plot_dpi: int = 500,
     num_interp_mean_points: int = 1000,
     min_log10_mean_for_interp: int = -6,
@@ -1200,14 +1215,16 @@ def make_figure_of_gmm_dispersion_ranges(
         The directory containing the results data.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : tuple[str], optional
-        The locations to plot. Default is ("AKL", "WLG", "CHC").
+    locations : tuple[param_options.LocationCode], optional
+        The locations to plot. Default is (param_options.LocationCode.AKL,
+                                           param_options.LocationCode.WLG,
+                                           param_options.LocationCode.CHC).
     filter_strs : tuple[str], optional
         The filter strings needed to select the desired data. Default is ("CRU", "HIK_and_PUY", "SLAB").
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
-    im : str, optional
-        The intensity measure to use in the plot. Default is "PGA".
+    im : param_options.IntensityMeasure, optional
+        The intensity measure to use in the plot. Default is param_options.IntensityMeasure.PGA.
     plot_dpi : int, optional
         The resolution of the plot in dots per inch. Default is 500.
     num_interp_mean_points : int, optional
@@ -1297,8 +1314,12 @@ def make_figure_of_gmm_dispersion_ranges(
 def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
-    im: str = "PGA",
+    locations: tuple[param_options.LocationCode, ...] = (
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
+    ),
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
     poe_min_plot: float = 1e-5,
@@ -1317,10 +1338,12 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         Directory containing the logic tree index.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : Tuple of str, optional
-        Tuple of location codes to generate plots for. Default is ("AKL", "WLG", "CHC").
-    im : str, optional
-        Intensity measure to be used in the plots. Default is "PGA".
+    locations : tuple[param_options.LocationCode], optional
+        Locations to generate plots for. Default is (param_options.LocationCode.AKL,
+                                                     param_options.LocationCode.WLG,
+                                                     param_options.LocationCode.CHC).
+    im : param_options.IntensityMeasure, optional
+        Intensity measure to be used in the plots. Default is param_options.IntensityMeasure.PGA.
     vs30 : int, optional
         Vs30 value to be used in the plots. Default is 400.
     im_xlims : tuple, optional
@@ -1391,8 +1414,12 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         ### Extract the short source model name from its position between the last two ">" characters
         ### in a source_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > deformation_model > '
 
-        last_part = re.search(r"(?<=\> )[^>]+(?= \>\s$)", output_notes["source_logic_tree_note"]).group()
-        tectonic_region_type_part = re.search(r"\[([^\]]+)\]", output_notes["source_logic_tree_note"]).group(1)
+        last_part = re.search(
+            r"(?<=\> )[^>]+(?= \>\s$)", output_notes["source_logic_tree_note"]
+        ).group()
+        tectonic_region_type_part = re.search(
+            r"\[([^\]]+)\]", output_notes["source_logic_tree_note"]
+        ).group(1)
         model_name_short = f"{tectonic_region_type_part}_{last_part}"
         model_name_long = model_name_to_plot_format[model_name_short]
 
@@ -1402,9 +1429,11 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         ### Extract the ground model name from its position between the second "[" character and the "*" character.
         ### in a ground_motion_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > [Bradley2013*15.15] > '
 
-        model_name_short = re.search(r"\[([^\[*]+)\*", output_notes["ground_motion_logic_tree_note"]).group(1)
+        model_name_short = re.search(
+            r"\[([^\[*]+)\*", output_notes["ground_motion_logic_tree_note"]
+        ).group(1)
         model_name_long = model_name_to_plot_format[model_name_short]
-        
+
     _, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
 
     poe_maxs = []
@@ -1530,13 +1559,17 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
-    im: str = "PGA",
+    locations: tuple[param_options.LocationCode, ...] = (
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
+    ),
+    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
     poe_min_plot: float = 1e-5,
     ybuffer_absmax_over_val: float = 10.0,
-    selected_subduction_interface: str = "INTER_HIK_and_PUY",
+    selected_subduction_interface: param_options.InterfaceName = param_options.InterfaceName.HIK_and_PUY,
     plot_dpi: int = 500,
     notes_to_exclude: Union[tuple[tuple[str, str]], tuple] = (),
 ):
@@ -1552,10 +1585,12 @@ def make_figures_of_several_individual_realizations(
         Directory containing the results of the logic tree realizations.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : tuple of str, optional
-        The locations to plot. Default is ("AKL", "WLG", "CHC").
-    im : str, optional
-        Intensity measure to be used in the plots. Default is "PGA".
+    locations : tuple[param_options.LocationCode], optional
+        The locations to plot. Default is (param_options.LocationCode.AKL,
+                                           param_options.LocationCode.WLG,
+                                           param_options.LocationCode.CHC).
+    im : param_options.IntensityMeasure, optional
+        Intensity measure to be used in the plots. Default is param_options.IntensityMeasure.PGA.
     vs30 : int, optional
         Vs30 value to be used in the plots. Default is 400.
     im_xlims : tuple, optional
@@ -1565,8 +1600,8 @@ def make_figures_of_several_individual_realizations(
     ybuffer_absmax_over_val : float, optional
         Defines how much to extend the y-axis limits above the maximum value in the plot (for a buffer).
         The amount of extension is defined as the maximum plotted value divided by this value. Default is 10.0.
-    selected_subduction_interface : str, optional
-        Subduction interface to be selected. Default is "INTER_HIK_and_PUY".
+    selected_subduction_interface : InterfaceName, optional
+        Subduction interface to be selected. Default is param_options.InterfaceName.HIK_and_PUY.
     plot_dpi : int, optional
         DPI for the generated plots. Default is 500.
     notes_to_exclude : tuple, optional
@@ -1577,6 +1612,8 @@ def make_figures_of_several_individual_realizations(
     -------
     None
     """
+
+    full_subduction_interface_str = f"INTER_{selected_subduction_interface}"
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -1610,15 +1647,13 @@ def make_figures_of_several_individual_realizations(
             collated_notes_df[exclude_bool_idx]["logic_tree_index"].values[0]
         )
 
-    print()
-
     ### Skip the interface branches that are not the selected one
     interface_logic_tree_indices = collated_notes_df[
         "source_logic_tree_note"
     ].str.contains("INTER")
     interface_indices_to_skip = ~collated_notes_df[interface_logic_tree_indices][
         "source_logic_tree_note"
-    ].str.contains(selected_subduction_interface)
+    ].str.contains(full_subduction_interface_str)
     logic_tree_indices_to_skip.extend(interface_indices_to_skip.index)
 
     for logic_tree_index_dir in natsort.natsorted(results_directory.iterdir()):

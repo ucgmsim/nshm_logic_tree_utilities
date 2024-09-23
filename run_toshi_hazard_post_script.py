@@ -17,6 +17,7 @@ from toshi_hazard_post.aggregation_args import (
 
 import config as cfg
 import logic_tree_tools
+import param_options
 import run_toshi_hazard_post_helper
 
 config = cfg.Config()
@@ -99,14 +100,14 @@ logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
-            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
-            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
+            [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
+            [param_options.TectonicRegionTypeName.Subduction_Interface],
+            [param_options.TectonicRegionTypeName.Subduction_Intraslab],
         ],
         which_interfaces=[
-            logic_tree_tools.InterfaceName.only_HIK,
-            logic_tree_tools.InterfaceName.only_PUY,
-            logic_tree_tools.InterfaceName.HIK_and_PUY,
+            param_options.InterfaceName.only_HIK,
+            param_options.InterfaceName.only_PUY,
+            param_options.InterfaceName.HIK_and_PUY,
         ],
     )
 )
@@ -120,14 +121,14 @@ logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_sets=[
-            [logic_tree_tools.TectonicRegionTypeName.Active_Shallow_Crust],
-            [logic_tree_tools.TectonicRegionTypeName.Subduction_Interface],
-            [logic_tree_tools.TectonicRegionTypeName.Subduction_Intraslab],
+            [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
+            [param_options.TectonicRegionTypeName.Subduction_Interface],
+            [param_options.TectonicRegionTypeName.Subduction_Intraslab],
         ],
         which_interfaces=[
-            logic_tree_tools.InterfaceName.only_HIK,
-            logic_tree_tools.InterfaceName.only_PUY,
-            logic_tree_tools.InterfaceName.HIK_and_PUY,
+            param_options.InterfaceName.only_HIK,
+            param_options.InterfaceName.only_PUY,
+            param_options.InterfaceName.HIK_and_PUY,
         ],
     )
 )
@@ -152,9 +153,6 @@ collated_notes_df.insert(
     0, "logic_tree_index", collated_notes_df.pop("logic_tree_index")
 )
 collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
-
-print()
-
 ## Run toshi_hazard_post with the modified logic trees
 for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
     run_toshi_hazard_post_helper.run_with_modified_logic_trees(
