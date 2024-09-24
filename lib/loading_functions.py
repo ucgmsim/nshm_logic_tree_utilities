@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 
 from lib import config as cfg
-from lib.plotting_utilities import RealizationName, remove_special_characters
+from lib.plotting_utilities import (
+    RealizationName,
+    remove_special_characters,
+)
 
 
 @dataclass

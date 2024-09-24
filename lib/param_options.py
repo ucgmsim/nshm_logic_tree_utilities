@@ -12,7 +12,7 @@ class IntensityMeasure(enum.StrEnum):
     Valid options are:
     'PGA','SA(0.1)', 'SA(0.15)', 'SA(0.2)', 'SA(0.25)', 'SA(0.3)', 'SA(0.35)', 'SA(0.4)', 'SA(0.5)', 'SA(0.6)',
     'SA(0.7)', 'SA(0.8)', 'SA(0.9)', 'SA(1.0)', 'SA(1.25)', 'SA(1.5)', 'SA(1.75)', 'SA(2.0)', 'SA(2.5)', 'SA(3.0)',
-	'SA(3.5)', 'SA(4.0)', 'SA(4.5)', 'SA(5.0)', 'SA(6.0)', 'SA(7.5)', 'SA(10.0)'
+        'SA(3.5)', 'SA(4.0)', 'SA(4.5)', 'SA(5.0)', 'SA(6.0)', 'SA(7.5)', 'SA(10.0)'
     """
 
     PGA = "PGA"  # Peak ground acceleration
@@ -42,6 +42,7 @@ class IntensityMeasure(enum.StrEnum):
     SA60 = "SA(6.0)"  # Spectral acceleration at 6.0 seconds
     SA75 = "SA(7.5)"  # Spectral acceleration at 7.5 seconds
     SA100 = "SA(10.0)"  # Spectral acceleration at 10.0 seconds
+
 
 class LocationCode(enum.StrEnum):
     """

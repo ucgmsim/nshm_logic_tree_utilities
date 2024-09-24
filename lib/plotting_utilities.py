@@ -14,7 +14,9 @@ import scipy
 import toml
 from matplotlib import pyplot as plt
 
-from lib.loading_functions import load_aggregate_stats_for_all_logic_trees_in_directory
+from lib.loading_functions import (
+    load_aggregate_stats_for_all_logic_trees_in_directory,
+)
 
 ##########################################
 ### dataclasses to store loaded data

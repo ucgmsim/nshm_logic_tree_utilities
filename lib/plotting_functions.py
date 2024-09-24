@@ -475,9 +475,9 @@ def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-            param_options.LocationCode.AKL,
-            param_options.LocationCode.WLG,
-            param_options.LocationCode.CHC,
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
@@ -644,9 +644,9 @@ def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-            param_options.LocationCode.AKL,
-            param_options.LocationCode.WLG,
-            param_options.LocationCode.CHC,
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
     ),
     vs30: int = 400,
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
@@ -1192,9 +1192,9 @@ def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-            param_options.LocationCode.AKL,
-            param_options.LocationCode.WLG,
-            param_options.LocationCode.CHC,
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
     ),
     filter_strs: tuple[str, ...] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
@@ -1315,9 +1315,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-            param_options.LocationCode.AKL,
-            param_options.LocationCode.WLG,
-            param_options.LocationCode.CHC,
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
@@ -1419,19 +1419,25 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
                   ([\w]+)  # Followed by one or more (+) alphanumeric characters ([\w]) and capture them in a group (...)
                   [ ]>[ ]$ # Followed by a space ([ ]) and then a ">" and then a space ([ ]) and then the end of the string ($)
                   """
-        
-        last_part = re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE).group(1)
+
+        last_part = re.search(
+            pattern, output_notes["source_logic_tree_note"], re.VERBOSE
+        ).group(1)
 
         ### Extract the short tectonic region type from its position between the ":[" and "]" characters in a
         # source_logic_tree_note such as 'full > tectonic_region_type_group:[CRU] > deformation_model > '
-    
+
         pattern = r"""                    
                     :\[     # Search for the ":" character followed by a "[" character (:\[)
                     ([\w]+) # Followed by one or more (+) alphabetic characters ([\w]+) and caputure them in a group (...)
                     \]      # Followed by a "]" character (\]) 
                     """
         ### Strip the preceding ": [" characters
-        tectonic_region_type_part = re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE).group().strip(":[")
+        tectonic_region_type_part = (
+            re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE)
+            .group()
+            .strip(":[")
+        )
 
         model_name_short = f"{tectonic_region_type_part}_{last_part}"
         model_name_long = model_name_to_plot_format[model_name_short]
@@ -1448,7 +1454,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
                   \*        # Followed by a "*" character
                   """
 
-        model_name_short = re.search(pattern,output_notes["ground_motion_logic_tree_note"], re.VERBOSE).group(1)
+        model_name_short = re.search(
+            pattern, output_notes["ground_motion_logic_tree_note"], re.VERBOSE
+        ).group(1)
         model_name_long = model_name_to_plot_format[model_name_short]
 
     _, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
@@ -1577,9 +1585,9 @@ def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-            param_options.LocationCode.AKL,
-            param_options.LocationCode.WLG,
-            param_options.LocationCode.CHC,
+        param_options.LocationCode.AKL,
+        param_options.LocationCode.WLG,
+        param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,

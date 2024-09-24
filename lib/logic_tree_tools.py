@@ -16,7 +16,9 @@ from nzshm_model.logic_tree.correlation import (
     LogicTreeCorrelations,
 )
 
-from lib.run_toshi_hazard_post_helper import CustomLogicTreePair
+from lib.run_toshi_hazard_post_utilities import (
+    CustomLogicTreePair,
+)
 
 LogicTree = Union[SourceLogicTree, GMCMLogicTree]
 
@@ -322,7 +324,7 @@ def select_branch_sets_given_tectonic_region_type(
     branch_set_short_names = [x.short_name for x in new_branch_sets]
 
     if (param_options.InterfaceName.only_PUY in branch_set_short_names) & (
-            param_options.InterfaceName.only_HIK in branch_set_short_names
+        param_options.InterfaceName.only_HIK in branch_set_short_names
     ):
         # retain the only_HIK to only_PUY correlations
         pass
@@ -475,8 +477,10 @@ def print_info_about_logic_tree_pairs(
 
 def get_logic_tree_pairs_for_tectonic_selection(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_groups: Union[list[param_options.TectonicRegionTypeName,...],
-                                       list[list[param_options.TectonicRegionTypeName,...]]],
+    tectonic_region_type_groups: Union[
+        list[param_options.TectonicRegionTypeName, ...],
+        list[list[param_options.TectonicRegionTypeName, ...]],
+    ],
     which_interfaces: list[param_options.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
