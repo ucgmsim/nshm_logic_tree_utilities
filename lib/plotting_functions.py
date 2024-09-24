@@ -8,6 +8,7 @@ from typing import Union
 
 import natsort
 import numpy as np
+import plotting_utilities
 import pyarrow.dataset as ds
 import toml
 import toshi_hazard_post.calculators as calculators
@@ -245,7 +246,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         ~gmcm_filtered_collated_notes_df["source_logic_tree_note"].str.contains("only")
     ]
     sorted_gmm_logic_tree_indices = (
-        plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(
+        plotting_utilities.sort_logic_tree_index_by_gmcm_model_name(
             gmcm_filtered_collated_notes_df
         )
     )
@@ -412,7 +413,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     ### but the figure margins need to be provided in fractions of the figure dimensions.
     ### As the figure dimensions change depending on how many columns are in the figure,
     ### the figure margins need to be calculated in pixels and then converted to fractions
-    fig_margins = plotting_helpers.convert_edge_margin_in_pixels_to_fraction(
+    fig_margins = plotting_utilities.convert_edge_margin_in_pixels_to_fraction(
         fig, 100, 5, 45, 30
     )
 
@@ -716,7 +717,7 @@ def make_figure_of_gmcms(
     ]
 
     sorted_logic_tree_indices = (
-        plotting_helpers.sort_logic_tree_index_by_gmcm_model_name(
+        plotting_utilities.sort_logic_tree_index_by_gmcm_model_name(
             filtered_collated_notes_df
         )
     )
@@ -762,7 +763,7 @@ def make_figure_of_gmcms(
             source_logic_tree_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"] == logic_tree_index]["source_logic_tree_note"].values[0]}"
             ground_motion_logic_tree_note = f"{collated_notes_df[collated_notes_df["logic_tree_index"]==logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
-            tectonic_region_type_set_from_note = (
+            tectonic_region_type_group_from_note = (
                 source_logic_tree_note.split(">")[-2].strip().split(":")[-1].strip("[]")
             )
             ground_motion_logic_tree_model_and_weight_str = (
@@ -772,18 +773,18 @@ def make_figure_of_gmcms(
                 ground_motion_logic_tree_model_and_weight_str.split("*")[0]
             )
 
-            linestyle = tectonic_type_to_linestyle[tectonic_region_type_set_from_note]
+            linestyle = tectonic_type_to_linestyle[tectonic_region_type_group_from_note]
 
-            if tectonic_region_type_set_from_note == "INTER_only_HIK":
+            if tectonic_region_type_group_from_note == "INTER_only_HIK":
                 continue
-            if tectonic_region_type_set_from_note == "INTER_only_PUY":
+            if tectonic_region_type_group_from_note == "INTER_only_PUY":
                 continue
 
-            if "CRU" in tectonic_region_type_set_from_note:
+            if "CRU" in tectonic_region_type_group_from_note:
                 subplot_idx = 0
-            if "INTER" in tectonic_region_type_set_from_note:
+            if "INTER" in tectonic_region_type_group_from_note:
                 subplot_idx = 1
-            if "SLAB" in tectonic_region_type_set_from_note:
+            if "SLAB" in tectonic_region_type_group_from_note:
                 subplot_idx = 2
 
             # noinspection PyUnboundLocalVariable
@@ -1249,7 +1250,7 @@ def make_figure_of_gmm_dispersion_ranges(
         plot_output_directory = Path(plot_output_directory)
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-    dispersion_range_dict = plotting_helpers.get_interpolated_gmms(
+    dispersion_range_dict = plotting_utilities.get_interpolated_gmms(
         results_directory=results_directory,
         locations=locations,
         filter_strs=filter_strs,

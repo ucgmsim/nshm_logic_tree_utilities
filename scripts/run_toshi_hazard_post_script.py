@@ -16,7 +16,7 @@ from toshi_hazard_post.aggregation_args import (
 )
 
 from lib import config as cfg
-from lib import logic_tree_tools, param_options
+from lib import logic_tree_tools, param_options, run_toshi_hazard_post_utilities
 
 config = cfg.Config()
 
@@ -97,7 +97,7 @@ logic_tree_pair_list1 = [
 logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
         initial_logic_tree_pair=full_logic_tree_pair,
-        tectonic_region_type_sets=[
+        tectonic_region_type_groups=[
             [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
             [param_options.TectonicRegionTypeName.Subduction_Interface],
             [param_options.TectonicRegionTypeName.Subduction_Intraslab],
@@ -118,7 +118,7 @@ logic_tree_pair_list2 = (
 logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
         initial_logic_tree_pair=full_logic_tree_pair,
-        tectonic_region_type_sets=[
+        tectonic_region_type_groups=[
             [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
             [param_options.TectonicRegionTypeName.Subduction_Interface],
             [param_options.TectonicRegionTypeName.Subduction_Intraslab],
@@ -141,8 +141,8 @@ logic_tree_tools.print_info_about_logic_tree_pairs(logic_tree_pair_list)
 
 ## Write notes about the modified logic trees
 collated_notes_df = pd.DataFrame()
-for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
-    notes_df = custom_logic_tree_set.notes_to_pandas_df()
+for logic_tree_index, custom_logic_tree_pair in enumerate(logic_tree_pair_list):
+    notes_df = custom_logic_tree_pair.notes_to_pandas_df()
     notes_df["logic_tree_index"] = [logic_tree_index]
     collated_notes_df = pd.concat([collated_notes_df, notes_df], ignore_index=True)
 
@@ -152,12 +152,12 @@ collated_notes_df.insert(
 )
 collated_notes_df.to_csv(output_dir / config.get_value("collated_notes_file_name"))
 ## Run toshi_hazard_post with the modified logic trees
-for logic_tree_index, custom_logic_tree_set in enumerate(logic_tree_pair_list):
-    run_toshi_hazard_post_helper.run_with_modified_logic_trees(
+for logic_tree_index, custom_logic_tree_pair in enumerate(logic_tree_pair_list):
+    run_toshi_hazard_post_utilities.run_with_modified_logic_trees(
         args,
         output_dir,
         logic_tree_index,
-        custom_logic_tree_set,
+        custom_logic_tree_pair,
         config.get_value("locations"),
         output_staging_dir,
     )

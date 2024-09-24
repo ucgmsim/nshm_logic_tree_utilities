@@ -66,7 +66,6 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         )
 
     for branch_set_idx, branch_set in enumerate(modified_logic_tree.branch_sets):
-
         reverse_sorted_branches = sorted(
             branch_set.branches, key=lambda x: x.weight, reverse=True
         )
@@ -88,7 +87,6 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         modified_logic_tree.branch_sets[branch_set_idx].branches = [selected_branch]
 
     modified_logic_tree.correlations = LogicTreeCorrelations()
-
     check_weight_validity(modified_logic_tree)
 
     return modified_logic_tree
@@ -238,9 +236,7 @@ def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict
 
     # Iterate through each branch set in the logic tree
     for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
-
         values_list = []
-
         # Convert branch values to strings and collect them in a list
         for branch_index, branch in enumerate(branch_set.branches):
             values_as_str = [str(value) for value in branch.values]
@@ -312,7 +308,6 @@ def select_branch_sets_given_tectonic_region_type(
                         elif which_interface == param_options.InterfaceName.only_PUY:
                             if branch_set.short_name == "PUY":
                                 new_branch_sets.append(copy.deepcopy(branch_set))
-
                     else:
                         new_branch_sets.append(copy.deepcopy(branch_set))
 
@@ -326,7 +321,7 @@ def select_branch_sets_given_tectonic_region_type(
     if (param_options.InterfaceName.only_PUY in branch_set_short_names) & (
         param_options.InterfaceName.only_HIK in branch_set_short_names
     ):
-        # retain the only_HIK to only_PUY correlations
+        # retain the HIK to PUY correlations
         pass
     else:
         # remove correlations
@@ -396,7 +391,6 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     )
 
     modified_logic_tree_pair.source_logic_tree_note += f"tectonic_region_type_group:[{' '.join(short_tectonic_region_types_for_source_logic_tree_note)}] > "
-
     modified_logic_tree_pair.ground_motion_logic_tree_note += f"tectonic_region_type_group:[{' '.join(short_tectonic_region_types_for_ground_motion_logic_tree_note)}] > "
 
     modified_logic_tree_pair.source_logic_tree = copy.deepcopy(
@@ -405,7 +399,6 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     modified_logic_tree_pair.ground_motion_logic_tree = copy.deepcopy(
         modified_ground_motion_logic_tree
     )
-
     modified_logic_tree_pairs.append(modified_logic_tree_pair)
 
     return modified_logic_tree_pairs
@@ -478,8 +471,8 @@ def print_info_about_logic_tree_pairs(
 def get_logic_tree_pairs_for_tectonic_selection(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_groups: Union[
-        list[param_options.TectonicRegionTypeName, ...],
-        list[list[param_options.TectonicRegionTypeName, ...]],
+        list[param_options.TectonicRegionTypeName],
+        list[list[param_options.TectonicRegionTypeName]],
     ],
     which_interfaces: list[param_options.InterfaceName],
 ) -> list[CustomLogicTreePair]:
@@ -508,47 +501,40 @@ def get_logic_tree_pairs_for_tectonic_selection(
     Returns
     -------
     logic_tree_pair_list : list[CustomLogicTreePair]
-        A list of len(tectonic_region_type_sets) CustomLogicTreePair instances, each containing a modified
+        A list of len(tectonic_region_type_groups) CustomLogicTreePair instances, each containing a modified
     """
 
     logic_tree_pair_list = []
 
     for tectonic_region_type_group in tectonic_region_type_groups:
-
         if "Subduction Interface" in tectonic_region_type_group:
-
             for which_interface in which_interfaces:
-
-                logic_tree_pair_for_tectonic_region_type_set = (
+                logic_tree_pair_for_tectonic_region_type_group = (
                     logic_tree_pair_with_selected_tectonic_region_types(
                         initial_logic_tree_pair,
                         tectonic_region_type_group=tectonic_region_type_group,
                         which_interface=which_interface,
                     )[0]
                 )
-
                 logic_tree_pair_list.append(
-                    logic_tree_pair_for_tectonic_region_type_set
+                    logic_tree_pair_for_tectonic_region_type_group
                 )
-
         else:
-
-            logic_tree_pair_for_tectonic_region_type_set = (
+            logic_tree_pair_for_tectonic_region_type_group = (
                 logic_tree_pair_with_selected_tectonic_region_types(
                     initial_logic_tree_pair,
                     tectonic_region_type_group=tectonic_region_type_group,
                     which_interface=None,
                 )[0]
             )
-
-            logic_tree_pair_list.append(logic_tree_pair_for_tectonic_region_type_set)
+            logic_tree_pair_list.append(logic_tree_pair_for_tectonic_region_type_group)
 
     return logic_tree_pair_list
 
 
 def get_logic_tree_pairs_for_individual_ground_motion_models(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_sets: list[list[param_options.TectonicRegionTypeName]],
+    tectonic_region_type_groups: list[list[param_options.TectonicRegionTypeName]],
     which_interfaces: list[param_options.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
@@ -561,7 +547,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         The initial logic tree pair to select tectonic region types from.
         Should contain the full SourceLogicTree and the full GMCMLogicTree.
 
-    tectonic_region_type_sets : list[list[param_options.TectonicRegionTypeName]]
+    tectonic_region_type_groups : list[list[param_options.TectonicRegionTypeName]]
         A list of lists that each contain a single param_options.TectonicRegionTypeName.
 
     which_interfaces : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY
@@ -578,7 +564,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         If more than one tectonic_region_type is included in any tectonic_region_type_group.
     """
 
-    if len(tectonic_region_type_sets[0]) > 1:
+    if len(tectonic_region_type_groups[0]) > 1:
         raise ValueError(
             "Only one tectonic_region_type can be included in each tectonic_region_type_group passed to this function."
         )
@@ -591,16 +577,14 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
 
     input_logic_tree_pair_list = get_logic_tree_pairs_for_tectonic_selection(
         initial_logic_tree_pair=initial_logic_tree_pair,
-        tectonic_region_type_groups=tectonic_region_type_sets,
+        tectonic_region_type_groups=tectonic_region_type_groups,
         which_interfaces=which_interfaces,
     )
 
     modified_logic_tree_pair_list = []
-
     all_ground_motion_logic_tree_gsim_names = []
 
     for logic_tree_pair in input_logic_tree_pair_list:
-
         ground_motion_logic_tree_gsim_names = [
             branch.gsim_name
             for branch in logic_tree_pair.ground_motion_logic_tree.branch_sets[
@@ -614,7 +598,6 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         unique_gsim_names = list(set(ground_motion_logic_tree_gsim_names))
 
         for gsim_name in unique_gsim_names:
-
             selected_ground_motion_logic_tree_branches = [
                 copy.deepcopy(branch)
                 for branch in logic_tree_pair.ground_motion_logic_tree.branch_sets[
@@ -662,7 +645,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
 
 def get_logic_tree_pairs_for_individual_source_models(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_sets: list[list[param_options.TectonicRegionTypeName]],
+    tectonic_region_type_groups: list[list[param_options.TectonicRegionTypeName]],
     which_interfaces: list[param_options.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
@@ -674,7 +657,7 @@ def get_logic_tree_pairs_for_individual_source_models(
         The initial logic tree pair to select tectonic region types from.
         Should contain the full SourceLogicTree and the full GMCMLogicTree.
 
-    tectonic_region_type_sets : list[list[param_options.TectonicRegionTypeName]]
+    tectonic_region_type_groups : list[list[param_options.TectonicRegionTypeName]]
         A list of lists that each containing a single param_options.TectonicRegionTypeName.
 
     which_interfaces : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY
@@ -691,7 +674,7 @@ def get_logic_tree_pairs_for_individual_source_models(
         If more than one tectonic_region_type is included in any tectonic_region_type_group.
     """
 
-    if len(tectonic_region_type_sets[0]) > 1:
+    if len(tectonic_region_type_groups[0]) > 1:
         raise ValueError(
             "Only one tectonic_region_type can be included in each tectonic_region_type_group passed to this function."
         )
@@ -704,7 +687,7 @@ def get_logic_tree_pairs_for_individual_source_models(
 
     input_logic_tree_pair_list = get_logic_tree_pairs_for_tectonic_selection(
         initial_logic_tree_pair=initial_logic_tree_pair,
-        tectonic_region_type_groups=tectonic_region_type_sets,
+        tectonic_region_type_groups=tectonic_region_type_groups,
         which_interfaces=which_interfaces,
     )
 
@@ -837,12 +820,9 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
             }
 
         num_params = len(source_logic_tree_branch_params[branch_set.short_name])
-
         # Iterate through each parameter in the branch set
         for branch_param_idx in range(num_params):
-
             selected_branches_per_param = []
-
             # Allow both values at index branch_param_idx and keep everything else as the highest weighted branch
             possible_values_for_this_param_index = source_logic_tree_branch_params[
                 branch_set.short_name
@@ -861,16 +841,13 @@ def get_needed_source_branches(logic_tree_pair: CustomLogicTreePair) -> dict:
 
             # branch_values_to_find list will be modified for each param value
             branch_values_to_find = copy.deepcopy(hwb_values)
-
             for possible_param_value in possible_values_for_this_param_index:
-
                 branch_values_to_find[branch_param_idx] = possible_param_value
 
                 # This is needed as some string conversions return the text of interest surrounded by ' '
                 search_str = str(branch_values_to_find).replace("'", "")
 
                 for branch in branch_set.branches:
-
                     if search_str == str(branch.values):
                         selected_branches_per_param.append(copy.deepcopy(branch))
 

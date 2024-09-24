@@ -157,7 +157,7 @@ def sort_logic_tree_index_by_gmcm_model_name(
         ground_motion_logic_tree_note = f"{concatenated_notes_df[concatenated_notes_df["logic_tree_index"]== logic_tree_index]["ground_motion_logic_tree_note"].values[0]}"
 
         # Isolate the useful parts of the notes
-        tectonic_region_type_set_from_note = (
+        tectonic_region_type_group_from_note = (
             source_logic_tree_note.split(">")[-2].strip().split(":")[-1].strip("[]")
         )
         ground_motion_logic_tree_model_and_weight_str = (
@@ -177,7 +177,7 @@ def sort_logic_tree_index_by_gmcm_model_name(
         run_list_label_tuple_list.append(
             (
                 logic_tree_index,
-                f"{tectonic_region_type_set_from_note}_{ground_motion_logic_tree_model}",
+                f"{tectonic_region_type_group_from_note}_{ground_motion_logic_tree_model}",
             )
         )
 
