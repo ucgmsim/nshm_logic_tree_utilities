@@ -6,6 +6,7 @@ import copy
 from typing import Optional, Union
 
 import numpy as np
+import param_options
 import toml
 from nzshm_model.logic_tree import (
     GMCMLogicTree,
@@ -15,8 +16,7 @@ from nzshm_model.logic_tree.correlation import (
     LogicTreeCorrelations,
 )
 
-import param_options
-from run_toshi_hazard_post_helper import CustomLogicTreePair
+from lib.run_toshi_hazard_post_helper import CustomLogicTreePair
 
 LogicTree = Union[SourceLogicTree, GMCMLogicTree]
 
@@ -322,7 +322,7 @@ def select_branch_sets_given_tectonic_region_type(
     branch_set_short_names = [x.short_name for x in new_branch_sets]
 
     if (param_options.InterfaceName.only_PUY in branch_set_short_names) & (
-        param_options.InterfaceName.only_HIK in branch_set_short_names
+            param_options.InterfaceName.only_HIK in branch_set_short_names
     ):
         # retain the only_HIK to only_PUY correlations
         pass

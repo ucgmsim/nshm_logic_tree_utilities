@@ -2,7 +2,7 @@
 This script provides examples of how to use the plotting functions in plotting_functions.py.
 """
 
-import plotting_functions
+from lib import plotting_functions
 
 plotting_functions.make_figure_of_coefficient_of_variation(
     results_directory="/home/arr65/data/nshm/output/",

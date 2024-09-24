@@ -13,8 +13,8 @@ import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
-import param_options
-import plotting_helpers
+import lib.loading_functions
+from lib import param_options
 
 
 def make_figure_of_coefficient_of_variation(
@@ -64,7 +64,7 @@ def make_figure_of_coefficient_of_variation(
 
     """
 
-    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
+    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -80,7 +80,7 @@ def make_figure_of_coefficient_of_variation(
     cov_list = []
 
     resulting_hazard_curves = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory
         )
     )
@@ -225,7 +225,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
     ground_motion_logic_tree_model_color = toml.load("resources/model_plot_colors.toml")
 
     loaded_results = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory
         )
     )
@@ -475,9 +475,9 @@ def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+            param_options.LocationCode.AKL,
+            param_options.LocationCode.WLG,
+            param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
@@ -525,7 +525,7 @@ def make_figure_of_srm_model_components(
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
     loaded_results = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory
         )
     )
@@ -644,9 +644,9 @@ def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+            param_options.LocationCode.AKL,
+            param_options.LocationCode.WLG,
+            param_options.LocationCode.CHC,
     ),
     vs30: int = 400,
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
@@ -694,7 +694,7 @@ def make_figure_of_gmcms(
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
     loaded_results = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory, locations
         )
     )
@@ -897,7 +897,7 @@ def make_figure_showing_bradley2009_method(
         registry_directory = Path(registry_directory)
 
     locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
-    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
+    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
 
     plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
@@ -929,7 +929,7 @@ def make_figure_showing_bradley2009_method(
         individual_realizations_needed_indices
     ]
 
-    realization_names = plotting_helpers.lookup_realization_name_from_hash(
+    realization_names = lib.loading_functions.lookup_realization_name_from_hash(
         filtered_individual_realization_df, registry_directory
     )
 
@@ -946,7 +946,7 @@ def make_figure_showing_bradley2009_method(
     hazard_prob_of_exceedance = calculators.rate_to_prob(hazard_rate_array, 1.0)
 
     resulting_hazard_curves = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory.parent
         )
     )
@@ -1192,9 +1192,9 @@ def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+            param_options.LocationCode.AKL,
+            param_options.LocationCode.WLG,
+            param_options.LocationCode.CHC,
     ),
     filter_strs: tuple[str, ...] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
@@ -1315,9 +1315,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+            param_options.LocationCode.AKL,
+            param_options.LocationCode.WLG,
+            param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
@@ -1363,7 +1363,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
     locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
     model_name_to_plot_format = toml.load("resources/model_name_lookup_for_plot.toml")
-    nshm_im_levels = np.loadtxt("resources/nshm_im_levels.txt")
+    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
 
     needed_im_level_indices = np.where(
         (nshm_im_levels >= im_xlims[0]) & (nshm_im_levels <= im_xlims[1])
@@ -1577,9 +1577,9 @@ def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+            param_options.LocationCode.AKL,
+            param_options.LocationCode.WLG,
+            param_options.LocationCode.CHC,
     ),
     im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
     vs30: int = 400,
@@ -1643,7 +1643,7 @@ def make_figures_of_several_individual_realizations(
     logic_tree_indices_to_skip = []
 
     aggregate_stats_results = (
-        plotting_helpers.load_aggregate_stats_for_all_logic_trees_in_directory(
+        lib.loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
             results_directory
         )
     )

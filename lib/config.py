@@ -9,7 +9,7 @@ class Config:
     """
 
     _instance = None
-    config_path = Path(__file__).parent.resolve() / "config.yaml"
+    config_path = Path(__file__).parent.resolve() / "run_toshi_hazard_post_config.yaml"
 
     def __new__(cls, *args, **kwargs):
         """

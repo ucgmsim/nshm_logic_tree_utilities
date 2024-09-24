@@ -15,10 +15,8 @@ from toshi_hazard_post.aggregation_args import (
     AggregationArgs,
 )
 
-import config as cfg
-import logic_tree_tools
-import param_options
-import run_toshi_hazard_post_helper
+from lib import config as cfg
+from lib import logic_tree_tools, param_options, run_toshi_hazard_post_helper
 
 config = cfg.Config()
 
