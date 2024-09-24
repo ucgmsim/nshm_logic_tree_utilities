@@ -73,8 +73,8 @@ plotting_functions.make_figures_of_several_individual_realizations(
         ("full > 1 (nth) h.w.b. > ", "full > "),
         ("full > ", "full > 1 (nth) h.w.b. > "),
         (
-            "full > tectonic_region_type_set:[SLAB] > slab_only_branch > ",
-            "full > 1 (nth) h.w.b. > tectonic_region_type_set:[SLAB] > ",
+            "full > tectonic_region_type_group:[SLAB] > slab_only_branch > ",
+            "full > 1 (nth) h.w.b. > tectonic_region_type_group:[SLAB] > ",
         ),
     ),
 )

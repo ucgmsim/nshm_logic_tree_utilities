@@ -1412,7 +1412,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
     if "1 (nth) h.w.b." in output_notes["ground_motion_logic_tree_note"]:
 
         ### Extract the short source model name from its position between the last two ">" characters
-        ### in a source_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > deformation_model > '
+        ### in a source_logic_tree_note such as 'full > tectonic_region_type_group:[CRU] > deformation_model > '
 
         pattern = r"""
                   >[ ]     # Search for the ">" character followed by a space ([ ])
@@ -1423,7 +1423,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         last_part = re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE).group(1)
 
         ### Extract the short tectonic region type from its position between the ":[" and "]" characters in a
-        # source_logic_tree_note such as 'full > tectonic_region_type_set:[CRU] > deformation_model > '
+        # source_logic_tree_note such as 'full > tectonic_region_type_group:[CRU] > deformation_model > '
     
         pattern = r"""                    
                     :\[     # Search for the ":" character followed by a "[" character (:\[)
@@ -1440,7 +1440,7 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
     if "1 (nth) h.w.b." in output_notes["source_logic_tree_note"]:
 
         ### Extract the ground model name from its position between the second "[" character and the "*" character.
-        ### in a ground_motion_logic_tree_note such as  'full > tectonic_region_type_set:[CRU] > [Bradley2013*15.15] > '
+        ### in a ground_motion_logic_tree_note such as  'full > tectonic_region_type_group:[CRU] > [Bradley2013*15.15] > '
 
         pattern = r"""
                   \[        # Search for the "[" character
