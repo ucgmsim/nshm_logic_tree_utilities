@@ -333,7 +333,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_group: list[param_options.TectonicRegionTypeName],
     which_interface: Optional[param_options.InterfaceName] = None,
-) -> list[CustomLogicTreePair]:
+) -> CustomLogicTreePair:
     """
     Modifies a logic tree pair to only include branch sets that correspond to the selected tectonic region types.
 
@@ -350,16 +350,14 @@ def logic_tree_pair_with_selected_tectonic_region_types(
 
     Returns
     -------
-    modified_logic_tree_pairs : list[CustomLogicTreePair]
-        The modified logic tree pairs that only include branch sets corresponding
+    modified_logic_tree_pair : CustomLogicTreePair
+        The modified logic tree pair that only includes branch sets corresponding
         to the selected tectonic region types.
     """
 
     short_tectonic_region_type_lookup_dict = toml.load(
         "resources/short_tectonic_region_type_lookup.toml"
     )
-
-    modified_logic_tree_pairs = []
 
     source_logic_tree = copy.deepcopy(initial_logic_tree_pair.source_logic_tree)
     ground_motion_logic_tree = copy.deepcopy(
@@ -399,9 +397,8 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     modified_logic_tree_pair.ground_motion_logic_tree = copy.deepcopy(
         modified_ground_motion_logic_tree
     )
-    modified_logic_tree_pairs.append(modified_logic_tree_pair)
 
-    return modified_logic_tree_pairs
+    return modified_logic_tree_pair
 
 
 def print_info_about_logic_tree(logic_tree: LogicTree):
@@ -514,7 +511,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
                         initial_logic_tree_pair,
                         tectonic_region_type_group=tectonic_region_type_group,
                         which_interface=which_interface,
-                    )[0]
+                    )
                 )
                 logic_tree_pair_list.append(
                     logic_tree_pair_for_tectonic_region_type_group
@@ -525,7 +522,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
                     initial_logic_tree_pair,
                     tectonic_region_type_group=tectonic_region_type_group,
                     which_interface=None,
-                )[0]
+                )
             )
             logic_tree_pair_list.append(logic_tree_pair_for_tectonic_region_type_group)
 
