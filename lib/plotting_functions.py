@@ -1414,30 +1414,28 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
         ### Extract the short source model name from its position between the last two ">" characters
         ### in a source_logic_tree_note such as 'full > tectonic_region_type_group:[CRU] > deformation_model > '
-
+        # Using re.VERBOSE to allow comments in the pattern string.
         pattern = r"""
-                  >[ ]     # Search for the ">" character followed by a space ([ ])
-                  ([\w]+)  # Followed by one or more (+) alphanumeric characters ([\w]) and capture them in a group (...)
-                  [ ]>[ ]$ # Followed by a space ([ ]) and then a ">" and then a space ([ ]) and then the end of the string ($)
+                  >[ ]               # Search for the ">" character followed by a space ([ ])
+                  (?P<group_id>\w+)  # Followed by one or more alphanumeric characters (\w+) and capture them 
+                                     # in a group called group_id (?P<group_id>...)                  
+                  [ ]>[ ]$           # Followed by a space ([ ]) and then a ">" and then a space ([ ]) and then the end of the string ($)
                   """
-
         last_part = re.search(
             pattern, output_notes["source_logic_tree_note"], re.VERBOSE
-        ).group(1)
+        ).group("group_id")
 
         ### Extract the short tectonic region type from its position between the ":[" and "]" characters in a
         # source_logic_tree_note such as 'full > tectonic_region_type_group:[CRU] > deformation_model > '
-
         pattern = r"""                    
-                    :\[     # Search for the ":" character followed by a "[" character (:\[)
-                    ([\w]+) # Followed by one or more (+) alphabetic characters ([\w]+) and caputure them in a group (...)
-                    \]      # Followed by a "]" character (\]) 
+                    :\[                 # Search for the ":" character followed by a "[" character (:\[)
+                     (?P<group_id>\w+)  # Followed by one or more alphanumeric characters (\w+) and capture them 
+                                        # in a group called group_id (?P<group_id>...)      
+                    \]                  # Followed by a "]" character (\]) 
                     """
-        ### Strip the preceding ": [" characters
         tectonic_region_type_part = (
             re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE)
-            .group()
-            .strip(":[")
+            .group("group_id")
         )
 
         model_name_short = f"{tectonic_region_type_part}_{last_part}"
@@ -1448,16 +1446,15 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 
         ### Extract the ground model name from its position between the second "[" character and the "*" character.
         ### in a ground_motion_logic_tree_note such as  'full > tectonic_region_type_group:[CRU] > [Bradley2013*15.15] > '
-
         pattern = r"""
-                  \[        # Search for the "[" character
-                  ([\w]+) + # Followed by one or more (+) alphanumeric characters ([\w]) and capture them in a group (...)
-                  \*        # Followed by a "*" character
+                  \[                    # Search for the "[" character
+                     (?P<group_id>\w+)  # Followed by one or more alphanumeric characters (\w+) and capture them 
+                                        # in a group called group_id (?P<group_id>...)      
+                  \*                    # Followed by a "*" character
                   """
-
         model_name_short = re.search(
             pattern, output_notes["ground_motion_logic_tree_note"], re.VERBOSE
-        ).group(1)
+        ).group("group_id")
         model_name_long = model_name_to_plot_format[model_name_short]
 
     _, axes = plt.subplots(2, len(locations), figsize=(3 * len(locations), 6))
