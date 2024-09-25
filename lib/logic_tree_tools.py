@@ -236,15 +236,15 @@ def get_source_branch_parameters_and_values(logic_tree: SourceLogicTree) -> dict
 
     # Iterate through each branch set in the logic tree
     for branch_set_index, branch_set in enumerate(logic_tree.branch_sets):
-        values_list = []
+        source_branch_parameter_values = []
         # Convert branch values to strings and collect them in a list
         for branch_index, branch in enumerate(branch_set.branches):
             values_as_str = [str(value) for value in branch.values]
-            values_list.append(values_as_str)
+            source_branch_parameter_values.append(values_as_str)
 
         # Store the list of string values in the dictionary with the branch set short name as the key
         source_branch_parameters_and_values[branch_set.short_name] = np.array(
-            values_list
+            source_branch_parameter_values
         )
 
     unique_source_branch_parameters_and_values = {
