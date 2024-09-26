@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-import logic_tree_tools
 import pandas as pd
 import toml
 from nzshm_model.logic_tree import (
@@ -30,6 +29,8 @@ from toshi_hazard_post.aggregation import run_aggregation
 from toshi_hazard_post.aggregation_args import (
     AggregationArgs,
 )
+
+from nshm_logic_tree_utilities.lib import logic_tree_tools
 
 
 @dataclass

@@ -11,14 +11,18 @@ import time
 from pathlib import Path
 
 import pandas as pd
-from toshi_hazard_post.aggregation_args import AggregationArgs
+from toshi_hazard_post.aggregation_args import (
+    AggregationArgs,
+)
 
 from nshm_logic_tree_utilities.lib import config as cfg
-from nshm_logic_tree_utilities.lib import logic_tree_tools as logic_tree_tools
-from nshm_logic_tree_utilities.lib import param_options as param_options
-from nshm_logic_tree_utilities.lib import (
-    run_toshi_hazard_post_utilities as run_toshi_hazard_post_utilities,
-)
+from nshm_logic_tree_utilities.lib import \
+    logic_tree_tools as logic_tree_tools
+from nshm_logic_tree_utilities.lib import \
+    param_options as param_options
+from nshm_logic_tree_utilities.lib import \
+    run_toshi_hazard_post_utilities as \
+    run_toshi_hazard_post_utilities
 
 config = cfg.Config()
 
@@ -41,10 +45,19 @@ if config.get_value("overwrite_if_output_directory_exists"):
     shutil.rmtree(output_dir, ignore_errors=True)
 output_dir.mkdir(parents=True, exist_ok=False)
 
-os.environ["THP_ENV_FILE"] = str(input_file_dir / config.get_value("env_file_name"))
-initial_input_file = input_file_dir / config.get_value("initial_input_file_name")
+os.environ["THP_ENV_FILE"] = str(
+    Path(__file__).parent.parent / input_file_dir / config.get_value("env_file_name")
+)
+initial_input_file = (
+    Path(__file__).parent.parent
+    / input_file_dir
+    / config.get_value("initial_input_file_name")
+)
 
-with open(input_file_dir / config.get_value("env_file_name"), "r") as file:
+with open(
+    Path(__file__).parent.parent / input_file_dir / config.get_value("env_file_name"),
+    "r",
+) as file:
     env_lines = file.readlines()
 
 ### output_staging_dir is toshi_hazard_post's output directory.
@@ -134,9 +147,11 @@ logic_tree_pair_list3 = (
 )
 
 ### concatenate the logic_tree_pair_lists
-logic_tree_pair_list = (
-    logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
-)
+# logic_tree_pair_list = (
+#     logic_tree_pair_list1 + logic_tree_pair_list2 + logic_tree_pair_list3
+# )
+
+logic_tree_pair_list = logic_tree_pair_list2
 
 ### Print info about the logic trees
 logic_tree_tools.print_info_about_logic_tree_pairs(logic_tree_pair_list)

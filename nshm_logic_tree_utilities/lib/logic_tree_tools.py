@@ -3,6 +3,7 @@ Contains functions to modify logic trees.
 """
 
 import copy
+from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
@@ -15,6 +16,7 @@ from nzshm_model.logic_tree.correlation import (
     LogicTreeCorrelations,
 )
 
+from nshm_logic_tree_utilities.lib import param_options
 from nshm_logic_tree_utilities.lib.run_toshi_hazard_post_utilities import (
     CustomLogicTreePair,
 )
@@ -353,9 +355,9 @@ def logic_tree_pair_with_selected_tectonic_region_types(
         The modified logic tree pair that only includes branch sets corresponding
         to the selected tectonic region types.
     """
-
     short_tectonic_region_type_lookup_dict = toml.load(
-        "resources/short_tectonic_region_type_lookup.toml"
+        Path(__file__).parent.parent
+        / "resources/short_tectonic_region_type_lookup.toml"
     )
 
     source_logic_tree = copy.deepcopy(initial_logic_tree_pair.source_logic_tree)
@@ -368,6 +370,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
         short_tectonic_region_type_lookup_dict[tectonic_region_type]
         for tectonic_region_type in tectonic_region_type_group
     ]
+
     short_tectonic_region_types_for_source_logic_tree_note = copy.deepcopy(
         short_tectonic_region_types_for_ground_motion_logic_tree_note
     )
@@ -501,7 +504,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
     """
 
     logic_tree_pair_list = []
-
+    print()
     for tectonic_region_type_group in tectonic_region_type_groups:
         if "Subduction Interface" in tectonic_region_type_group:
             for which_interface in which_interfaces:

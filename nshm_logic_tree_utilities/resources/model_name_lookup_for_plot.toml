@@ -1,0 +1,26 @@
+AbrahamsonEtAl2014 = "Crust Abrahamson et al. (2014)"
+Atkinson2022Crust = "Crust Atkinson (2022)"
+BooreEtAl2014 = "Crust Boore et al. (2014)"
+Bradley2013 = "Crust Bradley (2013)"
+CampbellBozorgnia2014 = "Crust Campbell & Bozorgnia (2014)"
+ChiouYoungs2014 = "Crust Chiou & Youngs (2014)"
+Stafford2022 = "Crust Stafford (2022)"
+Atkinson2022SInter = "Interface Atkinson (2022)"
+NZNSHM2022_AbrahamsonGulerce2020SInter = "Interface Abrahamson & Gulerce (2020)"
+NZNSHM2022_KuehnEtAl2020SInter = "Interface Kuehn et al. (2020)"
+NZNSHM2022_ParkerEtAl2020SInter = "Interface Parker et al. (2020)"
+Atkinson2022SSlab = "Intraslab Atkinson (2022)"
+NZNSHM2022_AbrahamsonGulerce2020SSlab = "Intraslab Abrahamson & Gulerce (2020)"
+NZNSHM2022_KuehnEtAl2020SSlab = "Intraslab Kuehn et al. (2020)"
+NZNSHM2022_ParkerEtAl2020SSlab = "Intraslab Parker et al. (2020)"
+CRU_deformation_model = "Crust deformation model (geologic or geodetic)"
+CRU_time_dependence = "Crust time dependence\n(time-dependent or -independent)"
+CRU_MFD = "Crust magnitude frequency distribution"
+CRU_moment_rate_scaling = "Crust moment rate scaling"
+INTER_HIK_and_PUY_MFD = "Interface magnitude frequency distribution"
+INTER_HIK_and_PUY_moment_rate_scaling = "Interface moment rate scaling"
+
+
+
+
+

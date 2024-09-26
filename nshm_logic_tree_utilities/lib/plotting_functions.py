@@ -14,7 +14,10 @@ import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
-from nshm_logic_tree_utilities.lib import loading_functions, param_options
+from nshm_logic_tree_utilities.lib import (
+    loading_functions,
+    param_options,
+)
 
 
 def make_figure_of_coefficient_of_variation(
@@ -1432,10 +1435,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
                                         # in a group called group_id (?P<group_id>...)      
                     \]                  # Followed by a "]" character (\]) 
                     """
-        tectonic_region_type_part = (
-            re.search(pattern, output_notes["source_logic_tree_note"], re.VERBOSE)
-            .group("group_id")
-        )
+        tectonic_region_type_part = re.search(
+            pattern, output_notes["source_logic_tree_note"], re.VERBOSE
+        ).group("group_id")
 
         model_name_short = f"{tectonic_region_type_part}_{last_part}"
         model_name_long = model_name_to_plot_format[model_name_short]
