@@ -8,5 +8,5 @@ toml
 scipy
 pyarrow
 
-git+https://github.com/ucgmsim/toshi-hazard-post.git@feature/documentation-v2_get_realizations
-git+https://github.com/ucgmsim/nzshm-model.git@srm-trt-merge-digest_version_hack
+toshi-hazard-post @ git+https://github.com/ucgmsim/toshi-hazard-post.git@feature/documentation-v2_get_realizations
+nzshm-model @ git+https://github.com/ucgmsim/nzshm-model.git@srm-trt-merge-digest_version_hack

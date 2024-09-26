@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PACKAGE NAME HERE"
+name = "nshm_logic_tree_utilities"
 authors = [
     {name = "QuakeCoRE" },
 ]
