@@ -2,10 +2,8 @@
 This script provides examples of how to use the plotting functions in plotting_functions.py.
 """
 
-from nshm_logic_tree_utilities.lib import (
-    param_options,
-    plotting_functions,
-)
+import nshm_logic_tree_utilities.lib.param_options as param_options
+import nshm_logic_tree_utilities.lib.plotting_functions as plotting_functions
 
 plotting_functions.make_figure_of_coefficient_of_variation(
     results_directory="/home/arr65/data/nshm/output/",

@@ -1,3 +1,7 @@
+"""
+Loads the config file.
+"""
+
 from pathlib import Path
 
 import yaml

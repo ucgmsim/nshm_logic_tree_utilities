@@ -1,5 +1,5 @@
 """
-This module contains helper functions for plotting logic tree investigation results.
+This module contains helpful functions and utilities for plotting logic tree investigation results.
 """
 
 from dataclasses import dataclass
@@ -14,9 +14,7 @@ import scipy
 import toml
 from matplotlib import pyplot as plt
 
-from nshm_logic_tree_utilities.lib.loading_functions import (
-    load_aggregate_stats_for_all_logic_trees_in_directory,
-)
+import nshm_logic_tree_utilities.lib.loading_functions as loading_functions
 
 ##########################################
 ### dataclasses to store loaded data
@@ -260,8 +258,10 @@ def get_interpolated_gmms(
         A dictionary containing the dispersion ranges for each location and filter.
     """
 
-    loaded_results = load_aggregate_stats_for_all_logic_trees_in_directory(
-        results_directory, locations
+    loaded_results = (
+        loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
+            results_directory, locations
+        )
     )
     data_df = loaded_results.data_df
     collated_notes_df = loaded_results.collated_notes_df
@@ -350,7 +350,9 @@ def interpolate_ground_motion_models(
     std_ln_list = []
     non_zero_name_list = []
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    locations_nloc_dict = toml.load(
+        Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml"
+    )
 
     ### Gather the data for the interpolation
     for logic_tree_name in natsort.natsorted(data_df["hazard_model_id"].unique()):

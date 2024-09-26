@@ -9,11 +9,8 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+import nshm_logic_tree_utilities.lib.plotting_utilities as plotting_utilities
 from nshm_logic_tree_utilities.lib import config as cfg
-from nshm_logic_tree_utilities.lib.plotting_utilities import (
-    RealizationName,
-    remove_special_characters,
-)
 
 
 @dataclass
@@ -224,7 +221,7 @@ def insert_ln_std(data_df: pd.DataFrame) -> pd.DataFrame:
 
 def lookup_realization_name_from_hash(
     individual_realization_df: pd.DataFrame, registry_directory: Union[Path, str]
-) -> list[RealizationName]:
+) -> list[plotting_utilities.RealizationName]:
     """
     Looks up the model names used in the realization based on the branch hash ids in the output parquet file.
 
@@ -239,8 +236,8 @@ def lookup_realization_name_from_hash(
 
     Returns
     -------
-    realization_names : list[RealizationName]
-        List of RealizationName objects containing the seismicity rate model (SRM) and
+    realization_names : list[plotting_utilities.RealizationName]
+        List of plotting_utilities.RealizationName objects containing the seismicity rate model (SRM) and
         ground motion characterization model (GMCM) names.
     """
 
@@ -254,7 +251,7 @@ def lookup_realization_name_from_hash(
     for idx, row in individual_realization_df.iterrows():
 
         contributing_branches_hash_ids = row["contributing_branches_hash_ids"]
-        contributing_branches_hash_ids_clean = remove_special_characters(
+        contributing_branches_hash_ids_clean = plotting_utilities.remove_special_characters(
             contributing_branches_hash_ids
         ).split(", ")
 
@@ -285,7 +282,7 @@ def lookup_realization_name_from_hash(
             )
 
     realization_names = [
-        RealizationName(
+        plotting_utilities.RealizationName(
             seismicity_rate_model_id, ground_motion_characterization_models_id
         )
         for seismicity_rate_model_id, ground_motion_characterization_models_id in zip(

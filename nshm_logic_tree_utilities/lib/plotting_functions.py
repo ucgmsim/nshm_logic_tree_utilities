@@ -8,16 +8,14 @@ from typing import Union
 
 import natsort
 import numpy as np
-import plotting_utilities
 import pyarrow.dataset as ds
 import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
-from nshm_logic_tree_utilities.lib import (
-    loading_functions,
-    param_options,
-)
+import nshm_logic_tree_utilities.lib.loading_functions as loading_functions
+import nshm_logic_tree_utilities.lib.param_options as param_options
+import nshm_logic_tree_utilities.lib.plotting_utilities as plotting_utilities
 
 
 def make_figure_of_coefficient_of_variation(
@@ -67,7 +65,7 @@ def make_figure_of_coefficient_of_variation(
 
     """
 
-    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
+    nshm_im_levels = np.loadtxt(Path(__file__).parent.parent / "resources/nshm_im_levels.txt")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -75,7 +73,7 @@ def make_figure_of_coefficient_of_variation(
         plot_output_directory = Path(plot_output_directory)
     plot_output_directory.mkdir(parents=True, exist_ok=True)
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
 
     nloc_001_str = locations_nloc_dict[location]
 
@@ -222,10 +220,10 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 
     num_plot_cols = len(locations)
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
-    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
-    model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
-    ground_motion_logic_tree_model_color = toml.load("resources/model_plot_colors.toml")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
+    location_to_full_location = toml.load(Path(__file__).parent.parent / "resources/location_code_to_full_name.toml")
+    model_to_plot_label = toml.load(Path(__file__).parent.parent / "resources/model_name_lookup_for_plot.toml")
+    ground_motion_logic_tree_model_color = toml.load(Path(__file__).parent.parent / "resources/model_plot_colors.toml")
 
     loaded_results = (
         loading_functions.load_aggregate_stats_for_all_logic_trees_in_directory(
@@ -517,8 +515,8 @@ def make_figure_of_srm_model_components(
         "moment_rate_scaling": "moment rate scaling",
     }
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
-    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
+    location_to_full_location = toml.load(Path(__file__).parent.parent / "resources/location_code_to_full_name.toml")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -680,13 +678,13 @@ def make_figure_of_gmcms(
     None
     """
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
     tectonic_type_to_linestyle = toml.load(
-        "resources/tectonic_region_type_to_linestyle.toml"
+        Path(__file__).parent.parent / "resources/tectonic_region_type_to_linestyle.toml"
     )
-    location_to_full_location = toml.load("resources/location_code_to_full_name.toml")
-    model_to_plot_label = toml.load("resources/model_name_lookup_for_plot.toml")
-    ground_motion_logic_tree_model_color = toml.load("resources/model_plot_colors.toml")
+    location_to_full_location = toml.load(Path(__file__).parent.parent / "resources/location_code_to_full_name.toml")
+    model_to_plot_label = toml.load(Path(__file__).parent.parent / "resources/model_name_lookup_for_plot.toml")
+    ground_motion_logic_tree_model_color = toml.load(Path(__file__).parent.parent / "resources/model_plot_colors.toml")
 
     if isinstance(results_directory, str):
         results_directory = Path(results_directory)
@@ -899,8 +897,8 @@ def make_figure_showing_bradley2009_method(
     if isinstance(registry_directory, str):
         registry_directory = Path(registry_directory)
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
-    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
+    nshm_im_levels = np.loadtxt(Path(__file__).parent.parent / "resources/nshm_im_levels.txt")
 
     plot_colors = ["tab:purple", "tab:orange", "tab:green"]
     plot_linestyles = [":", "-", "--"]
@@ -1364,9 +1362,9 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
     None
     """
 
-    locations_nloc_dict = toml.load("resources/location_code_to_nloc_str.toml")
-    model_name_to_plot_format = toml.load("resources/model_name_lookup_for_plot.toml")
-    nshm_im_levels = np.loadtxt("../resources/nshm_im_levels.txt")
+    locations_nloc_dict = toml.load(Path(__file__).parent.parent / "resources/location_code_to_nloc_str.toml")
+    model_name_to_plot_format = toml.load(Path(__file__).parent.parent / "resources/model_name_lookup_for_plot.toml")
+    nshm_im_levels = np.loadtxt(Path(__file__).parent.parent / "resources/nshm_im_levels.txt")
 
     needed_im_level_indices = np.where(
         (nshm_im_levels >= im_xlims[0]) & (nshm_im_levels <= im_xlims[1])
