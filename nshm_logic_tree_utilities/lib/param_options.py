@@ -65,8 +65,8 @@ class InterfaceName(enum.StrEnum):
     HIK_and_PUY which includes the Hikurangi–Kermadec and Puysegur subduction zones.
     """
 
-    only_HIK = "only_HIK"  # Hikurangi–Kermadec subduction interface
-    only_PUY = "only_PUY"  # Puysegur subduction interface
+    only_HIK = "only_HIK"  # Hikurangi–Kermadec subduction interface  # noqa: N815
+    only_PUY = "only_PUY"  # Puysegur subduction interface  # noqa: N815
     HIK_and_PUY = "HIK_and_PUY"  # Hikurangi–Kermadec and Puysegur subduction interfaces
 
 
