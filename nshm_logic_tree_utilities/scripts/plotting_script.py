@@ -70,7 +70,7 @@ plotting_functions.make_figure_of_gmm_dispersion_ranges(
 
 
 plotting_functions.make_figure_showing_bradley2009_method(
-    results_directory="/home/arr65/data/nshm/output/logic_tree_index_4",
+    results_directory="/home/arr65/data/nshm/output/logic_tree_index_6",
     plot_output_directory="/home/arr65/data/nshm/plots",
     registry_directory="/home/arr65/src/gns/modified_gns/nzshm-model/resources",
     location_short_name=param_options.LocationCode.WLG,
