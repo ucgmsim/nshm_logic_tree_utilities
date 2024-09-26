@@ -18,20 +18,20 @@ With this package, you can create modified logic trees and use them to calculate
 3. Activate the new virtual environment by running the following command in the terminal:
    1. `source .venv/bin/activate`
 
-4. Install the required packages by running the following command in the terminal:
-   1. `pip install -r requirements.txt`
+4. Install the required packages by running the following command in the terminal (without changing directories):
+   1. `pip install -e .`
 
 ### Usage
 
 1. To modify the standard NZ NSHM 2022 logic tree and generate hazard curves:
 
-   1. Go to the `scripts` directory
-   2. Open `run_toshi_hazard_post_config.yaml`
+   1. Go to the `nshm_logic_tree_utilities/scripts` directory (where this `nshm_logic_tree_utilities` directory is inside the first)
+   2. Open `nshm_logic_tree_utilities/run_toshi_hazard_post_config.yaml`
    3. Modify the line containing `output_directory : "/home/arr65/data/nshm/output"` to use your directory
-   4. Run the code with `python run_toshi_hazard_post_script.py`
+   4. Run the code with `python nshm_logic_tree_utilities/scripts/run_toshi_hazard_post_script.py`
 
 2. To plot the results:
-   1. Run `python plotting_script.py`
+   1. Run `python nshm_logic_tree_utilities/scripts/plotting_script.py`
 
 Note that the examples provided in `run_toshi_hazard_post_script.py` and `plotting_script.py`
 can be modified for your purposes.
