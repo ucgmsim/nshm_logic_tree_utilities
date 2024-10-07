@@ -16,7 +16,7 @@ from nzshm_model.logic_tree.correlation import (
     LogicTreeCorrelations,
 )
 
-from nshm_logic_tree_utilities.lib import param_options
+from nshm_logic_tree_utilities.lib import constants
 from nshm_logic_tree_utilities.lib.run_toshi_hazard_post_utilities import (
     CustomLogicTreePair,
 )
@@ -261,7 +261,7 @@ def select_branch_sets_given_tectonic_region_type(
     tectonic_region_type_group: Union[
         list[param_options.TectonicRegionTypeName], param_options.TectonicRegionTypeName
     ],
-    which_interface: param_options.InterfaceName = param_options.InterfaceName.HIK_and_PUY,
+    which_interface: constants.InterfaceName = constants.InterfaceName.HIK_and_PUY,
 ) -> LogicTree:
     """
     Modifies a logic tree to only include branch sets that correspond to the selected tectonic region types.
@@ -271,7 +271,7 @@ def select_branch_sets_given_tectonic_region_type(
     logic_tree : LogicTree
         The logic tree to modify.
 
-    tectonic_region_type_group : list[param_options.TectonicRegionTypeName] or param_options.TectonicRegionTypeName
+    tectonic_region_type_group : list[param_options.TectonicRegionTypeName] or constants.TectonicRegionTypeName
         The selected tectonic region types.
 
     which_interface : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY
@@ -301,12 +301,12 @@ def select_branch_sets_given_tectonic_region_type(
                         tectonic_region_type
                         == param_options.TectonicRegionTypeName.Subduction_Interface
                     ):
-                        if which_interface == param_options.InterfaceName.HIK_and_PUY:
+                        if which_interface == constants.InterfaceName.HIK_and_PUY:
                             new_branch_sets.append(copy.deepcopy(branch_set))
                         elif which_interface == param_options.InterfaceName.only_HIK:
                             if branch_set.short_name == "HIK":
                                 new_branch_sets.append(copy.deepcopy(branch_set))
-                        elif which_interface == param_options.InterfaceName.only_PUY:
+                        elif which_interface == constants.InterfaceName.only_PUY:
                             if branch_set.short_name == "PUY":
                                 new_branch_sets.append(copy.deepcopy(branch_set))
                     else:
@@ -319,7 +319,7 @@ def select_branch_sets_given_tectonic_region_type(
     modified_logic_tree.branch_sets = new_branch_sets
     branch_set_short_names = [x.short_name for x in new_branch_sets]
 
-    if (param_options.InterfaceName.only_PUY in branch_set_short_names) & (
+    if (constants.InterfaceName.only_PUY in branch_set_short_names) & (
         param_options.InterfaceName.only_HIK in branch_set_short_names
     ):
         # retain the HIK to PUY correlations
@@ -332,7 +332,7 @@ def select_branch_sets_given_tectonic_region_type(
 
 def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_group: list[param_options.TectonicRegionTypeName],
+    tectonic_region_type_group: list[constants.TectonicRegionTypeName],
     which_interface: Optional[param_options.InterfaceName] = None,
 ) -> CustomLogicTreePair:
     """
@@ -343,7 +343,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair : CustomLogicTreePair
         The initial logic tree pair to modify.
 
-    tectonic_region_type_group : list[param_options.TectonicRegionTypeName]
+    tectonic_region_type_group : list[constants.TectonicRegionTypeName]
         The selected tectonic region types.
 
     which_interface : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY
@@ -471,9 +471,9 @@ def get_logic_tree_pairs_for_tectonic_selection(
     initial_logic_tree_pair: CustomLogicTreePair,
     tectonic_region_type_groups: Union[
         list[param_options.TectonicRegionTypeName],
-        list[list[param_options.TectonicRegionTypeName]],
+        list[list[constants.TectonicRegionTypeName]],
     ],
-    which_interfaces: list[param_options.InterfaceName],
+    which_interfaces: list[constants.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
     Produces a list of logic tree pairs with the selected tectonic region types.
@@ -494,7 +494,7 @@ def get_logic_tree_pairs_for_tectonic_selection(
         3. [ [param_options.TectonicRegionTypeName.Active_Shallow_Crust, param_options.TectonicRegionTypeName.Subduction_Interface],
              [param_options.TectonicRegionTypeName.Subduction_Intraslab] ]
 
-    which_interfaces : list[param_options.InterfaceName]
+    which_interfaces : list[constants.InterfaceName]
         Subduction interfaces to include.
 
     Returns
@@ -532,8 +532,8 @@ def get_logic_tree_pairs_for_tectonic_selection(
 
 def get_logic_tree_pairs_for_individual_ground_motion_models(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_groups: list[list[param_options.TectonicRegionTypeName]],
-    which_interfaces: list[param_options.InterfaceName],
+    tectonic_region_type_groups: list[list[constants.TectonicRegionTypeName]],
+    which_interfaces: list[constants.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
     Creates a list of logic tree pairs with all individual ground motion models within the selected tectonic region
@@ -545,7 +545,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
         The initial logic tree pair to select tectonic region types from.
         Should contain the full SourceLogicTree and the full GMCMLogicTree.
 
-    tectonic_region_type_groups : list[list[param_options.TectonicRegionTypeName]]
+    tectonic_region_type_groups : list[list[constants.TectonicRegionTypeName]]
         A list of lists that each contain a single param_options.TectonicRegionTypeName.
 
     which_interfaces : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY
@@ -643,7 +643,7 @@ def get_logic_tree_pairs_for_individual_ground_motion_models(
 
 def get_logic_tree_pairs_for_individual_source_models(
     initial_logic_tree_pair: CustomLogicTreePair,
-    tectonic_region_type_groups: list[list[param_options.TectonicRegionTypeName]],
+    tectonic_region_type_groups: list[list[constants.TectonicRegionTypeName]],
     which_interfaces: list[param_options.InterfaceName],
 ) -> list[CustomLogicTreePair]:
     """
@@ -655,7 +655,7 @@ def get_logic_tree_pairs_for_individual_source_models(
         The initial logic tree pair to select tectonic region types from.
         Should contain the full SourceLogicTree and the full GMCMLogicTree.
 
-    tectonic_region_type_groups : list[list[param_options.TectonicRegionTypeName]]
+    tectonic_region_type_groups : list[list[constants.TectonicRegionTypeName]]
         A list of lists that each containing a single param_options.TectonicRegionTypeName.
 
     which_interfaces : param_options.InterfaceName, default = param_options.InterfaceName.HIK_and_PUY

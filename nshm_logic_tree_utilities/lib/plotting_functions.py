@@ -13,8 +13,8 @@ import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
+import nshm_logic_tree_utilities.lib.constants as param_options
 import nshm_logic_tree_utilities.lib.loading_functions as loading_functions
-import nshm_logic_tree_utilities.lib.param_options as param_options
 import nshm_logic_tree_utilities.lib.plotting_utilities as plotting_utilities
 
 
@@ -194,7 +194,7 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 
     Parameters
     ----------
-    locations : tuple[param_options.LocationCode]
+    locations : tuple[constants.LocationCode]
         The locations to plot.
     results_directory : Union[Path, str]
         The directory containing the data. This directory should contain subdirectories

@@ -16,8 +16,8 @@ from toshi_hazard_post.aggregation_args import (
 )
 
 from nshm_logic_tree_utilities.lib import config as cfg
+from nshm_logic_tree_utilities.lib import constants as param_options
 from nshm_logic_tree_utilities.lib import logic_tree_tools as logic_tree_tools
-from nshm_logic_tree_utilities.lib import param_options as param_options
 from nshm_logic_tree_utilities.lib import (
     run_toshi_hazard_post_utilities as run_toshi_hazard_post_utilities,
 )
