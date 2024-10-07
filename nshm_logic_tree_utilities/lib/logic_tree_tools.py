@@ -504,7 +504,6 @@ def get_logic_tree_pairs_for_tectonic_selection(
     """
 
     logic_tree_pair_list = []
-    print()
     for tectonic_region_type_group in tectonic_region_type_groups:
         if "Subduction Interface" in tectonic_region_type_group:
             for which_interface in which_interfaces:
