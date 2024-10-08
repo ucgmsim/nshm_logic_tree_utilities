@@ -13,7 +13,7 @@ import toml
 import toshi_hazard_post.calculators as calculators
 from matplotlib import pyplot as plt
 
-import nshm_logic_tree_utilities.lib.constants as param_options
+import nshm_logic_tree_utilities.lib.constants as constants
 import nshm_logic_tree_utilities.lib.loading_functions as loading_functions
 import nshm_logic_tree_utilities.lib.plotting_utilities as plotting_utilities
 
@@ -24,8 +24,8 @@ def make_figure_of_coefficient_of_variation(
     plot_dpi: int = 500,
     plot_fontsize: float = 12.0,
     plot_lineweight: float = 5.0,
-    location: param_options.LocationCode = param_options.LocationCode.WLG,
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    location: constants.LocationCode = constants.LocationCode.WLG,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     vs30: int = 400,
     xlims: tuple[float, float] = (1e-2, 5),
     ylims: tuple[float, float] = (0.05, 0.8),
@@ -48,10 +48,10 @@ def make_figure_of_coefficient_of_variation(
         The font size used in the plot (default is 12.0).
     plot_lineweight : int, optional
         The line weight used in the plot (default is 5).
-    location : param_options.LocationCode, optional
-        The location code (default is param_options.LocationCode.WLG).
-    im : param_options.IntensityMeasure, optional
-        The intensity measure (default is param_options.IntensityMeasure.PGA).
+    location : constants.LocationCode, optional
+        The location code (default is constants.LocationCode.WLG).
+    im : constants.IntensityMeasure, optional
+        The intensity measure (default is constants.IntensityMeasure.PGA).
     vs30 : int, optional
         The Vs30 value (default is 400).
     xlims : tuple, optional
@@ -172,11 +172,11 @@ def make_figure_of_coefficient_of_variation(
 
 # noinspection PyUnboundLocalVariable
 def make_figure_of_srm_and_gmcm_model_dispersions(
-    locations: tuple[param_options.LocationCode, ...],
+    locations: tuple[constants.LocationCode, ...],
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     vs30: int = 400,
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     plot_title_font_size: float = 12,
     plot_dpi: int = 500,
 ):
@@ -203,8 +203,8 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
         The directory where the plot will be saved.
     vs30 : int, optional
         The Vs30 value (default is 400).
-    im : param_options.IntensityMeasure, optional
-        The intensity measure (default is param_options.IntensityMeasure.PGA).
+    im : constants.IntensityMeasure, optional
+        The intensity measure (default is constants.IntensityMeasure.PGA).
     plot_title_font_size : float, optional
         The font size of the plot titles (default is 12).
     plot_dpi : int, optional
@@ -475,12 +475,12 @@ def make_figure_of_srm_and_gmcm_model_dispersions(
 def make_figure_of_srm_model_components(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+    locations: tuple[constants.LocationCode, ...] = (
+        constants.LocationCode.AKL,
+        constants.LocationCode.WLG,
+        constants.LocationCode.CHC,
     ),
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     vs30: int = 400,
     plot_dpi: int = 500,
 ):
@@ -496,8 +496,8 @@ def make_figure_of_srm_model_components(
         The directory where the plot will be saved.
     locations : tuple[LocationCode], optional
         The locations to plot. Default is (LocationCode.AKL, LocationCode.WLG, LocationCode.CHC).
-    im : param_options.IntensityMeasure, optional
-        The intensity measure (default is param_options.IntensityMeasure.PGA).
+    im : constants.IntensityMeasure, optional
+        The intensity measure (default is constants.IntensityMeasure.PGA).
     vs30 : int, optional
         The Vs30 value (default is 400).
     plot_dpi : int, optional
@@ -644,13 +644,13 @@ def make_figure_of_srm_model_components(
 def make_figure_of_gmcms(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+    locations: tuple[constants.LocationCode, ...] = (
+        constants.LocationCode.AKL,
+        constants.LocationCode.WLG,
+        constants.LocationCode.CHC,
     ),
     vs30: int = 400,
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     plot_dpi: int = 500,
 ):
     """
@@ -662,14 +662,14 @@ def make_figure_of_gmcms(
         The directory containing the results to plot.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : tuple[param_options.LocationCode], optional
-        The locations to plot. Default is (param_options.LocationCode.AKL,
-                                           param_options.LocationCode.WLG,
-                                           param_options.LocationCode.CHC).
+    locations : tuple[constants.LocationCode], optional
+        The locations to plot. Default is (constants.LocationCode.AKL,
+                                           constants.LocationCode.WLG,
+                                           constants.LocationCode.CHC).
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
-    im : param_options.IntensityMeasure, optional
-        The intensity measure to use in the plot. Default is param_options.IntensityMeasure.PGA.
+    im : constants.IntensityMeasure, optional
+        The intensity measure to use in the plot. Default is constants.IntensityMeasure.PGA.
     plot_dpi : int, optional
         The resolution of the plot in dots per inch. Default is 500.
 
@@ -856,9 +856,9 @@ def make_figure_showing_bradley2009_method(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
     registry_directory: Union[Path, str],
-    location_short_name: param_options.LocationCode = param_options.LocationCode.WLG,
+    location_short_name: constants.LocationCode = constants.LocationCode.WLG,
     vs30: int = 400,
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     plot_dpi: int = 500,
 ):
     """
@@ -874,12 +874,12 @@ def make_figure_showing_bradley2009_method(
         The directory where the plot will be saved.
     registry_directory : Union[Path, str]
         The directory containing the branch registry files that come with the GNS package nshm-model.
-    location_short_name : param_options.LocationCode, optional
-        The location code (default is param_options.LocationCode.WLG).
+    location_short_name : constants.LocationCode, optional
+        The location code (default is constants.LocationCode.WLG).
     vs30 : int, optional
         The Vs30 value (default is 400).
-    im : param_options.IntensityMeasure, optional
-        The intensity measure (default is param_options.IntensityMeasure.PGA).
+    im : constants.IntensityMeasure, optional
+        The intensity measure (default is constants.IntensityMeasure.PGA).
     plot_dpi : int, optional
         The resolution of the plot in dots per inch (default is 500).
 
@@ -1192,14 +1192,14 @@ def make_figure_showing_bradley2009_method(
 def make_figure_of_gmm_dispersion_ranges(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+    locations: tuple[constants.LocationCode, ...] = (
+        constants.LocationCode.AKL,
+        constants.LocationCode.WLG,
+        constants.LocationCode.CHC,
     ),
     filter_strs: tuple[str, ...] = ("CRU", "HIK_and_PUY", "SLAB"),
     vs30: int = 400,
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     plot_dpi: int = 500,
     num_interp_mean_points: int = 1000,
     min_log10_mean_for_interp: int = -6,
@@ -1216,16 +1216,16 @@ def make_figure_of_gmm_dispersion_ranges(
         The directory containing the results data.
     plot_output_directory : Union[Path, str]
         The directory where the plot will be saved.
-    locations : tuple[param_options.LocationCode], optional
-        The locations to plot. Default is (param_options.LocationCode.AKL,
-                                           param_options.LocationCode.WLG,
-                                           param_options.LocationCode.CHC).
+    locations : tuple[constants.LocationCode], optional
+        The locations to plot. Default is (constants.LocationCode.AKL,
+                                           constants.LocationCode.WLG,
+                                           constants.LocationCode.CHC).
     filter_strs : tuple[str], optional
         The filter strings needed to select the desired data. Default is ("CRU", "HIK_and_PUY", "SLAB").
     vs30 : int, optional
         The Vs30 value to use in the plot. Default is 400.
-    im : param_options.IntensityMeasure, optional
-        The intensity measure to use in the plot. Default is param_options.IntensityMeasure.PGA.
+    im : constants.IntensityMeasure, optional
+        The intensity measure to use in the plot. Default is constants.IntensityMeasure.PGA.
     plot_dpi : int, optional
         The resolution of the plot in dots per inch. Default is 500.
     num_interp_mean_points : int, optional
@@ -1315,12 +1315,12 @@ def make_figure_of_gmm_dispersion_ranges(
 def make_figures_of_individual_realizations_for_a_single_logic_tree(
     logic_tree_index_dir: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+    locations: tuple[constants.LocationCode, ...] = (
+        constants.LocationCode.AKL,
+        constants.LocationCode.WLG,
+        constants.LocationCode.CHC,
     ),
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
     poe_min_plot: float = 1e-5,
@@ -1339,12 +1339,12 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
         Directory containing the logic tree index.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : tuple[param_options.LocationCode], optional
-        Locations to generate plots for. Default is (param_options.LocationCode.AKL,
-                                                     param_options.LocationCode.WLG,
-                                                     param_options.LocationCode.CHC).
-    im : param_options.IntensityMeasure, optional
-        Intensity measure to be used in the plots. Default is param_options.IntensityMeasure.PGA.
+    locations : tuple[constants.LocationCode], optional
+        Locations to generate plots for. Default is (constants.LocationCode.AKL,
+                                                     constants.LocationCode.WLG,
+                                                     constants.LocationCode.CHC).
+    im : constants.IntensityMeasure, optional
+        Intensity measure to be used in the plots. Default is constants.IntensityMeasure.PGA.
     vs30 : int, optional
         Vs30 value to be used in the plots. Default is 400.
     im_xlims : tuple, optional
@@ -1581,17 +1581,17 @@ def make_figures_of_individual_realizations_for_a_single_logic_tree(
 def make_figures_of_several_individual_realizations(
     results_directory: Union[Path, str],
     plot_output_directory: Union[Path, str],
-    locations: tuple[param_options.LocationCode, ...] = (
-        param_options.LocationCode.AKL,
-        param_options.LocationCode.WLG,
-        param_options.LocationCode.CHC,
+    locations: tuple[constants.LocationCode, ...] = (
+        constants.LocationCode.AKL,
+        constants.LocationCode.WLG,
+        constants.LocationCode.CHC,
     ),
-    im: param_options.IntensityMeasure = param_options.IntensityMeasure.PGA,
+    im: constants.IntensityMeasure = constants.IntensityMeasure.PGA,
     vs30: int = 400,
     im_xlims: tuple = (9e-5, 5),
     poe_min_plot: float = 1e-5,
     ybuffer_absmax_over_val: float = 10.0,
-    selected_subduction_interface: param_options.InterfaceName = param_options.InterfaceName.HIK_and_PUY,
+    selected_subduction_interface: constants.InterfaceName = constants.InterfaceName.HIK_and_PUY,
     plot_dpi: int = 500,
     notes_to_exclude: Union[tuple[tuple[str, str]], tuple] = (),
 ):
@@ -1607,12 +1607,12 @@ def make_figures_of_several_individual_realizations(
         Directory containing the results of the logic tree realizations.
     plot_output_directory : Union[Path, str]
         Directory where the generated plots will be saved.
-    locations : tuple[param_options.LocationCode], optional
-        The locations to plot. Default is (param_options.LocationCode.AKL,
-                                           param_options.LocationCode.WLG,
-                                           param_options.LocationCode.CHC).
-    im : param_options.IntensityMeasure, optional
-        Intensity measure to be used in the plots. Default is param_options.IntensityMeasure.PGA.
+    locations : tuple[constants.LocationCode], optional
+        The locations to plot. Default is (constants.LocationCode.AKL,
+                                           constants.LocationCode.WLG,
+                                           constants.LocationCode.CHC).
+    im : constants.IntensityMeasure, optional
+        Intensity measure to be used in the plots. Default is constants.IntensityMeasure.PGA.
     vs30 : int, optional
         Vs30 value to be used in the plots. Default is 400.
     im_xlims : tuple, optional
@@ -1623,7 +1623,7 @@ def make_figures_of_several_individual_realizations(
         Defines how much to extend the y-axis limits above the maximum value in the plot (for a buffer).
         The amount of extension is defined as the maximum plotted value divided by this value. Default is 10.0.
     selected_subduction_interface : InterfaceName, optional
-        Subduction interface to be selected. Default is param_options.InterfaceName.HIK_and_PUY.
+        Subduction interface to be selected. Default is constants.InterfaceName.HIK_and_PUY.
     plot_dpi : int, optional
         DPI for the generated plots. Default is 500.
     notes_to_exclude : tuple, optional

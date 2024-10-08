@@ -16,7 +16,7 @@ from toshi_hazard_post.aggregation_args import (
 )
 
 from nshm_logic_tree_utilities.lib import config as cfg
-from nshm_logic_tree_utilities.lib import constants as param_options
+from nshm_logic_tree_utilities.lib import constants as constants
 from nshm_logic_tree_utilities.lib import logic_tree_tools as logic_tree_tools
 from nshm_logic_tree_utilities.lib import (
     run_toshi_hazard_post_utilities as run_toshi_hazard_post_utilities,
@@ -111,14 +111,14 @@ logic_tree_pair_list2 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_ground_motion_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_groups=[
-            [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
-            [param_options.TectonicRegionTypeName.Subduction_Interface],
-            [param_options.TectonicRegionTypeName.Subduction_Intraslab],
+            [constants.TectonicRegionTypeName.Active_Shallow_Crust],
+            [constants.TectonicRegionTypeName.Subduction_Interface],
+            [constants.TectonicRegionTypeName.Subduction_Intraslab],
         ],
         which_interfaces=[
-            param_options.InterfaceName.only_HIK,
-            param_options.InterfaceName.only_PUY,
-            param_options.InterfaceName.HIK_and_PUY,
+            constants.InterfaceName.only_HIK,
+            constants.InterfaceName.only_PUY,
+            constants.InterfaceName.HIK_and_PUY,
         ],
     )
 )
@@ -132,14 +132,14 @@ logic_tree_pair_list3 = (
     logic_tree_tools.get_logic_tree_pairs_for_individual_source_models(
         initial_logic_tree_pair=full_logic_tree_pair,
         tectonic_region_type_groups=[
-            [param_options.TectonicRegionTypeName.Active_Shallow_Crust],
-            [param_options.TectonicRegionTypeName.Subduction_Interface],
-            [param_options.TectonicRegionTypeName.Subduction_Intraslab],
+            [constants.TectonicRegionTypeName.Active_Shallow_Crust],
+            [constants.TectonicRegionTypeName.Subduction_Interface],
+            [constants.TectonicRegionTypeName.Subduction_Intraslab],
         ],
         which_interfaces=[
-            param_options.InterfaceName.only_HIK,
-            param_options.InterfaceName.only_PUY,
-            param_options.InterfaceName.HIK_and_PUY,
+            constants.InterfaceName.only_HIK,
+            constants.InterfaceName.only_PUY,
+            constants.InterfaceName.HIK_and_PUY,
         ],
     )
 )
