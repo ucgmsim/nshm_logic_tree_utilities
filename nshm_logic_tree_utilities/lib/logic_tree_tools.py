@@ -181,8 +181,6 @@ def check_weight_validity(logic_tree: LogicTree) -> None:
         If the weights of branches in each branch_set do not sum to 1.0.
     """
 
-    logic_tree = copy.deepcopy(logic_tree)
-
     if not np.allclose(
         [
             np.sum(np.array([branch.weight for branch in branch_set.branches]))
