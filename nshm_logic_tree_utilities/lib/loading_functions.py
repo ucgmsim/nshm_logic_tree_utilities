@@ -9,6 +9,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+import nshm_logic_tree_utilities.lib.constants as constants
 import nshm_logic_tree_utilities.lib.plotting_utilities as plotting_utilities
 from nshm_logic_tree_utilities.lib import config as cfg
 
@@ -32,7 +33,7 @@ class LoadedResults:
 
 
 def load_aggregate_stats_for_one_logic_tree_one_location(
-    results_dir_for_one_logic_tree: Union[Path, str], location: str
+    results_dir_for_one_logic_tree: Union[Path, str], location: constants.LocationCode
 ) -> pd.DataFrame:
     """
     Load aggregate statistics results for a single location.
@@ -43,18 +44,13 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
         The directory containing the results of a run of run_toshi_hazard_post_script.py for a single logic tree. This directory has a
         name like logic_tree_index_0. This directory should contain location subdirectories.
 
-    location : str
-        The location code, which must be one of ["AKL", "WLG", "CHC"].
+    location : constants.LocationCode
+        The location code.
 
     Returns
     -------
     pd.DataFrame
         A DataFrame containing the results for the specified location.
-
-    Raises
-    ------
-    ValueError
-        If the location is not one of ["AKL", "WLG", "CHC"].
     """
 
     if isinstance(results_dir_for_one_logic_tree, str):
@@ -62,17 +58,13 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
 
     results_df = pd.DataFrame()
 
-    if location not in ["AKL", "WLG", "CHC"]:
-        raise ValueError("location must be AKL, WLG or CHC")
-
     if location == "CHC":
         nloc_str = "nloc_0=-44.0~173.0"
-    if location == "WLG":
+    elif location == "WLG":
         nloc_str = "nloc_0=-41.0~175.0"
-    if location == "AKL":
+    else:
         nloc_str = "nloc_0=-37.0~175.0"
 
-    # noinspection PyUnboundLocalVariable
     results_dir = results_dir_for_one_logic_tree / nloc_str
 
     for index, file in enumerate(results_dir.glob("*.parquet")):
@@ -85,7 +77,7 @@ def load_aggregate_stats_for_one_logic_tree_one_location(
 
 
 def load_aggregate_stats_for_one_logic_tree_several_locations(
-    results_dir_for_one_logic_tree: Union[Path, str], locations: tuple[str, ...]
+    results_dir_for_one_logic_tree: Union[Path, str], locations: tuple[constants.LocationCode, ...]
 ) -> pd.DataFrame:
     """
     Load aggregate statistics results for several locations.
@@ -96,8 +88,9 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(
         The directory containing the results of a run of run_toshi_hazard_post_script.py for a single logic tree. This directory has a
         name like logic_tree_index_0. This directory should contain location subdirectories.
 
-    locations : tuple[str]
-        Location codes to load. Valid location codes are "AKL", "WLG", "CHC".
+    locations : tuple[constants.LocationCode, ...]
+        Location codes to load.
+        
     Returns
     -------
     lib.loading_functions.LoadedResults
@@ -125,7 +118,7 @@ def load_aggregate_stats_for_one_logic_tree_several_locations(
 
 def load_aggregate_stats_for_all_logic_trees_in_directory(
     results_directory: Union[Path, str],
-    locations: tuple[str, ...] = ("AKL", "WLG", "CHC"),
+    locations: tuple[constants.LocationCode, ...] = (constants.LocationCode.AKL, constants.LocationCode.WLG, constants.LocationCode.CHC),
 ) -> LoadedResults:
     """
     Load aggregate statistics for all logic trees in the results_directory.
@@ -135,8 +128,9 @@ def load_aggregate_stats_for_all_logic_trees_in_directory(
     results_directory : Union[Path, str]
         The directory containing the results of one or more logic trees.
         Should contain directories named like logic_tree_index_0, logic_tree_index_0 etc.
-    locations : tuple[str], optional
-        The locations to plot. Default is ("AKL", "WLG", "CHC").
+    locations : tuple[constants.LocationCode, ...], optional
+        The locations to plot. Default is (constants.LocationCode.AKL, constants.LocationCode.WLG,
+                                           constants.LocationCode.CHC).
 
     Returns
     -------
