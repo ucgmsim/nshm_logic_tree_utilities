@@ -717,9 +717,9 @@ def get_logic_tree_pairs_for_individual_source_models(
         else:
             source_branch_set_names_to_change = list(needed_branches_dict.keys())
 
-        assert (
-            len(source_branch_set_names_to_change) == 1
-        ), "Should only have one source branch set to change at this point"
+        if len(source_branch_set_names_to_change) != 1:
+            raise ValueError(
+                "Should only have one source branch set to change at this point")
 
         for source_short_branch_set_name in source_branch_set_names_to_change:
 
