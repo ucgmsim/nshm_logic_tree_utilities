@@ -28,8 +28,8 @@ class LoadedResults:
         the run that generated these results.
     """
 
-    data_df: pd.DataFrame()
-    collated_notes_df: pd.DataFrame()
+    data_df: pd.DataFrame
+    collated_notes_df: pd.DataFrame
 
 
 def load_aggregate_stats_for_one_logic_tree_one_location(
