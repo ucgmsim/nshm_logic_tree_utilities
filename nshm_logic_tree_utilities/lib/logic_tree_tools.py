@@ -357,7 +357,7 @@ def logic_tree_pair_with_selected_tectonic_region_types(
     """
     short_tectonic_region_type_lookup_dict = toml.load(
         Path(__file__).parent.parent
-        / "resources/short_tectonic_region_type_lookup.toml"
+        / "resources" / "short_tectonic_region_type_lookup.toml"
     )
 
     source_logic_tree = copy.deepcopy(initial_logic_tree_pair.source_logic_tree)
