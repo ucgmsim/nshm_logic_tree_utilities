@@ -249,6 +249,10 @@ def lookup_realization_name_from_hash(
             contributing_branches_hash_ids
         ).split(", ")
 
+        ### contributing_branches_hash_id is a string containing 24 characters. It is a concatenation of the hash ids
+        ### for the seismicity rate model (first 12 characters, [0:12]) and the ground motion characterization model
+        ### (last 12 characters, [12:24]). For example, if contributing_branches_hash_id = "fafd00891923a7d8c5d537e1",
+        ### seismicity_rate_model_id = "fafd00891923" and ground_motion_characterization_models_id = "a7d8c5d537e1".
         for contributing_branches_hash_id in contributing_branches_hash_ids_clean:
             seismicity_rate_model_id = contributing_branches_hash_id[0:12]
             ground_motion_characterization_models_id = contributing_branches_hash_id[
