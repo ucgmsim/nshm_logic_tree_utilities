@@ -72,7 +72,7 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         )
         if len(reverse_sorted_branches) == 1:
             print(
-                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to"
+                f"Branch set {branch_set.long_name} ({branch_set.short_name}) only has one branch so cannot reduce to "
                 f"nth highest weighted branch. Leaving this branch_set unchanged."
             )
             selected_branch = copy.deepcopy(reverse_sorted_branches[0])
@@ -317,16 +317,19 @@ def select_branch_sets_given_tectonic_region_type(
     modified_logic_tree.branch_sets = new_branch_sets
     branch_set_short_names = [x.short_name for x in new_branch_sets]
 
+
     if (constants.InterfaceName.only_PUY in branch_set_short_names) & (
         constants.InterfaceName.only_HIK in branch_set_short_names
     ):
         # retain the HIK to PUY correlations
+        print()
         pass
     else:
         # remove correlations
         modified_logic_tree.correlations = LogicTreeCorrelations()
+        print()
     return modified_logic_tree
-
+ 
 
 def logic_tree_pair_with_selected_tectonic_region_types(
     initial_logic_tree_pair: CustomLogicTreePair,
