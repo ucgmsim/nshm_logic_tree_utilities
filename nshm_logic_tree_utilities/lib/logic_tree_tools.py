@@ -55,8 +55,12 @@ def reduce_logic_tree_to_nth_highest_weighted_branch(
         If the nth_highest is greater than the number of branches in any branch_set
     """
 
-    modified_logic_tree = copy.deepcopy(logic_tree)
+    for branch_set in logic_tree.branch_sets:
+        if len(branch_set.branches) == 0:
+            print()
 
+
+    modified_logic_tree = copy.deepcopy(logic_tree)
     # find the maximum number of branches in any branch set
     max_num_branches = max(
         len(branch_set.branches) for branch_set in logic_tree.branch_sets
@@ -284,33 +288,59 @@ def select_branch_sets_given_tectonic_region_type(
         tectonic_region_type_group = [tectonic_region_type_group]
 
     modified_logic_tree = copy.deepcopy(logic_tree)
-    new_branch_sets = []
-    for branch_set in logic_tree.branch_sets:
-        if isinstance(logic_tree, SourceLogicTree):
+    # new_branch_sets = []
+    # for branch_set in logic_tree.branch_sets:
+    #     if isinstance(logic_tree, SourceLogicTree):
+    #
+    #         ## even though each branch_set corresponds to one tectonic region type,
+    #         ## branch_set.tectonic_region_types returns a list of one tectonic region
+    #         # type which is accessed with the for loop
+    #         for tectonic_region_type in branch_set.tectonic_region_types:
+    #             if tectonic_region_type in tectonic_region_type_group:
+    #                 if (
+    #                     tectonic_region_type
+    #                     == constants.TectonicRegionTypeName.Subduction_Interface
+    #                 ):
+    #                     if which_interface == constants.InterfaceName.HIK_and_PUY:
+    #                         new_branch_sets.append(copy.deepcopy(branch_set))
+    #                     elif which_interface == constants.InterfaceName.only_HIK:
+    #                         if branch_set.short_name == "HIK":
+    #                             new_branch_sets.append(copy.deepcopy(branch_set))
+    #                     elif which_interface == constants.InterfaceName.only_PUY:
+    #                         if branch_set.short_name == "PUY":
+    #                             new_branch_sets.append(copy.deepcopy(branch_set))
+    #                 else:
+    #                     new_branch_sets.append(copy.deepcopy(branch_set))
+    #
+    #     if isinstance(logic_tree, GMCMLogicTree):
+    #         if branch_set.tectonic_region_type in tectonic_region_type_group:
+    #             new_branch_sets.append(copy.deepcopy(branch_set))
 
-            ## even though each branch_set corresponds to one tectonic region type,
-            ## branch_set.tectonic_region_types returns a list of one tectonic region
-            # type which is accessed with the for loop
-            for tectonic_region_type in branch_set.tectonic_region_types:
-                if tectonic_region_type in tectonic_region_type_group:
-                    if (
-                        tectonic_region_type
-                        == constants.TectonicRegionTypeName.Subduction_Interface
-                    ):
-                        if which_interface == constants.InterfaceName.HIK_and_PUY:
-                            new_branch_sets.append(copy.deepcopy(branch_set))
-                        elif which_interface == constants.InterfaceName.only_HIK:
-                            if branch_set.short_name == "HIK":
-                                new_branch_sets.append(copy.deepcopy(branch_set))
-                        elif which_interface == constants.InterfaceName.only_PUY:
-                            if branch_set.short_name == "PUY":
-                                new_branch_sets.append(copy.deepcopy(branch_set))
-                    else:
-                        new_branch_sets.append(copy.deepcopy(branch_set))
+    ###########################################################################################################3
 
-        if isinstance(logic_tree, GMCMLogicTree):
-            if branch_set.tectonic_region_type in tectonic_region_type_group:
-                new_branch_sets.append(copy.deepcopy(branch_set))
+    # print(logic_tree)
+    # print(tectonic_region_type_group)
+    # print(which_interface)
+
+    ## SourceLogicTree has branch_set.tectonic_region_types which is a list of length 1
+    ## GMCMLogicTree has branch_set.tectonic_region_type which is a single tectonic region type string
+    new_branch_sets = [copy.deepcopy(branch_set) for branch_set in logic_tree.branch_sets
+                       if (isinstance(logic_tree, GMCMLogicTree) and (branch_set.tectonic_region_type in tectonic_region_type_group))
+
+                       or (isinstance(logic_tree, SourceLogicTree) and (branch_set.tectonic_region_types[0] in tectonic_region_type_group) and
+                       (((which_interface is not None) and (which_interface == constants.InterfaceName.HIK_and_PUY)) or
+                        ((which_interface is not None) and (which_interface[len('only_'):] == branch_set.short_name))))
+
+                        or ((which_interface is None) and isinstance(logic_tree, SourceLogicTree) and
+                            (branch_set.tectonic_region_types[0] in tectonic_region_type_group))
+                      ]
+
+    # if len(new_branch_sets) != len(new_branch_sets2):
+    #     print()
+
+
+    ###########################################################################################################3
+
 
     modified_logic_tree.branch_sets = new_branch_sets
     branch_set_short_names = [x.short_name for x in new_branch_sets]
