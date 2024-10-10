@@ -133,12 +133,10 @@ def reduce_logic_tree_pair_to_nth_highest_branches(
 
     modified_logic_tree_pair = copy.deepcopy(initial_logic_tree_pair)
 
-    if (source_logic_tree_nth_highest is None) and (
-        ground_motion_logic_tree_nth_highest is None
-    ):
+    if source_logic_tree_nth_highest and not ground_motion_logic_tree_nth_highest:
         return modified_logic_tree_pair
 
-    if source_logic_tree_nth_highest is not None:
+    if source_logic_tree_nth_highest:
         modified_logic_tree_pair.source_logic_tree = (
             reduce_logic_tree_to_nth_highest_weighted_branch(
                 initial_logic_tree_pair.source_logic_tree, source_logic_tree_nth_highest
