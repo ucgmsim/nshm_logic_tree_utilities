@@ -317,15 +317,9 @@ def select_branch_sets_given_tectonic_region_type(
     modified_logic_tree.branch_sets = new_branch_sets
     branch_set_short_names = [x.short_name for x in new_branch_sets]
 
-    if (constants.InterfaceName.only_PUY in branch_set_short_names) & (
-        constants.InterfaceName.only_HIK in branch_set_short_names
-    ):
-        # retain the HIK to PUY correlations
-        pass
-    else:
-        # remove correlations
+    if not (("HIK" in branch_set_short_names) and ("PUY" in branch_set_short_names)):
+        # HIK and PUY are not both in the logic tree so remove their correlations
         modified_logic_tree.correlations = LogicTreeCorrelations()
-    return modified_logic_tree
 
 
 def logic_tree_pair_with_selected_tectonic_region_types(
