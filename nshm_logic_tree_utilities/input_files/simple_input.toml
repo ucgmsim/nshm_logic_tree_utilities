@@ -1,0 +1,19 @@
+[general]
+compatibility_key = "NZSHM22-0"
+hazard_model_id = "temp"
+
+[logic_trees]
+
+### Loading logic tree files instead of loading the built-in logic trees with model_version = "NSHM_v1.0.4"
+### because the built-in logic trees seemed to not have branch_set names
+srm_file = "../input_files/nshm_v1.0.4_v2.json"
+gmcm_file = "../input_files/gmcm_nshm_v1.0.4.json"
+
+[site]
+vs30s = [400]
+locations = [ "CHC",]
+
+[calculation]
+imts = [ "PGA"]
+agg_types = [ "mean", "std", "cov"]
+
