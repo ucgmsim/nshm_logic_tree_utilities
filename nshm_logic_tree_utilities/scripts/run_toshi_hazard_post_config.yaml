@@ -1,5 +1,5 @@
 ## Optional settings for the run
-overwrite_if_output_directory_exists : False
+overwrite_if_output_directory_exists : True
 output_individual_realizations : True
 
 ## Input information
@@ -9,5 +9,5 @@ initial_input_file_name : "simple_input.toml"
 locations : ["AKL","WLG","CHC"]
 
 ## Output information
-output_directory : "/home/arr65/data/nshm/output"
+output_directory : "/home/arr65/data/nshm/output_test"
 collated_notes_file_name : "collated_notes.csv"

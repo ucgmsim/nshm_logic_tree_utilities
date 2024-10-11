@@ -337,6 +337,11 @@ def select_branch_sets_given_tectonic_region_type(
 
     # if len(new_branch_sets) != len(new_branch_sets2):
     #     print()
+    # print()
+    # if new_branch_sets2 != new_branch_sets:
+    #     raise Exception
+    #
+    # new_branch_sets = new_branch_sets2
 
 
     ###########################################################################################################3
