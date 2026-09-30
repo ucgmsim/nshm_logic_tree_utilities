@@ -88,7 +88,7 @@ GMCMs (middle), and SRM components (bottom). This figure was made with the funct
 
 Figures 5 and 6 are similar and show the epistemic uncertainty contributions of only seismicity rate model (SRM) 
 components and only ground motion characterization models (GMCMs), respectively. They can be generated with functions
-`plotting_functions.make_figure_of_srm_model_components` and `plotting_functions.make_figure_of_gmcm_model_components`,
+`plotting_functions.make_figure_of_srm_model_components` and `plotting_functions.make_figure_of_gmcms`,
 respectively.
 
 ![Figure 5](images/srm_dispersions_WLG_CHC_AKL.png)
@@ -96,15 +96,19 @@ respectively.
 with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
 
 ![Figure 6](images/gmcms_PGA_AKL_WLG_CHC.png)
-*Figure 6: Epistemic uncertainty contributions ground motion characterization models (GMCMs) components. 
-This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
+*Figure 6: Epistemic uncertainty contributions from individual ground motion characterization models (GMCMs) for
+peak ground acceleration (PGA). The rows show Auckland (top), Wellington (middle), and Christchurch (bottom), and the
+columns show the crustal (left), subduction interface (middle), and subduction intraslab (right) GMCMs. 
+This figure was generated with the function `make_figure_of_gmcms` in `plotting_functions.py`*.
 
-Figure 7 shows the range of dispersions among ground motion characterization models (GMCMs) can be generated with
-the function `plotting_functions.make_figure_of_gmcm_model_dispersions`.
+Figure 7 shows the range of dispersions among ground motion characterization models (GMCMs). It can be generated with
+the function `plotting_functions.make_figure_of_gmm_dispersion_ranges`.
 
 ![Figure 7](images/gmcm_models_dispersion_ranges.png)
-*Figure 7: Epistemic uncertainty contributions ground motion characterization models (GMCMs) components. 
-This figure was generated with the function `make_figure_of_srm_model_components` in `plotting_functions.py`*.
+*Figure 7: Range in dispersion (highest minus lowest) among the crustal (CRU), subduction interface (INTER), and 
+subduction intraslab (SLAB) ground motion characterization models (GMCMs) for PGA in Auckland (AKL), Wellington (WLG), 
+and Christchurch (CHC). This figure was generated with the function `make_figure_of_gmm_dispersion_ranges` in 
+`plotting_functions.py`*.
 
 ### Figures of individual hazard curve realizations
 
@@ -139,12 +143,12 @@ functions are shown below.
 
 ![Figure 17](images/individual_realizations/ChiouYoungs2014_individual_realizations.png)
 
-![Figure 19](images/individual_realizations/Stafford2022_individual_realizations.png)
+![Figure 18](images/individual_realizations/Stafford2022_individual_realizations.png)
 
 
 ### Individual hazard curves of subduction interface & intraslab ground motion characterization models (GMCMs)
 
-![Figure 18](images/individual_realizations/Atkinson2022SSlab_individual_realizations.png)
+![Figure 19](images/individual_realizations/Atkinson2022SSlab_individual_realizations.png)
 
 ![Figure 20](images/individual_realizations/NZNSHM2022_AbrahamsonGulerce2020SSlab_individual_realizations.png)
 
